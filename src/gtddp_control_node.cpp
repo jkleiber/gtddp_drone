@@ -3,7 +3,7 @@
 #include "std_msgs/String.h"
 
 //Include package libraries
-#include "control_calc.h"
+#include "gtddp_drone/control_calc.h"
 
 #define MAX_BUFFER 100
 

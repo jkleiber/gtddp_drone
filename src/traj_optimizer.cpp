@@ -1,4 +1,4 @@
-#include "traj_optimizer.h"
+#include "gtddp_drone/traj_optimizer.h"
 
 Optimizer::Optimizer()
 {}
@@ -20,5 +20,5 @@ void Optimizer::state_estimate_callback(const std_msgs::Header& estimate_event)
 
 void Optimizer::target_state_callback(const std_msgs::Header& target_event)
 {
-    
+
 }

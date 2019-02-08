@@ -8,7 +8,8 @@
             "includePath": [
                 "/opt/ros/melodic/include",
                 "/home/justin/catkin_ws/src/gtddp_drone/include",
-                "/usr/include"
+                "/usr/include",
+                "${workspaceFolder}/include"
             ],
             "name": "Linux",
             "intelliSenseMode": "gcc-x64"
