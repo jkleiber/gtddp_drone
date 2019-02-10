@@ -24,6 +24,9 @@ int main(int argc, char **argv)
     //Set up callbacks for the current trajectory topic
     ros::Subscriber traj_sub = control_node.subscribe("trajectory", MAX_BUFFER, &ControlCalculator::trajectory_callback, &control_calc);
 
+    //Set up a timer to call the control calculation function at the appropriate update rate
+    ros::Timer update_timer = control_node.createTimer(ros::Duration(0.001), &ControlCalculator::recalculate_control_callback, &control_calc, false);
+
     //Pump callbacks
     ros::spin();
 

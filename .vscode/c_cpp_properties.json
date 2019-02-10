@@ -6,8 +6,8 @@
                 "limitSymbolsToIncludedHeaders": true
             },
             "includePath": [
-                "/opt/ros/melodic/include",
-                "/home/justin/catkin_ws/src/gtddp_drone/include",
+                "/opt/ros/kinetic/include",
+                "${workspaceFolder}/src/gtddp_drone/include",
                 "/usr/include",
                 "${workspaceFolder}/include"
             ],

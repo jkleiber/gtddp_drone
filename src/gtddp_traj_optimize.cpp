@@ -1,6 +1,5 @@
 //System headers
 #include "ros/ros.h"
-#include "std_msgs/String.h"
 
 //Package defined headers
 #include "traj_optimizer.h"
@@ -21,7 +20,7 @@ int main(int argc, char **argv)
 
     //Advertise trajectory data
     //TODO: Change message type
-    ros::Publisher traj_pub = traj_node.advertise<std_msgs::String>("trajectory", MAX_BUFFER);
+    ros::Publisher traj_pub = traj_node.advertise<gtddp_drone::Trajectory>("trajectory", MAX_BUFFER);
 
     //Set up the trajectory optimizer
     Optimizer traj_optimizer(traj_pub);
@@ -31,7 +30,7 @@ int main(int argc, char **argv)
     ros::Subscriber target_sub = traj_node.subscribe("target_state", MAX_BUFFER, &Optimizer::target_state_callback, &traj_optimizer);
 
     //Set up timer for recalculations
-    ros::Timer update_timer = traj_node.createTimer(ros::Duration(0.05), &Optimizer::traj_update_callback, &traj_optimizer, false);
+    ros::Timer update_timer = traj_node.createTimer(ros::Duration(0.5), &Optimizer::traj_update_callback, &traj_optimizer, false);
 
     //Pump callbacks
     ros::spin();

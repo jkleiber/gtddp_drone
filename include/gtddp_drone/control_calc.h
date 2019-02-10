@@ -14,7 +14,7 @@ class ControlCalculator
 
         //Callback functions
         void recalculate_control_callback(const ros::TimerEvent& time_event);
-        void trajectory_callback(const std_msgs::Header msg);
+        void trajectory_callback(const gtddp_drone::Trajectory::ConstPtr& traj_msg);
 
     private:
         //Publish control system data to the drone
