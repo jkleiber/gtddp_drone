@@ -51,11 +51,11 @@ gtddp_drone::Trajectory Optimizer::get_traj_msg(std::vector<Eigen::VectorXd> x_t
     gtddp_drone::Trajectory traj_msg;   //trajectory message result
 
     //Loop through each time step and encode the data into ROS messages
-    for(i = 0; i < num_time_steps; ++i)
+    for(i = 0; i < Constants::num_time_steps; ++i)
     {
-        traj_msg.state_data.push_back(this->get_state_data_msg(x_traj), i);
-        traj_msg.ctrl_data.push_back(this->get_ctrl_data_msg(u_traj), i);
-        traj_msg.gain_data.push_back(this->get_gain_data_msg(K_traj), i);
+        traj_msg.x_traj.push_back(this->get_state_data_msg(x_traj, i));
+        traj_msg.u_traj.push_back(this->get_ctrl_data_msg(u_traj, i));
+        traj_msg.K_traj.push_back(this->get_gain_data_msg(K_traj, i));
     }
 
     //Set up the Header of this message (for time tracking)
@@ -72,9 +72,9 @@ gtddp_drone::state_data Optimizer::get_state_data_msg(std::vector<Eigen::VectorX
     gtddp_drone::state_data state_msg;
 
     //Loop through each state variable for this particular state to extract the value
-    for(int i = 0; i < num_states; ++i)
+    for(int i = 0; i < Constants::num_states; ++i)
     {
-        state_msg.push_back(x_traj[idx](i));
+        state_msg[i] = (x_traj[idx](i));
     }
 
     //Return the generated message
@@ -87,16 +87,16 @@ gtddp_drone::ctrl_data Optimizer::get_ctrl_data_msg(std::vector<Eigen::VectorXd>
     gtddp_drone::ctrl_data ctrl_msg;
 
     //Loop through each state variable for this particular state to extract the value
-    for(int i = 0; i < num_controls_u; ++i)
+    for(int i = 0; i < Constants::num_controls_u; ++i)
     {
-        ctrl_msg.push_back(u_traj[idx](i));
+        ctrl_msg[i] = u_traj[idx](i);
     }
 
     //Return the generated message
     return ctrl_msg;
 }
 
-gtddp_drone::gain_data Optimizer::get_gain_data_msg(std::vector<Eigen::MatrixXd> u_traj, int idx)
+gtddp_drone::gain_data Optimizer::get_gain_data_msg(std::vector<Eigen::MatrixXd> K_traj, int idx)
 {
     //Set up the gain data message types
     gtddp_drone::gain_data gain_msg;
@@ -106,13 +106,13 @@ gtddp_drone::gain_data Optimizer::get_gain_data_msg(std::vector<Eigen::MatrixXd>
     int r, c;
 
     //Loop through the gain matrix for this particular state
-    for(r = 0; r < num_controls_u; ++r)
+    for(r = 0; r < Constants::num_controls_u; ++r)
     {
         //Clear old row  data
         gain_row.clear();
 
         //Add all the values to the row vector
-        for(c = 0; c < num_controls_u; ++c)
+        for(c = 0; c < Constants::num_controls_u; ++c)
         {
             gain_row.push_back(K_traj[idx](r,c));
         }
