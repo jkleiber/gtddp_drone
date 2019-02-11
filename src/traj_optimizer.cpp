@@ -2,18 +2,18 @@
 
 Optimizer::Optimizer()
 {
-    //Set state vectors to uninitialized
-    this->cur_state.quiet_NaN();
-    this->goal_state.quiet_NaN();
+    //Flag the state data as uninitialized
+    this->cur_state_init = false;
+    this->goal_state_init = false;
 }
 
 Optimizer::Optimizer(ros::Publisher& publisher)
 {
     this->traj_pub = publisher;
-
-    //Set state vectors to uninitialized
-    this->cur_state.quiet_NaN();
-    this->goal_state.quiet_NaN();
+    
+    //Flag the state data as uninitialized
+    this->cur_state_init = false;
+    this->goal_state_init = false;
 }
 
 /**
@@ -35,12 +35,12 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
 
 void Optimizer::state_estimate_callback(const tf2_msgs::TFMessage::ConstPtr& estimate_event)
 {
-
+    this->cur_state_init = true;
 }
 
 void Optimizer::target_state_callback(const std_msgs::Header& target_event)
 {
-
+    this->goal_state_init = true;
 }
 
 
@@ -74,7 +74,7 @@ gtddp_drone::state_data Optimizer::get_state_data_msg(std::vector<Eigen::VectorX
     //Loop through each state variable for this particular state to extract the value
     for(int i = 0; i < Constants::num_states; ++i)
     {
-        state_msg[i] = (x_traj[idx](i));
+        state_msg.states[i] = (x_traj[idx](i));
     }
 
     //Return the generated message
@@ -89,7 +89,7 @@ gtddp_drone::ctrl_data Optimizer::get_ctrl_data_msg(std::vector<Eigen::VectorXd>
     //Loop through each state variable for this particular state to extract the value
     for(int i = 0; i < Constants::num_controls_u; ++i)
     {
-        ctrl_msg[i] = u_traj[idx](i);
+        ctrl_msg.ctrl[i] = u_traj[idx](i);
     }
 
     //Return the generated message
@@ -109,16 +109,16 @@ gtddp_drone::gain_data Optimizer::get_gain_data_msg(std::vector<Eigen::MatrixXd>
     for(r = 0; r < Constants::num_controls_u; ++r)
     {
         //Clear old row  data
-        gain_row.clear();
+        gain_row.gain_list.clear();
 
         //Add all the values to the row vector
         for(c = 0; c < Constants::num_controls_u; ++c)
         {
-            gain_row.push_back(K_traj[idx](r,c));
+            gain_row.gain_list.push_back(K_traj[idx](r,c));
         }
 
         //Save the row
-        gain_msg.push_back(gain_row);
+        gain_msg.gain_mat.push_back(gain_row);
     }
 
     //Return the processed gain message

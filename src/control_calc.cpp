@@ -9,7 +9,7 @@ ControlCalculator::ControlCalculator()
 
 ControlCalculator::ControlCalculator(ros::Publisher ctrl_sig_pub)
 {
-
+    this->control_signal_pub = ctrl_sig_pub;
 }
 
 

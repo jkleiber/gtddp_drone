@@ -11,7 +11,15 @@
 #include "gtddp_drone/gtddp_lib/DDP_main_mm.h"
 
 //ROS msgs
+#include <tf2_msgs/TFMessage.h>
+
+//User defined ROS msgs
 #include <gtddp_drone/Trajectory.h>
+#include <gtddp_drone/state_data.h>
+#include <gtddp_drone/ctrl_data.h>
+#include <gtddp_drone/gain_data.h>
+#include <gtddp_drone/gain_vector.h>
+
 
 class Optimizer 
 {
@@ -22,7 +30,7 @@ class Optimizer
         
         //Callback functions
         void traj_update_callback(const ros::TimerEvent& time_event);
-        void state_estimate_callback(const std_msgs::Header& estimate_event);
+        void state_estimate_callback(const tf2_msgs::TFMessage::ConstPtr& estimate_event);
         void target_state_callback(const std_msgs::Header& target_event);
 
     private:
@@ -32,6 +40,8 @@ class Optimizer
         //Save callback data here
         Eigen::VectorXd cur_state;
         Eigen::VectorXd goal_state;
+        bool cur_state_init;
+        bool goal_state_init;
 
         //Data parsing for sending messages
         gtddp_drone::Trajectory get_traj_msg(std::vector<Eigen::VectorXd> x_traj, std::vector<Eigen::VectorXd> u_traj, std::vector<Eigen::MatrixXd> K_traj);
