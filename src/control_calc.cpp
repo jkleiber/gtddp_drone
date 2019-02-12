@@ -24,6 +24,18 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
 }
 
 
+//TODO: if necessary, consider renaming this and its partner callback in optimizer to be the vicon_estimate
+//in the future it might be necessary to handle multiple callbacks to estimate the state
+//such as if we are reading sensor data or doing EKF stuff.
+//Then it will come full circle and we will create a node to handle state estimation
+//TODO: consider making a separate package and node for state estimation (drone_state_estimate)
+void state_estimate_callback(const vicon::Subject::ConstPtr& estimate_event)
+{
+    //TODO: do the same thing here as in the traj_optimizer
+    //TODO: consider a common function that can return the same data
+}
+
+
 
 void ControlCalculator::trajectory_callback(const gtddp_drone::Trajectory::ConstPtr& traj_msg)
 {

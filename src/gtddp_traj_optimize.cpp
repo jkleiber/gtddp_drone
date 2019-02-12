@@ -19,7 +19,6 @@ int main(int argc, char **argv)
     ros::NodeHandle traj_node;
 
     //Advertise trajectory data
-    //TODO: Change message type
     ros::Publisher traj_pub = traj_node.advertise<gtddp_drone::Trajectory>("/gtddp_drone/trajectory", MAX_BUFFER);
 
     //Set up the trajectory optimizer

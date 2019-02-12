@@ -35,7 +35,7 @@ class Optimizer
         //Callback functions
         void traj_update_callback(const ros::TimerEvent& time_event);
         void state_estimate_callback(const vicon::Subject::ConstPtr& estimate_event);
-        void target_state_callback(const std_msgs::Header& target_event);
+        void target_state_callback(const gtddp_drone::state_data::ConstPtr& target_event);
 
     private:
         //Publisher for the trajectory data

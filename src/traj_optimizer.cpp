@@ -61,7 +61,7 @@ void Optimizer::state_estimate_callback(const vicon::Subject::ConstPtr& estimate
 /**
  * 
  */
-void Optimizer::target_state_callback(const std_msgs::Header& target_event)
+void Optimizer::target_state_callback(const gtddp_drone::state_data::ConstPtr& target_event)
 {
     this->goal_state_init = true;
 }

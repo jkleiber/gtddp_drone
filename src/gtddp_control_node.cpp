@@ -21,11 +21,12 @@ int main(int argc, char **argv)
     //Set up the control calculator
     ControlCalculator control_calc(ctrl_sig_pub);
 
-    //Set up callbacks for the current trajectory topic
+    //Set up callbacks for the current trajectory topic and the state estimation
     ros::Subscriber traj_sub = control_node.subscribe("/gtddp_drone/trajectory", MAX_BUFFER, &ControlCalculator::trajectory_callback, &control_calc);
-
+    ros::Subscriber estimate_sub = control_node.subscribe("/vicon/drone_0/odom", MAX_BUFFER, &ControlCalculator::state_estimate_callback, &control_calc);
+    
     //Set up a timer to call the control calculation function at the appropriate update rate
-    ros::Timer update_timer = control_node.createTimer(ros::Duration(0.001), &ControlCalculator::recalculate_control_callback, &control_calc, false);
+    ros::Timer update_timer = control_node.createTimer(ros::Duration(0.01), &ControlCalculator::recalculate_control_callback, &control_calc, false);
 
     //Pump callbacks
     ros::spin();
