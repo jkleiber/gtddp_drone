@@ -11,7 +11,7 @@ class Quadrotor
 {
 public:
     /**
-     This constructor instantiates the Cart_Pole object by making a call to the
+     This constructor instantiates the Quadrotor object by making a call to the
      superclass constructor in System. Every System subclass (Cart_Pole,
      Quadrotor, etc.) must have this constructor, only changing the handle
      of the constructor.

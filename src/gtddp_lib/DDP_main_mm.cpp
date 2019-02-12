@@ -49,7 +49,7 @@ void DDP_main_mm::ddp_loop()
         
         // Output the cost
         trajectory_cost_mm[i] = cost.calculate_cost_mm(x_traj, u_traj, v_traj);
-        printf("Cart Pole DDP\tIteration %i\tCost = %10.4f\n", i + 1, trajectory_cost_mm[i]);
+        printf("Quadrotor DDP\tIteration %i\tCost = %10.4f\n", i + 1, trajectory_cost_mm[i]);
         
         // Linearize dynamics along x_traj, u_traj, v_traj
         quad.linearize_dynamics_mm(x_traj, u_traj, v_traj, A, B, C);

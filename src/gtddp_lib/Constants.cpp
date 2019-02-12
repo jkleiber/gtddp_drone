@@ -21,7 +21,7 @@ namespace Constants {
 //	   extern const int num_controls_v(1);
 //    
    //Quadrotor system
-    extern const int num_states(12);
+    extern const int num_states(16);
     extern const int num_controls_u(4);
     extern const int num_controls_v(4);
 //    

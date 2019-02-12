@@ -11,7 +11,11 @@
 #include "gtddp_drone/gtddp_lib/DDP_main_mm.h"
 
 //ROS msgs
+#include <vicon/Subject.h>
+#include <vicon/Markers.h>
+#include <vicon/Marker.h>
 #include <tf2_msgs/TFMessage.h>
+#include <geometry_msgs/TransformStamped.h>
 
 //User defined ROS msgs
 #include <gtddp_drone/Trajectory.h>
@@ -30,7 +34,7 @@ class Optimizer
         
         //Callback functions
         void traj_update_callback(const ros::TimerEvent& time_event);
-        void state_estimate_callback(const tf2_msgs::TFMessage::ConstPtr& estimate_event);
+        void state_estimate_callback(const vicon::Subject::ConstPtr& estimate_event);
         void target_state_callback(const std_msgs::Header& target_event);
 
     private:

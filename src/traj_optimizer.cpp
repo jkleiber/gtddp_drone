@@ -1,5 +1,9 @@
 #include "gtddp_drone/traj_optimizer.h"
 
+
+/**
+ * 
+ */
 Optimizer::Optimizer()
 {
     //Flag the state data as uninitialized
@@ -7,6 +11,10 @@ Optimizer::Optimizer()
     this->goal_state_init = false;
 }
 
+
+/**
+ * 
+ */
 Optimizer::Optimizer(ros::Publisher& publisher)
 {
     this->traj_pub = publisher;
@@ -16,6 +24,7 @@ Optimizer::Optimizer(ros::Publisher& publisher)
     this->goal_state_init = false;
 }
 
+
 /**
  * 
  */
@@ -23,7 +32,7 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
 {
     //Check to make sure current state and target state are initialized
     //If they are, then optimize the current trajectory
-    if(!(this->cur_state.hasNaN() || this->goal_state.hasNaN()))
+    if(this->cur_state_init && this->goal_state_init)
     {
         DDP_main_mm ddpmain(this->cur_state, this->goal_state);
         ddpmain.ddp_loop();
@@ -33,17 +42,35 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
     }
 }
 
-void Optimizer::state_estimate_callback(const tf2_msgs::TFMessage::ConstPtr& estimate_event)
+
+/**
+ * 
+ */
+void Optimizer::state_estimate_callback(const vicon::Subject::ConstPtr& estimate_event)
 {
+    //Set the current state as initialized
     this->cur_state_init = true;
+
+    //Get the state estimate
+    const geometry_msgs::Point drone_pos = estimate_event->position;
+    const geometry_msgs::Quaternion drone_orient = estimate_event->orientation;
+
 }
 
+
+/**
+ * 
+ */
 void Optimizer::target_state_callback(const std_msgs::Header& target_event)
 {
     this->goal_state_init = true;
 }
 
 
+
+/**
+ * 
+ */
 gtddp_drone::Trajectory Optimizer::get_traj_msg(std::vector<Eigen::VectorXd> x_traj, std::vector<Eigen::VectorXd> u_traj, std::vector<Eigen::MatrixXd> K_traj)
 {
     //Declare local variables
@@ -66,6 +93,10 @@ gtddp_drone::Trajectory Optimizer::get_traj_msg(std::vector<Eigen::VectorXd> x_t
     return traj_msg;
 }
 
+
+/**
+ * 
+ */
 gtddp_drone::state_data Optimizer::get_state_data_msg(std::vector<Eigen::VectorXd> x_traj, int idx)
 {
     //Set up a state data message
@@ -81,6 +112,10 @@ gtddp_drone::state_data Optimizer::get_state_data_msg(std::vector<Eigen::VectorX
     return state_msg;
 }
 
+
+/**
+ * 
+ */
 gtddp_drone::ctrl_data Optimizer::get_ctrl_data_msg(std::vector<Eigen::VectorXd> u_traj, int idx)
 {
     //Set up a state data message
@@ -96,6 +131,10 @@ gtddp_drone::ctrl_data Optimizer::get_ctrl_data_msg(std::vector<Eigen::VectorXd>
     return ctrl_msg;
 }
 
+
+/**
+ * 
+ */
 gtddp_drone::gain_data Optimizer::get_gain_data_msg(std::vector<Eigen::MatrixXd> K_traj, int idx)
 {
     //Set up the gain data message types
