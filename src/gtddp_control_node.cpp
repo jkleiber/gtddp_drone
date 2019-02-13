@@ -1,6 +1,6 @@
 //Include system libraries
 #include "ros/ros.h"
-#include "std_msgs/String.h"
+#include "geometry_msgs/Twist.h"
 
 //Include package libraries
 #include "gtddp_drone/control_calc.h"
@@ -16,14 +16,14 @@ int main(int argc, char **argv)
     ros::NodeHandle control_node;
 
     //Advertise control output
-    ros::Publisher ctrl_sig_pub = control_node.advertise<std_msgs::String>("control_signal", MAX_BUFFER);
+    ros::Publisher ctrl_sig_pub = control_node.advertise<geometry_msgs::Twist>("/ardrone/cmd_vel", MAX_BUFFER);
 
     //Set up the control calculator
     ControlCalculator control_calc(ctrl_sig_pub);
 
     //Set up callbacks for the current trajectory topic and the state estimation
     ros::Subscriber traj_sub = control_node.subscribe("/gtddp_drone/trajectory", MAX_BUFFER, &ControlCalculator::trajectory_callback, &control_calc);
-    ros::Subscriber estimate_sub = control_node.subscribe("/vicon/drone_0/odom", MAX_BUFFER, &ControlCalculator::state_estimate_callback, &control_calc);
+    ros::Subscriber estimate_sub = control_node.subscribe("/gtddp_drone/state_estimate", MAX_BUFFER, &ControlCalculator::state_estimate_callback, &control_calc);
     
     //Set up a timer to call the control calculation function at the appropriate update rate
     ros::Timer update_timer = control_node.createTimer(ros::Duration(0.01), &ControlCalculator::recalculate_control_callback, &control_calc, false);

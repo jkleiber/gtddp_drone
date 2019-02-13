@@ -11,7 +11,6 @@ using namespace std;
 using namespace boost::numeric::odeint;
 
 
-//TODO: Add the remaining 4 states to this function?
 /**
  Dynamics_mm is the main ode function to solve dx/dt = f(x,u,v).
  @param x -  a num_states x 1 VectorXd of state values
@@ -99,7 +98,6 @@ void Quadrotor::forward_propagate_mm(vector<VectorXd>& x_traj, const vector<Vect
 } //forward_propagate_mm
 
 
-//TODO: Update linearized dynamics to include the rest of the states (12-15)
 /**
  linearize_dynamics_mm obtains the gradient of f (A,B,C) at the given trajectory
  @param x_traj -  a num_states x 1 VectorXd of state values

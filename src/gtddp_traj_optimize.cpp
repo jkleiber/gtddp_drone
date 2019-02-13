@@ -2,7 +2,8 @@
 #include "ros/ros.h"
 
 //Package defined headers
-#include "traj_optimizer.h"
+#include "gtddp_drone/Trajectory.h"
+#include "gtddp_drone/traj_optimizer.h"
 
 //Define program constants
 #define MAX_BUFFER 100
@@ -25,7 +26,7 @@ int main(int argc, char **argv)
     Optimizer traj_optimizer(traj_pub);
 
     //Subscribe to state estimation and target state topics
-    ros::Subscriber estimate_sub = traj_node.subscribe("/vicon/drone_0/odom", MAX_BUFFER, &Optimizer::state_estimate_callback, &traj_optimizer);
+    ros::Subscriber estimate_sub = traj_node.subscribe("/gtddp_drone/state_estimate", MAX_BUFFER, &Optimizer::state_estimate_callback, &traj_optimizer);
     ros::Subscriber target_sub = traj_node.subscribe("target_state", MAX_BUFFER, &Optimizer::target_state_callback, &traj_optimizer);
 
     //Set up timer for recalculations

@@ -9,6 +9,9 @@ Optimizer::Optimizer()
     //Flag the state data as uninitialized
     this->cur_state_init = false;
     this->goal_state_init = false;
+
+    //Initialize current state size
+    this->cur_state.resize(Constants::num_states);
 }
 
 
@@ -22,6 +25,9 @@ Optimizer::Optimizer(ros::Publisher& publisher)
     //Flag the state data as uninitialized
     this->cur_state_init = false;
     this->goal_state_init = false;
+
+    //Initialize current state size
+    this->cur_state.resize(Constants::num_states);
 }
 
 
@@ -46,15 +52,16 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
 /**
  * 
  */
-void Optimizer::state_estimate_callback(const vicon::Subject::ConstPtr& estimate_event)
+void Optimizer::state_estimate_callback(const gtddp_drone::state_data::ConstPtr& estimate_event)
 {
     //Set the current state as initialized
     this->cur_state_init = true;
 
     //Get the state estimate
-    const geometry_msgs::Point drone_pos = estimate_event->position;
-    const geometry_msgs::Quaternion drone_orient = estimate_event->orientation;
-
+    for(int i = 0; i < Constants::num_states; ++i)
+    {
+        this->cur_state(i) = estimate_event->states[i];
+    }
 }
 
 

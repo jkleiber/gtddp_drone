@@ -1,51 +1,144 @@
 #include "gtddp_drone/control_calc.h"
 
+/**
+ * 
+ */
 ControlCalculator::ControlCalculator()
 {
+    //Initialize current state size
+    this->cur_state.resize(Constants::num_states);
 
+    //Reset flags
+    this->cur_state_init = false;
+    this->traj_init = false;
 }
 
 
-
+/**
+ * 
+ */
 ControlCalculator::ControlCalculator(ros::Publisher ctrl_sig_pub)
 {
+    //Control signal to publish to AR Drone
     this->control_signal_pub = ctrl_sig_pub;
+
+    //Initialize current state size
+    this->cur_state.resize(Constants::num_states);
+
+    //Reset flags
+    this->cur_state_init = false;
+    this->traj_init = false;
 }
 
 
-
+/**
+ * 
+ */
 void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time_event)
 {
-    //Somehow determine the curretn time and where that is in the traj
+    //Increment the timestep
+    this->timestep++;
 
-    //Calculate u(t)
+    //Only output to the control topic if the localization has happened and the trajectory has been built
+    //Also only output if the timestep is in bounds
+    if(this->cur_state_init && this->traj_init
+    && timestep >= 0 && timestep < u_traj.size())
+    {
+        //TODO: Make K_traj the right dimensions for multiplication
+        //Calculate u(t)
+        Eigen::VectorXd ctrl_vector = u_traj[timestep] + K_traj[timestep] * (x_traj[timestep] - cur_state);
 
-    //Publish u(t) to the control signal topic
+        //Form the control message
+        this->ctrl_command.ctrl[0] = ctrl_vector(0);
+        this->ctrl_command.ctrl[1] = ctrl_vector(1);
+        this->ctrl_command.ctrl[2] = ctrl_vector(2);
+        this->ctrl_command.ctrl[3] = ctrl_vector(3);
+
+        //Publish u(t) to the control signal topic
+        this->control_signal_pub.publish(this->ctrl_command);
+    }
 }
 
 
-//TODO: if necessary, consider renaming this and its partner callback in optimizer to be the vicon_estimate
-//in the future it might be necessary to handle multiple callbacks to estimate the state
-//such as if we are reading sensor data or doing EKF stuff.
-//Then it will come full circle and we will create a node to handle state estimation
-//TODO: consider making a separate package and node for state estimation (drone_state_estimate)
-void state_estimate_callback(const vicon::Subject::ConstPtr& estimate_event)
+/**
+ * 
+ */
+void ControlCalculator::state_estimate_callback(const gtddp_drone::state_data::ConstPtr& estimate_event)
 {
-    //TODO: do the same thing here as in the traj_optimizer
-    //TODO: consider a common function that can return the same data
+    //Set the current state as initialized
+    this->cur_state_init = true;
+
+    //Get the state estimate
+    for(int i = 0; i < Constants::num_states; ++i)
+    {
+        this->cur_state(i) = estimate_event->states[i];
+    }
 }
 
 
-
+/**
+ * 
+ */
 void ControlCalculator::trajectory_callback(const gtddp_drone::Trajectory::ConstPtr& traj_msg)
 {
+    //Declare local variables
+    int i;          //iteration variable
+    int num_events; //number of events in the message
+    int t;          //time iteration variable
+    int r, c;       //rows and columns of gain matrix
+
+    //The trajectory is now initialized!
+    this->traj_init = true;
+
     //Get the components of the message
     const std::vector<gtddp_drone::state_data> &x_data = traj_msg->x_traj;
     const std::vector<gtddp_drone::ctrl_data> &u_data = traj_msg->u_traj;
     const std::vector<gtddp_drone::gain_data> &K_data = traj_msg->K_traj;
 
+    //Find the number of events
+    num_events = x_data.size();
+
+    //Clear the trajectory vectors
+    this->x_traj.clear();
+    this->u_traj.clear();
+    this->K_traj.clear();
+
+    //Create temporary vectors for the trajectory data
+    Eigen::VectorXd x_traj_dat(Constants::num_states);
+    Eigen::VectorXd u_traj_dat(Constants::num_controls_u);
+    Eigen::MatrixXd K_traj_dat(Constants::num_controls_u, Constants::num_controls_u);
+
     //Parse the message to get the trajectory
-    
+    for(t = 0; t < num_events; ++t)
+    {
+        //x_traj
+        for(i = 0; i < Constants::num_states; ++i)
+        {
+            x_traj_dat(i) = x_data[t].states[i];
+        }
+
+        //u_traj
+        for(i = 0; i < Constants::num_controls_u; ++i)
+        {
+            u_traj_dat(i) = u_data[t].ctrl[i];
+        }
+
+        //K_traj
+        //Go through rows and columns of the message
+        for(r = 0; r < Constants::num_controls_u; ++r)
+        {
+            for(c = 0; c < Constants::num_controls_u; ++c)
+            {
+                K_traj_dat(r,c) = K_data[t].gain_mat[r].gain_list[c];
+            }
+        }
+
+        //Push the new data into storage
+        this->x_traj.push_back(x_traj_dat);
+        this->u_traj.push_back(u_traj_dat);
+        this->K_traj.push_back(K_traj_dat);
+    }
+
+    //Reset the timestep variable to -1 for calculation
+    timestep = -1;
 }
-
-

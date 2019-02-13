@@ -25,17 +25,28 @@ class ControlCalculator
 
         //Callback functions
         void recalculate_control_callback(const ros::TimerEvent& time_event);
-        void state_estimate_callback(const vicon::Subject::ConstPtr& estimate_event);
+        void state_estimate_callback(const gtddp_drone::state_data::ConstPtr& estimate_event);
         void trajectory_callback(const gtddp_drone::Trajectory::ConstPtr& traj_msg);
 
     private:
         //Publish control system data to the drone
         ros::Publisher control_signal_pub;
+        gtddp_drone::ctrl_data ctrl_command;
 
         //Store the current trajectory information
         std::vector<Eigen::VectorXd> x_traj;
         std::vector<Eigen::VectorXd> u_traj;
         std::vector<Eigen::MatrixXd> K_traj;
+
+        //Store current state data
+        Eigen::VectorXd cur_state;
+
+        //Do time tracking
+        int timestep;
+
+        //Flags for initialization
+        bool cur_state_init;
+        bool traj_init;
 
 };
 
