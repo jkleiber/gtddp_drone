@@ -26,6 +26,7 @@ int main(int argc, char **argv)
     StateEstimator state_estimation(state_pub);
 
     //Subscribe to the vicon topic
+    ros::Subscriber imu_sub = state_node.subscribe("/ardrone/imu/data", MAX_BUFFER, &StateEstimator::imu_callback, &state_estmation);
     ros::Subscriber nav_sub = state_node.subscribe("/ardrone/navdata", MAX_BUFFER, &StateEstimator::navdata_callback, &state_estimation);
     ros::Subscriber vicon_sub = state_node.subscribe("/vicon/drone_0/odom", MAX_BUFFER, &StateEstimator::vicon_data_callback, &state_estimation);
 

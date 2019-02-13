@@ -17,10 +17,13 @@ ControlCalculator::ControlCalculator()
 /**
  * 
  */
-ControlCalculator::ControlCalculator(ros::Publisher ctrl_sig_pub)
+ControlCalculator::ControlCalculator(ros::Publisher ctrl_sig_pub, ros::Publisher land_pub)
 {
     //Control signal to publish to AR Drone
     this->control_signal_pub = ctrl_sig_pub;
+
+    //For landing the drone, use the landing Publisher
+    this->landing_pub = land_pub;
 
     //Initialize current state size
     this->cur_state.resize(Constants::num_states);
