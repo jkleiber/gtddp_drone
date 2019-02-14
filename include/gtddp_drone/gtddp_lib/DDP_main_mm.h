@@ -15,8 +15,6 @@
 #include "Constants.h"
 #include "GT_DDP_optimizer.h"
 #include "Cost_Function.h"
-
-#include "Cart_Pole.h"      // include the system's header file (Quadrotor.h, Pendulum.h, etc.)
 #include "Quadrotor.h"      // include the system's header file (Quadrotor.h, Pendulum.h, etc.)
 
 class DDP_main_mm
@@ -35,7 +33,6 @@ public:
     
 private:
 
-    Cart_Pole cp;
     Quadrotor quad;
     Cost_Function cost;
     GT_DDP_optimizer ddp;

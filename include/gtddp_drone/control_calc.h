@@ -12,6 +12,7 @@
 #include <vicon/Subject.h>
 
 //User msgs
+#include <tum_ardrone/filter_state.h>
 #include <gtddp_drone/Trajectory.h>
 
 /**
@@ -25,7 +26,7 @@ class ControlCalculator
 
         //Callback functions
         void recalculate_control_callback(const ros::TimerEvent& time_event);
-        void state_estimate_callback(const gtddp_drone::state_data::ConstPtr& estimate_event);
+        void state_estimate_callback(const tum_ardrone::filter_state::ConstPtr& estimate_event);
         void trajectory_callback(const gtddp_drone::Trajectory::ConstPtr& traj_msg);
 
     private:
