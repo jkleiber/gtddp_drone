@@ -2,6 +2,8 @@
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
 #include <std_msgs/Empty.h>
+#include <std_msgs/String.h>
+#include <sstream>
 
 //Include package libraries
 #include "gtddp_drone/control_calc.h"
@@ -17,7 +19,7 @@ int main(int argc, char **argv)
     ros::NodeHandle control_node;
 
     //Advertise control output and landing mode
-    ros::Publisher ctrl_sig_pub = control_node.advertise<geometry_msgs::Twist>(control_node.resolveName("/ardrone/cmd_vel"), MAX_BUFFER);
+    ros::Publisher ctrl_sig_pub = control_node.advertise<geometry_msgs::Twist>(control_node.resolveName("cmd_vel"), MAX_BUFFER);
     ros::Publisher land_pub = control_node.advertise<std_msgs::Empty>(control_node.resolveName("/ardrone/land"), MAX_BUFFER);
 
     //Set up the control calculator
@@ -25,10 +27,17 @@ int main(int argc, char **argv)
 
     //Set up callbacks for the current trajectory topic and the state estimation
     ros::Subscriber traj_sub = control_node.subscribe(control_node.resolveName("/gtddp_drone/trajectory"), MAX_BUFFER, &ControlCalculator::trajectory_callback, &control_calc);
-    ros::Subscriber estimate_sub = control_node.subscribe(control_node.resolveName("ardrone/predictedPose"), MAX_BUFFER, &ControlCalculator::state_estimate_callback, &control_calc);
+    ros::Subscriber estimate_sub = control_node.subscribe(control_node.resolveName("/ardrone/predictedPose"), MAX_BUFFER, &ControlCalculator::state_estimate_callback, &control_calc);
     
     //Set up a timer to call the control calculation function at the appropriate update rate
     ros::Timer update_timer = control_node.createTimer(ros::Duration(0.01), &ControlCalculator::recalculate_control_callback, &control_calc, false);
+
+    //Set up and change the settings of tum_ardrone to use the Vicon system
+    ros::Publisher tum_settings = control_node.advertise<std_msgs::String>(control_node.resolveName("switch_control"), 10);
+    std_msgs::String str;
+    std::stringstream ss("Vicon");
+    str.data = ss.str();
+    tum_settings.publish(str);
 
     //Create an empty message
     std_msgs::Empty empty_msg;
