@@ -12,6 +12,7 @@ Optimizer::Optimizer()
 
     //Initialize current state size
     this->cur_state.resize(Constants::num_states);
+    this->goal_state.resize(Constants::num_states);
 }
 
 
@@ -28,6 +29,13 @@ Optimizer::Optimizer(ros::Publisher& publisher)
 
     //Initialize current state size
     this->cur_state.resize(Constants::num_states);
+    this->goal_state.resize(Constants::num_states);
+
+    //Goal state hacks
+    //TODO: fix this to be a real goal state
+    this->goal_state.setZero();
+    this->goal_state(3) = 8;
+    this->goal_state_init = true;
 }
 
 
@@ -54,9 +62,6 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
  */
 void Optimizer::state_estimate_callback(const tum_ardrone::filter_state::ConstPtr& estimate_event)
 {
-    //Set the current state as initialized
-    this->cur_state_init = true;
-
     //Update the current state from the tum_ardrone
     this->cur_state(0) = estimate_event->x;
     this->cur_state(1) = estimate_event->y;
@@ -70,6 +75,9 @@ void Optimizer::state_estimate_callback(const tum_ardrone::filter_state::ConstPt
     this->cur_state(9) = estimate_event->droll;
     this->cur_state(10) = estimate_event->dpitch;
     this->cur_state(11) = estimate_event->dyaw;
+
+    //Set the current state as initialized
+    this->cur_state_init = true;
 }
 
 

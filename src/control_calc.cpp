@@ -11,6 +11,9 @@ ControlCalculator::ControlCalculator()
     //Reset flags
     this->cur_state_init = false;
     this->traj_init = false;
+
+    //Set timestep to before t0
+    this->timestep = -1;
 }
 
 
@@ -31,6 +34,9 @@ ControlCalculator::ControlCalculator(ros::Publisher ctrl_sig_pub, ros::Publisher
     //Reset flags
     this->cur_state_init = false;
     this->traj_init = false;
+
+    //Set timestep to before t0
+    this->timestep = -1;
 }
 
 
@@ -47,7 +53,6 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
     if(this->cur_state_init && this->traj_init
     && timestep >= 0 && timestep < u_traj.size())
     {
-        //TODO: Make K_traj the right dimensions for multiplication
         //Calculate u(t)
         Eigen::VectorXd ctrl_vector = u_traj[timestep] + K_traj[timestep] * (x_traj[timestep] - cur_state);
 
