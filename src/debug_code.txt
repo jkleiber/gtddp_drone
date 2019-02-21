@@ -1,0 +1,4 @@
+for(int y = 0; y < num_states; ++y)
+            printf("%f\n", x_traj[0][y]);
+        printf("\n");
+

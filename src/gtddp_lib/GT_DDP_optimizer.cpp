@@ -223,7 +223,7 @@ void GT_DDP_optimizer::forward_propagate_mm_rk(vector<VectorXd>& dx_traj,
     //main integration loop
     for (int i = 0; i<num_time_steps-1; i++) {
         //update dx
-        dx_update_mm dum(A[i], B[i] ,C[i], lu_[i],lv_[i],Ku_[i],Kv_[i]);
+        dx_update_mm dum(A[i], B[i] ,C[i], lu_[i],lv_[i], Ku_[i], Kv_[i]);
         stepper.do_step(dum, dx, t, dt);
         dx_traj[i+1]=dx;
         t+=-dt;

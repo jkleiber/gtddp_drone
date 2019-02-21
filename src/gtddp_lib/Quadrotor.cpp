@@ -108,7 +108,8 @@ void Quadrotor::forward_propagate_mm(vector<VectorXd>& x_traj, const vector<Vect
 void Quadrotor::linearize_dynamics_mm(const vector<VectorXd>& x_traj, const vector<VectorXd>& u_traj, const vector<VectorXd>& v_traj,
                                       vector<MatrixXd>& A,vector<MatrixXd>& B,vector<MatrixXd>& C){
     
-    for (int i=0;i<num_time_steps-1;i++){
+    for (int i=0; i < (num_time_steps - 1); i++)
+    {
         double x6=x_traj[i](6);
         double x7=x_traj[i](7);
         double x8=x_traj[i](8);

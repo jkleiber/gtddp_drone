@@ -30,12 +30,6 @@ Optimizer::Optimizer(ros::Publisher& publisher)
     //Initialize current state size
     this->cur_state.resize(Constants::num_states);
     this->goal_state.resize(Constants::num_states);
-
-    //Goal state hacks
-    //TODO: fix this to be a real goal state
-    this->goal_state.setZero();
-    this->goal_state(3) = 8;
-    this->goal_state_init = true;
 }
 
 
@@ -80,9 +74,9 @@ void Optimizer::ground_truth_callback(const nav_msgs::Odometry::ConstPtr& odom)
     this->cur_state(8) = odom->twist.twist.linear.z;
 
     //Angular velocity
-    this->cur_state(0) = odom->twist.twist.angular.x;
-    this->cur_state(1) = odom->twist.twist.angular.y;
-    this->cur_state(2) = odom->twist.twist.angular.z;
+    this->cur_state(9) = odom->twist.twist.angular.x;
+    this->cur_state(10) = odom->twist.twist.angular.y;
+    this->cur_state(11) = odom->twist.twist.angular.z;
 
     //Set the current state as initialized
     this->cur_state_init = true;
@@ -117,6 +111,11 @@ void Optimizer::state_estimate_callback(const tum_ardrone::filter_state::ConstPt
  */
 void Optimizer::target_state_callback(const gtddp_drone::state_data::ConstPtr& target_event)
 {
+    for(int i = 0; i < Constants::num_states; ++i)
+    {
+        this->goal_state(i) = target_event->states[i];
+    }
+
     this->goal_state_init = true;
 }
 
@@ -132,7 +131,8 @@ gtddp_drone::Trajectory Optimizer::get_traj_msg(std::vector<Eigen::VectorXd> x_t
     gtddp_drone::Trajectory traj_msg;   //trajectory message result
 
     //Loop through each time step and encode the data into ROS messages
-    for(i = 0; i < Constants::num_time_steps; ++i)
+    //Note: the ddp only initializes values from 0 to num_time_steps - 1. Thus, 100 timesteps will yield 99 values
+    for(i = 0; i < Constants::num_time_steps - 1; ++i)
     {
         traj_msg.x_traj.push_back(this->get_state_data_msg(x_traj, i));
         traj_msg.u_traj.push_back(this->get_ctrl_data_msg(u_traj, i));
@@ -205,7 +205,7 @@ gtddp_drone::gain_data Optimizer::get_gain_data_msg(std::vector<Eigen::MatrixXd>
         gain_row.gain_list.clear();
 
         //Add all the values to the row vector
-        for(c = 0; c < Constants::num_controls_u; ++c)
+        for(c = 0; c < Constants::num_states; ++c)
         {
             gain_row.gain_list.push_back(K_traj[idx](r,c));
         }

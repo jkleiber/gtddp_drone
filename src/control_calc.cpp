@@ -57,10 +57,10 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         Eigen::VectorXd ctrl_vector = u_traj[timestep] + K_traj[timestep] * (x_traj[timestep] - cur_state);
 
         //Form the control message
-        this->ctrl_command.ctrl[0] = ctrl_vector(0);
-        this->ctrl_command.ctrl[1] = ctrl_vector(1);
-        this->ctrl_command.ctrl[2] = ctrl_vector(2);
-        this->ctrl_command.ctrl[3] = ctrl_vector(3);
+        this->ctrl_command.linear.x = ctrl_vector(0);
+        this->ctrl_command.linear.y = ctrl_vector(1);
+        this->ctrl_command.linear.z = ctrl_vector(2);
+        this->ctrl_command.angular.z = ctrl_vector(3);
 
         //Publish u(t) to the control signal topic
         this->control_signal_pub.publish(this->ctrl_command);
@@ -92,9 +92,9 @@ void ControlCalculator::ground_truth_callback(const nav_msgs::Odometry::ConstPtr
     this->cur_state(8) = odom->twist.twist.linear.z;
 
     //Angular velocity
-    this->cur_state(0) = odom->twist.twist.angular.x;
-    this->cur_state(1) = odom->twist.twist.angular.y;
-    this->cur_state(2) = odom->twist.twist.angular.z;
+    this->cur_state(9) = odom->twist.twist.angular.x;
+    this->cur_state(10) = odom->twist.twist.angular.y;
+    this->cur_state(11) = odom->twist.twist.angular.z;
 
     //Set the current state as initialized
     this->cur_state_init = true;
@@ -156,7 +156,7 @@ void ControlCalculator::trajectory_callback(const gtddp_drone::Trajectory::Const
     //Create temporary vectors for the trajectory data
     Eigen::VectorXd x_traj_dat(Constants::num_states);
     Eigen::VectorXd u_traj_dat(Constants::num_controls_u);
-    Eigen::MatrixXd K_traj_dat(Constants::num_controls_u, Constants::num_controls_u);
+    Eigen::MatrixXd K_traj_dat(Constants::num_controls_u, Constants::num_states);
 
     //Parse the message to get the trajectory
     for(t = 0; t < num_events; ++t)
@@ -177,7 +177,7 @@ void ControlCalculator::trajectory_callback(const gtddp_drone::Trajectory::Const
         //Go through rows and columns of the message
         for(r = 0; r < Constants::num_controls_u; ++r)
         {
-            for(c = 0; c < Constants::num_controls_u; ++c)
+            for(c = 0; c < Constants::num_states; ++c)
             {
                 K_traj_dat(r,c) = K_data[t].gain_mat[r].gain_list[c];
             }

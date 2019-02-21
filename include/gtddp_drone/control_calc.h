@@ -4,6 +4,7 @@
 //System libs
 #include "ros/ros.h"
 #include <eigen3/Eigen/Dense>
+#include <geometry_msgs/Twist.h>
 #include <nav_msgs/Odometry.h>
 #include <tf/transform_datatypes.h>
 
@@ -33,7 +34,7 @@ class ControlCalculator
         //Publish control system data to the drone
         ros::Publisher control_signal_pub;
         ros::Publisher landing_pub;
-        gtddp_drone::ctrl_data ctrl_command;
+        geometry_msgs::Twist ctrl_command;
 
         //Store the current trajectory information
         std::vector<Eigen::VectorXd> x_traj;
