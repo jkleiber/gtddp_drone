@@ -5,6 +5,8 @@
 #include "ros/ros.h"
 #include <eigen3/Eigen/Dense>
 #include <vector>
+#include <nav_msgs/Odometry.h>
+#include <tf/transform_datatypes.h>
 
 //User defined libs
 #include "gtddp_drone/gtddp_lib/Constants.h"
@@ -31,6 +33,7 @@ class Optimizer
         
         //Callback functions
         void traj_update_callback(const ros::TimerEvent& time_event);
+        void ground_truth_callback(const nav_msgs::Odometry::ConstPtr& odom);
         void state_estimate_callback(const tum_ardrone::filter_state::ConstPtr& estimate_event);
         void target_state_callback(const gtddp_drone::state_data::ConstPtr& target_event);
 

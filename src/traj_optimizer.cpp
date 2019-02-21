@@ -60,6 +60,37 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
 /**
  * 
  */
+void Optimizer::ground_truth_callback(const nav_msgs::Odometry::ConstPtr& odom)
+{
+    //Position
+    this->cur_state(0) = odom->pose.pose.position.x;
+    this->cur_state(1) = odom->pose.pose.position.y;
+    this->cur_state(2) = odom->pose.pose.position.z;
+
+    //Orientation
+    tf::Quaternion q(odom->pose.pose.orientation.w, odom->pose.pose.orientation.x, odom->pose.pose.orientation.y, odom->pose.pose.orientation.z);
+    tf::Matrix3x3 mat(q);
+
+    //Convert the quaternion to euler angles of yaw, pitch, and roll
+    mat.getEulerYPR(this->cur_state(5), this->cur_state(4), this->cur_state(3));
+
+    //Linear velocity
+    this->cur_state(6) = odom->twist.twist.linear.x;
+    this->cur_state(7) = odom->twist.twist.linear.y;
+    this->cur_state(8) = odom->twist.twist.linear.z;
+
+    //Angular velocity
+    this->cur_state(0) = odom->twist.twist.angular.x;
+    this->cur_state(1) = odom->twist.twist.angular.y;
+    this->cur_state(2) = odom->twist.twist.angular.z;
+
+    //Set the current state as initialized
+    this->cur_state_init = true;
+}
+
+/**
+ * 
+ */
 void Optimizer::state_estimate_callback(const tum_ardrone::filter_state::ConstPtr& estimate_event)
 {
     //Update the current state from the tum_ardrone

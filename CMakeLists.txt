@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(gtddp_drone)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -10,6 +10,10 @@ project(gtddp_drone)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
+  geometry_msgs
+  nav_msgs
+  tf
+  tum_ardrone
   message_generation
 )
 
@@ -74,6 +78,8 @@ add_message_files(
 generate_messages(
   DEPENDENCIES
   std_msgs
+  geometry_msgs
+  nav_msgs
 )
 
 ################################################
@@ -106,10 +112,10 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES gtddp_drone
-   CATKIN_DEPENDS roscpp std_msgs message_runtime
-#  DEPENDS system_lib
+  INCLUDE_DIRS include
+# LIBRARIES gtddp_drone
+  CATKIN_DEPENDS roscpp std_msgs message_runtime tum_ardrone
+# DEPENDS system_lib
 )
 
 ###########
@@ -119,14 +125,21 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+  include
   ${catkin_INCLUDE_DIRS}
 )
 
+## Add the GTDDP library
+list(APPEND GTDDP_LIB_FILES src/gtddp_lib/*.cpp)
+
 ## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/gtddp_drone.cpp
-# )
+add_library(GTDDP_LIB
+  src/gtddp_lib/Constants.cpp
+  src/gtddp_lib/Cost_Function.cpp
+  src/gtddp_lib/DDP_main_mm.cpp
+  src/gtddp_lib/GT_DDP_optimizer.cpp
+  src/gtddp_lib/Quadrotor.cpp
+)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -136,7 +149,9 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/gtddp_drone_node.cpp)
+add_executable(gtddp_control_node src/gtddp_control_node.cpp src/control_calc.cpp)
+add_executable(gtddp_optimize_node src/gtddp_optimize_node.cpp src/traj_optimizer.cpp)
+add_executable(gtddp_target_node src/gtddp_target_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -146,12 +161,14 @@ include_directories(
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(gtddp_control_node gtddp_drone_generate_messages_cpp)
+add_dependencies(gtddp_optimize_node gtddp_drone_generate_messages_cpp)
+add_dependencies(gtddp_target_node gtddp_drone_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(${PROJECT_NAME}_node
-#   ${catkin_LIBRARIES}
-# )
+target_link_libraries(gtddp_control_node ${catkin_LIBRARIES} GTDDP_LIB)
+target_link_libraries(gtddp_optimize_node ${catkin_LIBRARIES} GTDDP_LIB)
+target_link_libraries(gtddp_target_node ${catkin_LIBRARIES} GTDDP_LIB)
 
 #############
 ## Install ##

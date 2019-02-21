@@ -4,6 +4,8 @@
 //System libs
 #include "ros/ros.h"
 #include <eigen3/Eigen/Dense>
+#include <nav_msgs/Odometry.h>
+#include <tf/transform_datatypes.h>
 
 //User libs
 #include "gtddp_drone/gtddp_lib/Constants.h"
@@ -23,6 +25,7 @@ class ControlCalculator
 
         //Callback functions
         void recalculate_control_callback(const ros::TimerEvent& time_event);
+        void ground_truth_callback(const nav_msgs::Odometry::ConstPtr& odom);
         void state_estimate_callback(const tum_ardrone::filter_state::ConstPtr& estimate_event);
         void trajectory_callback(const gtddp_drone::Trajectory::ConstPtr& traj_msg);
 

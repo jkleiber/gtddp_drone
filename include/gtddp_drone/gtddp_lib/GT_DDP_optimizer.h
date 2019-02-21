@@ -18,7 +18,7 @@ private:
 
     // stepper for forward propagating & contolled_stepper for backward propagating
     boost::numeric::odeint::runge_kutta_dopri5<Eigen::VectorXd, double, Eigen::VectorXd, double, boost::numeric::odeint::vector_space_algebra> stepper;
-    typedef boost::numeric::odeint::runge_kutta_cash_karp54<std::vector<double>> error_stepper_type;
+    typedef boost::numeric::odeint::runge_kutta_cash_karp54<std::vector<double> > error_stepper_type;
 //    typedef boost::numeric::odeint::runge_kutta_dopri5<std::vector<double>> error_stepper_type;
     typedef boost::numeric::odeint::controlled_runge_kutta< error_stepper_type > controlled_stepper_type;
     controlled_stepper_type controlled_stepper;
@@ -93,4 +93,4 @@ public:
 
 };
 
-#endif ;// DDP_OPTIMIZER_H
+#endif // DDP_OPTIMIZER_H

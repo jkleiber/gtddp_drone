@@ -1,4 +1,4 @@
-#include "gtddp_lib/Cost_Function.h"
+#include "gtddp_drone/gtddp_lib/Cost_Function.h"
 
 using namespace std;
 using namespace Eigen;

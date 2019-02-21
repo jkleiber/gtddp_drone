@@ -1,6 +1,10 @@
 <launch>
-  <node name="gtddp_traj_optimize" pkg="gtddp_drone" type="gtddp_traj_optimize">
-  </node>
-  <node name="gtddp_control_node" pkg="gtddp_drone" type="gtddp_control_node">
-  </node>
+  <!-- GT-DDP nodes -->
+  <node name="gtddp_control_node" pkg="gtddp_drone" type="gtddp_control_node" output="screen"/>
+  <node name="gtddp_optimize_node" pkg="gtddp_drone" type="gtddp_optimize_node" output="screen"/>
+  <node name="gtddp_target_node" pkg="gtddp_drone" type="gtddp_target_node" output="screen"/>
+
+  <!-- Simulator -->
+  <include file="$(find cvg_sim_gazebo)/launch/ardrone_testworld.launch"/>
+
 </launch>

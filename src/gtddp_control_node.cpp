@@ -1,5 +1,6 @@
 //Include system libraries
 #include <ros/ros.h>
+#include <ros/console.h>
 #include <geometry_msgs/Twist.h>
 #include <std_msgs/Empty.h>
 #include <std_msgs/String.h>
@@ -20,7 +21,7 @@ int main(int argc, char **argv)
     ros::NodeHandle control_node;
 
     //Advertise control output and landing mode
-    ros::Publisher ctrl_sig_pub = control_node.advertise<geometry_msgs::Twist>(control_node.resolveName("cmd_vel"), MAX_BUFFER);
+    ros::Publisher ctrl_sig_pub = control_node.advertise<geometry_msgs::Twist>(control_node.resolveName("/cmd_vel"), MAX_BUFFER);
     ros::Publisher land_pub = control_node.advertise<std_msgs::Empty>(control_node.resolveName("/ardrone/land"), MAX_BUFFER);
 
     //Set up the control calculator
@@ -28,15 +29,17 @@ int main(int argc, char **argv)
 
     //Set up callbacks for the current trajectory topic and the state estimation
     ros::Subscriber traj_sub = control_node.subscribe(control_node.resolveName("/gtddp_drone/trajectory"), MAX_BUFFER, &ControlCalculator::trajectory_callback, &control_calc);
-    
+    ros::Subscriber estimate_sub;
+
     //If this is a simulation, subscribe to the exact state update
     if(SIMULATION)
     {
-        //ros::Subscriber estimate_sub = control_node.subscribe(control_node.resolveName("/ardrone/predictedPose"), MAX_BUFFER, &ControlCalculator::state_estimate_callback, &control_calc);
+        ROS_INFO("Simulation mode active");
+        estimate_sub = control_node.subscribe(control_node.resolveName("/ground_truth/state"), MAX_BUFFER, &ControlCalculator::ground_truth_callback, &control_calc);
     }
     else
     {
-        ros::Subscriber estimate_sub = control_node.subscribe(control_node.resolveName("/ardrone/predictedPose"), MAX_BUFFER, &ControlCalculator::state_estimate_callback, &control_calc);
+        estimate_sub = control_node.subscribe(control_node.resolveName("/ardrone/predictedPose"), MAX_BUFFER, &ControlCalculator::state_estimate_callback, &control_calc);
     }
     
     //Set up a timer to call the control calculation function at the appropriate update rate
@@ -54,6 +57,14 @@ int main(int argc, char **argv)
 
     //Launch the drone with a takeoff command
     ros::Publisher takeoff_pub = control_node.advertise<std_msgs::Empty>("/ardrone/takeoff", MAX_BUFFER);
+    
+    //Wait for there to be a subscriber before publishing the takeoff command
+    while(takeoff_pub.getNumSubscribers() == 0)
+    {
+        sleep(1);
+    }
+    
+    //Once we have locked to the ardrone, send the takeoff command
     takeoff_pub.publish(empty_msg);
 
     //Pump callbacks

@@ -9,7 +9,7 @@
 //#include "Constants.h"
 #include <ctime>
 
-#include "DDP_main_mm.h"
+#include "gtddp_drone/gtddp_lib/DDP_main_mm.h"
 
 using namespace Constants;
 DDP_main_mm::DDP_main_mm(Eigen::VectorXd x, Eigen::VectorXd x_t)

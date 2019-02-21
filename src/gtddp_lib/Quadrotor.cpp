@@ -3,7 +3,7 @@
 #include <iostream>
 #include <cmath>
 
-#include "gtddp_lib/Quadrotor.h"
+#include "gtddp_drone/gtddp_lib/Quadrotor.h"
 
 using namespace Eigen;
 using namespace Constants;
