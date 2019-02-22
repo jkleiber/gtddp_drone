@@ -28,7 +28,7 @@ DDP_main_mm::DDP_main_mm(Eigen::VectorXd x, Eigen::VectorXd x_t)
     A.resize(num_time_steps - 1);
     B.resize(num_time_steps - 1);
     C.resize(num_time_steps - 1);
-    dx_traj.resize(num_time_steps-1);
+    dx_traj.resize(num_time_steps);
     
     trajectory_cost_mm.resize(num_iterations);
     
@@ -46,10 +46,6 @@ void DDP_main_mm::ddp_loop()
     {        
         // Play the controls on the real dynamics to generate new x_traj, u_traj, v_traj //
         quad.forward_propagate_mm(x_traj, u_traj, v_traj);
-
-        for(int y = 0; y < num_states; ++y)
-            printf("%f\n", x_traj[0][y]);
-        printf("\n");
         
         // Output the cost
         trajectory_cost_mm[i] = cost.calculate_cost_mm(x_traj, u_traj, v_traj);
@@ -65,17 +61,16 @@ void DDP_main_mm::ddp_loop()
         ddp.backpropagate_mm_rk(x_traj, A, B, C);
         
         // forward propagate the dynamics along x_traj, u_traj, v_traj to get dx_traj
-        //TODO: Fix memory leak, which starts here
-        //ddp.forward_propagate_mm_rk(dx_traj, A, B, C);
+        ddp.forward_propagate_mm_rk(dx_traj, A, B, C);
         
         // Update the controls
-        //ddp.update_controls_mm(dx_traj, u_traj, v_traj);
+        ddp.update_controls_mm(dx_traj, u_traj, v_traj);
         //print_traj(ddp.get_lu());
         ////
     } // END MAIN DDP LOOP
     //int stop_s=clock();
     //printf("DDP Loop Execution Time: %i\n",stop_s-start_s );
-
+    printf("b\n");
 } //ddp_loop()
 
 

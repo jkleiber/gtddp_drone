@@ -45,6 +45,8 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
         DDP_main_mm ddpmain(this->cur_state, this->goal_state);
         ddpmain.ddp_loop();
 
+        printf("c\n");
+
         //Publise the newly optimized trajectory data to the trajectory topic
         traj_pub.publish(this->get_traj_msg(ddpmain.get_x_traj(), ddpmain.get_u_traj(), ddpmain.get_Ku()));
     }
