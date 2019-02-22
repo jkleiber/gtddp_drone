@@ -6,6 +6,7 @@
 #include <eigen3/Eigen/Dense>
 #include <vector>
 #include <nav_msgs/Odometry.h>
+#include <tf/tf.h>
 #include <tf/transform_datatypes.h>
 
 //User defined libs

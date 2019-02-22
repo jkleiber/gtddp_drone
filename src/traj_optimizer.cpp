@@ -64,10 +64,12 @@ void Optimizer::ground_truth_callback(const nav_msgs::Odometry::ConstPtr& odom)
     this->cur_state(2) = odom->pose.pose.position.z;
 
     //Orientation
-    tf::Quaternion q(odom->pose.pose.orientation.w, odom->pose.pose.orientation.x, odom->pose.pose.orientation.y, odom->pose.pose.orientation.z);
-    tf::Matrix3x3 mat(q);
+    tf::Pose pose;
+    tf::poseMsgToTF(odom->pose.pose, pose);
+    tf::Matrix3x3 mat(pose.getRotation());
 
     //Convert the quaternion to euler angles of yaw, pitch, and roll
+    //This should be in radians
     mat.getEulerYPR(this->cur_state(5), this->cur_state(4), this->cur_state(3));
 
     //Linear velocity
