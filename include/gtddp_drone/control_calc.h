@@ -10,10 +10,16 @@
 
 //User libs
 #include "gtddp_drone/gtddp_lib/Constants.h"
+#include "gtddp_drone/gtddp_lib/Quadrotor.h"
 
 //User msgs
 #include <tum_ardrone/filter_state.h>
 #include <gtddp_drone/Trajectory.h>
+
+//Conversion Constants
+#define MAX_EULER_ANGLE (double)(0.3)   //Max angle (radians)
+#define MAX_YAW_RATE (double)(1.32)     //Max yaw rate (rads / sec)
+#define MAX_VERTICAL_VEL (double)(0.74) //Max vertical speed (m/s)
 
 /**
  * 
@@ -43,6 +49,9 @@ class ControlCalculator
 
         //Store current state data
         Eigen::VectorXd cur_state;
+
+        //Use quadrotor dynamics
+        Quadrotor quadrotor;
 
         //Do time tracking
         int timestep;

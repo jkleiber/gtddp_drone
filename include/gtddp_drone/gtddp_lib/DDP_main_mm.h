@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include <eigen3/Eigen/Dense>
+#include <vector>
 
 #include "Constants.h"
 #include "GT_DDP_optimizer.h"
@@ -30,6 +31,8 @@ public:
     std::vector<Eigen::VectorXd> get_u_traj();
     std::vector<Eigen::VectorXd> get_lu();
     std::vector<Eigen::MatrixXd> get_Ku();
+
+    void print_trajectory(std::vector<Eigen::VectorXd> traj);
     
 private:
 

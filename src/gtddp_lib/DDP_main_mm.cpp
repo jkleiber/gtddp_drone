@@ -46,14 +46,15 @@ void DDP_main_mm::ddp_loop()
     {        
         // Play the controls on the real dynamics to generate new x_traj, u_traj, v_traj //
         quad.forward_propagate_mm(x_traj, u_traj, v_traj);
-        
+        //this->print_trajectory(this->get_x_traj());
+
         // Output the cost
         trajectory_cost_mm[i] = cost.calculate_cost_mm(x_traj, u_traj, v_traj);
-        printf("Quadrotor DDP\tIteration %i\tCost = %10.4f\n", i + 1, trajectory_cost_mm[i]);
+        printf("Quadrotor DDP 0\tIteration %i\tCost = %10.4f\n", i + 1, trajectory_cost_mm[i]);
         
         // Linearize dynamics along x_traj, u_traj, v_traj
         quad.linearize_dynamics_mm(x_traj, u_traj, v_traj, A, B, C);
-        
+
         // Linearize cost along x_traj, u_traj, v_traj
         ddp.quadratize_cost_mm(x_traj, u_traj, v_traj);
         
@@ -65,12 +66,12 @@ void DDP_main_mm::ddp_loop()
         
         // Update the controls
         ddp.update_controls_mm(dx_traj, u_traj, v_traj);
-        //print_traj(ddp.get_lu());
+        
         ////
     } // END MAIN DDP LOOP
     //int stop_s=clock();
     //printf("DDP Loop Execution Time: %i\n",stop_s-start_s );
-    printf("b\n");
+    //printf("b\n");
 } //ddp_loop()
 
 
@@ -88,4 +89,13 @@ std::vector<Eigen::VectorXd> DDP_main_mm::get_lu(){
 std::vector<Eigen::MatrixXd> DDP_main_mm::get_Ku(){
     
     return ddp.Ku_;
+}
+
+void DDP_main_mm::print_trajectory(std::vector<Eigen::VectorXd> traj)
+{
+    std::cout<< "trajectory \n";
+    for(int i=0; i<traj.size() ;i=i+5) {
+        std::cout << traj[i].transpose() << std::endl;
+    }
+    
 }

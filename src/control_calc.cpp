@@ -12,8 +12,8 @@ ControlCalculator::ControlCalculator()
     this->cur_state_init = false;
     this->traj_init = false;
 
-    //Set timestep to before t0
-    this->timestep = -1;
+    //Set timestep to t0
+    this->timestep = 0;
 }
 
 
@@ -35,8 +35,8 @@ ControlCalculator::ControlCalculator(ros::Publisher ctrl_sig_pub, ros::Publisher
     this->cur_state_init = false;
     this->traj_init = false;
 
-    //Set timestep to before t0
-    this->timestep = -1;
+    //Set timestep to t0
+    this->timestep = 0;
 }
 
 
@@ -45,26 +45,40 @@ ControlCalculator::ControlCalculator(ros::Publisher ctrl_sig_pub, ros::Publisher
  */
 void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time_event)
 {
-    //Increment the timestep
-    this->timestep++;
-
     //Only output to the control topic if the localization has happened and the trajectory has been built
     //Also only output if the timestep is in bounds
     if(this->cur_state_init && this->traj_init
-    && timestep >= 0 && timestep < u_traj.size())
+    && timestep >= 0 && timestep < this->x_traj.size())
     {
-        //Calculate u(t)
-        Eigen::VectorXd ctrl_vector = u_traj[timestep] + K_traj[timestep] * (x_traj[timestep] - cur_state);
-
-        //Form the control message
-        this->ctrl_command.linear.x = ctrl_vector(0);
-        this->ctrl_command.linear.y = ctrl_vector(1);
-        this->ctrl_command.linear.z = ctrl_vector(2);
-        this->ctrl_command.angular.z = ctrl_vector(3);
-
-        //Publish u(t) to the control signal topic
-        this->control_signal_pub.publish(this->ctrl_command);
+        printf("Pitch:%f\t Roll: %f\t Yaw Rate: %f\t Vertical Speed: %f\n", this->x_traj[timestep](4), this->x_traj[timestep](3), this->x_traj[timestep](11), this->x_traj[timestep](8));
+        /* Form the control message */
+        //Pitch (move forward) (theta)
+        this->ctrl_command.linear.x = this->x_traj[timestep](4) / MAX_EULER_ANGLE;
+        
+        //Roll (move side to side) (-phi)
+        this->ctrl_command.linear.y = -this->x_traj[timestep](3) / MAX_EULER_ANGLE;
+        
+        //Yaw rate (how fast to spin) (r)
+        this->ctrl_command.angular.z = this->x_traj[timestep](11) ;
+    
+        //Vertical speed (how fast to move upward) (z dot)
+        this->ctrl_command.linear.z = this->x_traj[timestep](8) / MAX_VERTICAL_VEL;
+    
+        //Increment the timestep
+        this->timestep++;
     }
+    else
+    {
+        this->ctrl_command.linear.x = 0;
+        this->ctrl_command.linear.y = 0;
+        this->ctrl_command.linear.z = 0;
+        this->ctrl_command.angular.x = 0;
+        this->ctrl_command.angular.y = 0;
+        this->ctrl_command.angular.z = 0;
+    }
+
+    //Publish u(t) to the control signal topic
+    this->control_signal_pub.publish(this->ctrl_command);
 }
 
 
@@ -80,10 +94,12 @@ void ControlCalculator::ground_truth_callback(const nav_msgs::Odometry::ConstPtr
     this->cur_state(2) = odom->pose.pose.position.z;
 
     //Orientation
-    tf::Quaternion q(odom->pose.pose.orientation.w, odom->pose.pose.orientation.x, odom->pose.pose.orientation.y, odom->pose.pose.orientation.z);
-    tf::Matrix3x3 mat(q);
+    tf::Pose pose;
+    tf::poseMsgToTF(odom->pose.pose, pose);
+    tf::Matrix3x3 mat(pose.getRotation());
 
     //Convert the quaternion to euler angles of yaw, pitch, and roll
+    //This should be in radians
     mat.getEulerYPR(this->cur_state(5), this->cur_state(4), this->cur_state(3));
 
     //Linear velocity
@@ -137,9 +153,6 @@ void ControlCalculator::trajectory_callback(const gtddp_drone::Trajectory::Const
     int t;          //time iteration variable
     int r, c;       //rows and columns of gain matrix
 
-    //The trajectory is now initialized!
-    this->traj_init = true;
-
     //Get the components of the message
     const std::vector<gtddp_drone::state_data> &x_data = traj_msg->x_traj;
     const std::vector<gtddp_drone::ctrl_data> &u_data = traj_msg->u_traj;
@@ -189,6 +202,12 @@ void ControlCalculator::trajectory_callback(const gtddp_drone::Trajectory::Const
         this->K_traj.push_back(K_traj_dat);
     }
 
-    //Reset the timestep variable to -1 for calculation
-    timestep = -1;
+    //Forward propagate controls to find the correct output
+    quadrotor.feedforward_controls(this->cur_state, this->u_traj, this->K_traj, this->x_traj);
+
+    //Reset the timestep variable to t0
+    timestep = 0;
+
+    //The trajectory is now initialized!
+    this->traj_init = true;
 }
