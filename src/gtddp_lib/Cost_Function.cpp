@@ -53,7 +53,7 @@ double Cost_Function::calculate_cost_mm(const vector<VectorXd>& x_traj, const ve
 	for (int i = 0; i < num_time_steps - 1; i++) {
 		total_cost += 0.5 * (u_traj[i].transpose() * Ru * u_traj[i])(0, 0) * dt;
 		total_cost += - 0.5 * (v_traj[i].transpose() * Rv * v_traj[i])(0, 0) * dt;
-		//total_cost += 0.5 * ((x_traj[i] - x_target).transpose() * Q_x * (x_traj[i] - x_target))(0, 0) * dt;
+		total_cost += 0.5 * ((x_traj[i] - x_target).transpose() * Q_x * (x_traj[i] - x_target))(0, 0) * dt;
 	}
 
 	total_cost += ((x_traj[num_time_steps - 1] - x_target).transpose() * Q_f * (x_traj[num_time_steps - 1] - x_target))(0, 0);
