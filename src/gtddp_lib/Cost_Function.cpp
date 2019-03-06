@@ -43,6 +43,8 @@ void Cost_Function::initialize_cost_matrix(){
     Q_f(9,9) = 1000;
     Q_f(10,10) = 1000;
     Q_f(11,11) = 1000;
+
+    Q_x = 0.0001*Q_f;
     
 }
 
