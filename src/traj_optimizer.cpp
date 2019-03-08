@@ -42,7 +42,7 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
     //If they are, then optimize the current trajectory
     if(this->cur_state_init && this->goal_state_init)
     {
-        DDP_main_mm ddpmain(this->cur_state, this->goal_state);
+        ddpmain.update(this->cur_state, this->goal_state);
         ddpmain.ddp_loop();
 
         printf("c\n");

@@ -19,7 +19,7 @@
 //Conversion Constants
 #define MAX_EULER_ANGLE (double)(0.3)   //Max angle (radians)
 #define MAX_YAW_RATE (double)(1.32)     //Max yaw rate (rads / sec)
-#define MAX_VERTICAL_VEL (double)(0.74) //Max vertical speed (m/s)
+#define MAX_VERTICAL_VEL (double)(10.0)//(0.74) //Max vertical speed (m/s)
 
 /**
  * 

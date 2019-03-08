@@ -25,6 +25,7 @@ public:
     DDP_main_mm (Eigen::VectorXd x, Eigen::VectorXd x_t);
     ~DDP_main_mm();
     
+    void update(Eigen::VectorXd x, Eigen::VectorXd x_t);
     void ddp_loop();
     
     std::vector<Eigen::VectorXd> get_x_traj();

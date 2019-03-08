@@ -42,7 +42,7 @@ int main(int argc, char **argv)
     }
 
     //Set up timer for recalculations
-    ros::Timer update_timer = traj_node.createTimer(ros::Duration(20.0), &Optimizer::traj_update_callback, &traj_optimizer, false);
+    ros::Timer update_timer = traj_node.createTimer(ros::Duration(5.0), &Optimizer::traj_update_callback, &traj_optimizer, false);
 
     //Pump callbacks
     ros::spin();

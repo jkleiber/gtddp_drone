@@ -33,9 +33,9 @@ int main(int argc, char **argv)
     //Choose an initial target state
     //TODO: make this dynamic
     std::vector<double> state_vector(Constants::num_states, 0.0);
-    state_vector[0] = 0;
+    state_vector[0] = 1;
     state_vector[1] = 0;
-    state_vector[2] = 5;
+    state_vector[2] = 1;
 
     //Add the values to the initial state
     //TODO: make a cleaner way of doing this when paths are to be followed

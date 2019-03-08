@@ -48,6 +48,9 @@ class Optimizer
         bool cur_state_init;
         bool goal_state_init;
 
+        //Save DDP loop state in class variable
+        DDP_main_mm ddpmain;
+
         //Data parsing for sending messages
         gtddp_drone::Trajectory get_traj_msg(std::vector<Eigen::VectorXd> x_traj, std::vector<Eigen::VectorXd> u_traj, std::vector<Eigen::MatrixXd> K_traj);
         gtddp_drone::state_data get_state_data_msg(std::vector<Eigen::VectorXd> x_traj, int idx);

@@ -12,6 +12,26 @@
 #include "gtddp_drone/gtddp_lib/DDP_main_mm.h"
 
 using namespace Constants;
+DDP_main_mm::DDP_main_mm()
+{
+    quad = Quadrotor();
+
+    //  ***** DO NOT EDIT *****
+//  Initialize state and control trajectories, dF_dx, dF_du, dF_dv
+    x_traj.resize(num_time_steps);
+    u_traj.resize(num_time_steps - 1);
+    v_traj.resize(num_time_steps - 1);
+
+    A.resize(num_time_steps - 1);
+    B.resize(num_time_steps - 1);
+    C.resize(num_time_steps - 1);
+    dx_traj.resize(num_time_steps);
+    
+    trajectory_cost_mm.resize(num_iterations);
+    
+    ddp.initialize_trajectories_to_zero_mm(x_traj, u_traj, v_traj, dx_traj);
+}
+
 DDP_main_mm::DDP_main_mm(Eigen::VectorXd x, Eigen::VectorXd x_t)
 {
 
@@ -38,6 +58,21 @@ DDP_main_mm::DDP_main_mm(Eigen::VectorXd x, Eigen::VectorXd x_t)
 }
 
 DDP_main_mm::~DDP_main_mm() {}
+
+
+void DDP_main_mm::update(Eigen::VectorXd x, Eigen::VectorXd x_t)
+{
+    cost = Cost_Function(x_t);
+    ddp = GT_DDP_optimizer(cost);
+
+    //Reset x_traj to 0
+    for (int i = 0; i < num_time_steps; i++) {
+        x_traj[i] = Eigen::VectorXd::Zero(num_states);
+    }
+
+    //Update current trajectory
+    x_traj[0]=x;
+}
     
 void DDP_main_mm::ddp_loop() 
 {

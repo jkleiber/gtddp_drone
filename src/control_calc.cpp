@@ -50,19 +50,25 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
     if(this->cur_state_init && this->traj_init
     && timestep >= 0 && timestep < this->x_traj.size())
     {
-        printf("Pitch:%f\t Roll: %f\t Yaw Rate: %f\t Vertical Speed: %f\n", this->x_traj[timestep](4), this->x_traj[timestep](3), this->x_traj[timestep](11), this->x_traj[timestep](8));
+        printf("[");
+        for(int i = 0; i < Constants::num_states; ++i)
+        {
+            printf("%f ", this->x_traj[timestep](i));
+        }
+        printf("]\n");
+        
         /* Form the control message */
         //Pitch (move forward) (theta)
-        this->ctrl_command.linear.x = this->x_traj[timestep](4) / MAX_EULER_ANGLE;
+        this->ctrl_command.linear.x = this->x_traj[timestep](7) / MAX_EULER_ANGLE;
         
         //Roll (move side to side) (-phi)
-        this->ctrl_command.linear.y = -this->x_traj[timestep](3) / MAX_EULER_ANGLE;
+        this->ctrl_command.linear.y = -this->x_traj[timestep](6)/ MAX_EULER_ANGLE;
         
         //Yaw rate (how fast to spin) (r)
-        this->ctrl_command.angular.z = this->x_traj[timestep](11) ;
+        this->ctrl_command.angular.z = this->x_traj[timestep](11) / MAX_YAW_RATE;
     
         //Vertical speed (how fast to move upward) (z dot)
-        this->ctrl_command.linear.z = this->x_traj[timestep](8) / MAX_VERTICAL_VEL;
+        this->ctrl_command.linear.z = this->x_traj[timestep](5) / MAX_VERTICAL_VEL;
     
         //Increment the timestep
         this->timestep++;
