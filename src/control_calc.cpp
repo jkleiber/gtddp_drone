@@ -151,7 +151,7 @@ void ControlCalculator::state_estimate_callback(const tum_ardrone::filter_state:
 /**
  * 
  */
-void ControlCalculator::trajectory_callback(const gtddp_drone::Trajectory::ConstPtr& traj_msg)
+void ControlCalculator::trajectory_callback(const gtddp_drone_msgs::Trajectory::ConstPtr& traj_msg)
 {
     //Declare local variables
     int i;          //iteration variable
@@ -160,9 +160,9 @@ void ControlCalculator::trajectory_callback(const gtddp_drone::Trajectory::Const
     int r, c;       //rows and columns of gain matrix
 
     //Get the components of the message
-    const std::vector<gtddp_drone::state_data> &x_data = traj_msg->x_traj;
-    const std::vector<gtddp_drone::ctrl_data> &u_data = traj_msg->u_traj;
-    const std::vector<gtddp_drone::gain_data> &K_data = traj_msg->K_traj;
+    const std::vector<gtddp_drone_msgs::state_data> &x_data = traj_msg->x_traj;
+    const std::vector<gtddp_drone_msgs::ctrl_data> &u_data = traj_msg->u_traj;
+    const std::vector<gtddp_drone_msgs::gain_data> &K_data = traj_msg->K_traj;
 
     //Find the number of events
     num_events = x_data.size();

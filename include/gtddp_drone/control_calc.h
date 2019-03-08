@@ -14,7 +14,7 @@
 
 //User msgs
 #include <tum_ardrone/filter_state.h>
-#include <gtddp_drone/Trajectory.h>
+#include <gtddp_drone_msgs/Trajectory.h>
 
 //Conversion Constants
 #define MAX_EULER_ANGLE (double)(0.3)   //Max angle (radians)
@@ -34,7 +34,7 @@ class ControlCalculator
         void recalculate_control_callback(const ros::TimerEvent& time_event);
         void ground_truth_callback(const nav_msgs::Odometry::ConstPtr& odom);
         void state_estimate_callback(const tum_ardrone::filter_state::ConstPtr& estimate_event);
-        void trajectory_callback(const gtddp_drone::Trajectory::ConstPtr& traj_msg);
+        void trajectory_callback(const gtddp_drone_msgs::Trajectory::ConstPtr& traj_msg);
 
     private:
         //Publish control system data to the drone

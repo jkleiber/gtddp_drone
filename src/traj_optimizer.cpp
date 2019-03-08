@@ -113,7 +113,7 @@ void Optimizer::state_estimate_callback(const tum_ardrone::filter_state::ConstPt
 /**
  * 
  */
-void Optimizer::target_state_callback(const gtddp_drone::state_data::ConstPtr& target_event)
+void Optimizer::target_state_callback(const gtddp_drone_msgs::state_data::ConstPtr& target_event)
 {
     for(int i = 0; i < Constants::num_states; ++i)
     {
@@ -128,11 +128,11 @@ void Optimizer::target_state_callback(const gtddp_drone::state_data::ConstPtr& t
 /**
  * 
  */
-gtddp_drone::Trajectory Optimizer::get_traj_msg(std::vector<Eigen::VectorXd> x_traj, std::vector<Eigen::VectorXd> u_traj, std::vector<Eigen::MatrixXd> K_traj)
+gtddp_drone_msgs::Trajectory Optimizer::get_traj_msg(std::vector<Eigen::VectorXd> x_traj, std::vector<Eigen::VectorXd> u_traj, std::vector<Eigen::MatrixXd> K_traj)
 {
     //Declare local variables
     int i;                              //iteration variable
-    gtddp_drone::Trajectory traj_msg;   //trajectory message result
+    gtddp_drone_msgs::Trajectory traj_msg;   //trajectory message result
 
     //Loop through each time step and encode the data into ROS messages
     //Note: the ddp only initializes values from 0 to num_time_steps - 1. Thus, 100 timesteps will yield 99 values
@@ -155,10 +155,10 @@ gtddp_drone::Trajectory Optimizer::get_traj_msg(std::vector<Eigen::VectorXd> x_t
 /**
  * 
  */
-gtddp_drone::state_data Optimizer::get_state_data_msg(std::vector<Eigen::VectorXd> x_traj, int idx)
+gtddp_drone_msgs::state_data Optimizer::get_state_data_msg(std::vector<Eigen::VectorXd> x_traj, int idx)
 {
     //Set up a state data message
-    gtddp_drone::state_data state_msg;
+    gtddp_drone_msgs::state_data state_msg;
 
     //Loop through each state variable for this particular state to extract the value
     for(int i = 0; i < Constants::num_states; ++i)
@@ -174,10 +174,10 @@ gtddp_drone::state_data Optimizer::get_state_data_msg(std::vector<Eigen::VectorX
 /**
  * 
  */
-gtddp_drone::ctrl_data Optimizer::get_ctrl_data_msg(std::vector<Eigen::VectorXd> u_traj, int idx)
+gtddp_drone_msgs::ctrl_data Optimizer::get_ctrl_data_msg(std::vector<Eigen::VectorXd> u_traj, int idx)
 {
     //Set up a state data message
-    gtddp_drone::ctrl_data ctrl_msg;
+    gtddp_drone_msgs::ctrl_data ctrl_msg;
 
     //Loop through each state variable for this particular state to extract the value
     for(int i = 0; i < Constants::num_controls_u; ++i)
@@ -193,11 +193,11 @@ gtddp_drone::ctrl_data Optimizer::get_ctrl_data_msg(std::vector<Eigen::VectorXd>
 /**
  * 
  */
-gtddp_drone::gain_data Optimizer::get_gain_data_msg(std::vector<Eigen::MatrixXd> K_traj, int idx)
+gtddp_drone_msgs::gain_data Optimizer::get_gain_data_msg(std::vector<Eigen::MatrixXd> K_traj, int idx)
 {
     //Set up the gain data message types
-    gtddp_drone::gain_data gain_msg;
-    gtddp_drone::gain_vector gain_row;
+    gtddp_drone_msgs::gain_data gain_msg;
+    gtddp_drone_msgs::gain_vector gain_row;
 
     //Declare local variables
     int r, c;

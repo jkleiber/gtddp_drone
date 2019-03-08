@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   nav_msgs
   tf
   tum_ardrone
+  gtddp_drone_msgs
   message_generation
 )
 
@@ -51,14 +52,14 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  ctrl_data.msg
-  gain_vector.msg
-  gain_data.msg
-  state_data.msg
-  Trajectory.msg
-)
+# add_message_files(
+#   FILES
+#   ctrl_data.msg
+#   gain_vector.msg
+#   gain_data.msg
+#   state_data.msg
+#   Trajectory.msg
+# )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -114,7 +115,7 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS include
 # LIBRARIES gtddp_drone
-  CATKIN_DEPENDS roscpp std_msgs message_runtime tum_ardrone
+  CATKIN_DEPENDS roscpp std_msgs message_runtime tum_ardrone gtddp_drone_msgs
 # DEPENDS system_lib
 )
 
@@ -129,9 +130,6 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-## Add the GTDDP library
-list(APPEND GTDDP_LIB_FILES src/gtddp_lib/*.cpp)
-
 ## Declare a C++ library
 add_library(GTDDP_LIB
   src/gtddp_lib/Constants.cpp
@@ -142,17 +140,11 @@ add_library(GTDDP_LIB
   src/gtddp_lib/Quadrotor.cpp
 )
 
-## Add cmake target dependencies of the library
-## as an example, code may need to be generated before libraries
-## either from message generation or dynamic reconfigure
-# add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(gtddp_control_node src/gtddp_control_node.cpp src/control_calc.cpp)
 add_executable(gtddp_optimize_node src/gtddp_optimize_node.cpp src/traj_optimizer.cpp)
-add_executable(gtddp_target_node src/gtddp_target_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -162,14 +154,12 @@ add_executable(gtddp_target_node src/gtddp_target_node.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(gtddp_control_node gtddp_drone_generate_messages_cpp)
-add_dependencies(gtddp_optimize_node gtddp_drone_generate_messages_cpp)
-add_dependencies(gtddp_target_node gtddp_drone_generate_messages_cpp)
+add_dependencies(gtddp_control_node gtddp_drone_generate_messages_cpp gtddp_drone_msgs)
+add_dependencies(gtddp_optimize_node gtddp_drone_generate_messages_cpp gtddp_drone_msgs)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(gtddp_control_node ${catkin_LIBRARIES} GTDDP_LIB)
 target_link_libraries(gtddp_optimize_node ${catkin_LIBRARIES} GTDDP_LIB)
-target_link_libraries(gtddp_target_node ${catkin_LIBRARIES} GTDDP_LIB)
 
 #############
 ## Install ##
