@@ -58,10 +58,10 @@ void GT_DDP_optimizer::quadratize_cost_mm(const vector<VectorXd>& x_traj, const 
         L_0_[i]= (0.5 * u_traj[i].transpose() * Ru * u_traj[i]
                 - 0.5 * v_traj[i].transpose() * Rv * v_traj[i]
                 + 0.5 * (x_traj[i] - x_target).transpose() * Q_x * (x_traj[i] - x_target))(0,0);
-        L_x_[i]= VectorXd::Zero(num_states);//  Q_x * (x_traj[i] - x_target);
+        L_x_[i]= Q_x * (x_traj[i] - x_target); //VectorXd::Zero(num_states);//  
 		L_u_[i]= Ru * u_traj[i];
 		L_v_[i]=-Rv * v_traj[i];
-		L_xx_[i]= MatrixXd::Zero(num_states, num_states);//Q_x;
+		L_xx_[i]= Q_x; // MatrixXd::Zero(num_states, num_states);//
 		L_uu_[i]= Ru;
 		L_vv_[i]= - Rv;
 		L_ux_[i]= MatrixXd::Zero(num_controls_u, num_states);

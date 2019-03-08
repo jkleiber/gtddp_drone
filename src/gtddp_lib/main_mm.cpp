@@ -38,7 +38,7 @@ int main()
     x_0 << 0,0,0,0,0,0,0,0,0,0,0,0;                 // initial state using comma initialization
 //    x_0 << 0,0,pi,0;
     VectorXd x_target(num_states);  // do not edit
-    x_target << 0,0,2,0,0,0,0,0,0,0,0,0;           // target state using comma initialization
+    x_target << 3,0,1,0,0,0,0,0,0,0,0,0;           // target state using comma initialization
 
     DDP_main_mm ddpmain(x_0,x_target);
     
