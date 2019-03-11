@@ -26,12 +26,12 @@ namespace Constants {
     extern const int num_controls_v(4);
 //    
     extern const int num_time_steps(201);
-    extern const int num_iterations(50); 
+    extern const int num_iterations(6); 
 
     // DDP Constant doubles
     // Change as necessary, do not remove
     extern const double dt(0.001);
-    extern const double learning_rate(0.025);
+    extern const double learning_rate(0.125);
 
     // System Constant doubles
     // Change, add, or remove as necessary

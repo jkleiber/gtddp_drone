@@ -70,12 +70,16 @@ void Optimizer::ground_truth_callback(const nav_msgs::Odometry::ConstPtr& odom)
 
     //Convert the quaternion to euler angles of yaw, pitch, and roll
     //This should be in radians
-    mat.getEulerYPR(this->cur_state(5), this->cur_state(4), this->cur_state(3));
+    mat.getEulerYPR(this->cur_state(8), this->cur_state(7), this->cur_state(6));
+    //mat.getEulerYPR(this->cur_state(5), this->cur_state(4), this->cur_state(3));
 
     //Linear velocity
-    this->cur_state(6) = odom->twist.twist.linear.x;
-    this->cur_state(7) = odom->twist.twist.linear.y;
-    this->cur_state(8) = odom->twist.twist.linear.z;
+    this->cur_state(3) = odom->twist.twist.linear.x;
+    this->cur_state(4) = odom->twist.twist.linear.y;
+    this->cur_state(5) = odom->twist.twist.linear.z;
+    //this->cur_state(6) = odom->twist.twist.linear.x;
+    //this->cur_state(7) = odom->twist.twist.linear.y;
+    //this->cur_state(8) = odom->twist.twist.linear.z;
 
     //Angular velocity
     this->cur_state(9) = odom->twist.twist.angular.x;
@@ -95,15 +99,26 @@ void Optimizer::state_estimate_callback(const tum_ardrone::filter_state::ConstPt
     this->cur_state(0) = estimate_event->x;
     this->cur_state(1) = estimate_event->y;
     this->cur_state(2) = estimate_event->z;
-    this->cur_state(3) = estimate_event->roll;
-    this->cur_state(4) = estimate_event->pitch;
-    this->cur_state(5) = estimate_event->yaw;
-    this->cur_state(6) = estimate_event->dx;
-    this->cur_state(7) = estimate_event->dy;
-    this->cur_state(8) = estimate_event->dz;
+
+    this->cur_state(3) = estimate_event->dx;
+    this->cur_state(4) = estimate_event->dy;
+    this->cur_state(5) = estimate_event->dz;
+
+    this->cur_state(6) = estimate_event->roll;
+    this->cur_state(7) = estimate_event->pitch;
+    this->cur_state(8) = estimate_event->yaw;
+    
     this->cur_state(9) = estimate_event->droll;
     this->cur_state(10) = estimate_event->dpitch;
     this->cur_state(11) = estimate_event->dyaw;
+
+    //TODO: Review dynamics
+    //this->cur_state(3) = estimate_event->roll;
+    //this->cur_state(4) = estimate_event->pitch;
+    //this->cur_state(5) = estimate_event->yaw;
+    //this->cur_state(6) = estimate_event->dx;
+    //this->cur_state(7) = estimate_event->dy;
+    //this->cur_state(8) = estimate_event->dz;
 
     //Set the current state as initialized
     this->cur_state_init = true;

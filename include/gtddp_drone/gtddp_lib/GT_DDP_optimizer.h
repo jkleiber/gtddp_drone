@@ -24,7 +24,7 @@ private:
     controlled_stepper_type controlled_stepper;
 
 
-    //temoraray data members for Value backpropagating: They will be saved in the public std::vector.
+    //temporary data members for Value backpropagating: They will be saved in the public std::vector.
     double L_0i_;
     Eigen::VectorXd L_xi_;
     Eigen::VectorXd L_ui_;
