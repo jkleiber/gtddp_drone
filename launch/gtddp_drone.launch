@@ -2,6 +2,8 @@
   <!-- GT-DDP nodes -->
   <node name="gtddp_control_node" pkg="gtddp_drone" type="gtddp_control_node" output="screen"/>
   <node name="gtddp_optimize_node" pkg="gtddp_drone" type="gtddp_optimize_node" output="screen"/>
+
+  <!-- Target node -->
   <node name="gtddp_target_node" pkg="gtddp_drone_target_trajectory" type="gtddp_target_node" output="screen"/>
 
   <!-- Simulator -->

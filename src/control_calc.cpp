@@ -59,10 +59,10 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         
         /* Form the control message */
         //Pitch (move forward) (theta)
-        this->ctrl_command.linear.x = this->x_traj[timestep](6) / MAX_EULER_ANGLE;
+        this->ctrl_command.linear.x = this->x_traj[timestep](7) / MAX_EULER_ANGLE;
         
         //Roll (move side to side) (-phi)
-        this->ctrl_command.linear.y = -this->x_traj[timestep](7)/ MAX_EULER_ANGLE;
+        this->ctrl_command.linear.y = -this->x_traj[timestep](6)/ MAX_EULER_ANGLE;
         
         //Yaw rate (how fast to spin) (r)
         this->ctrl_command.angular.z = this->x_traj[timestep](11) / MAX_YAW_RATE;
