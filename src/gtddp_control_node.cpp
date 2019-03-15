@@ -67,8 +67,9 @@ int main(int argc, char **argv)
     //Once we have locked to the ardrone, send the takeoff command
     takeoff_pub.publish(empty_msg);
 
-    //Pump callbacks
-    ros::spin();
+    //Pump multithreaded callbacks
+    ros::MultiThreadedSpinner spinner;
+    spinner.spin();
 
     return 0;
 }

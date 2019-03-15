@@ -19,9 +19,10 @@ Optimizer::Optimizer()
 /**
  * 
  */
-Optimizer::Optimizer(ros::Publisher& publisher)
+Optimizer::Optimizer(ros::Publisher& traj_publisher, ros::Publisher& state_publisher)
 {
-    this->traj_pub = publisher;
+    this->traj_pub = traj_publisher;
+    this->state_pub = state_publisher;
     
     //Flag the state data as uninitialized
     this->cur_state_init = false;
@@ -88,6 +89,15 @@ void Optimizer::ground_truth_callback(const nav_msgs::Odometry::ConstPtr& odom)
 
     //Set the current state as initialized
     this->cur_state_init = true;
+
+    gtddp_drone_msgs::state_data current_state_dbg;
+
+    for(int i = 0; i < Constants::num_states; ++i)
+    {
+        current_state_dbg.states[i] = this->cur_state(i);
+    }
+
+    this->state_pub.publish(current_state_dbg);
 }
 
 /**

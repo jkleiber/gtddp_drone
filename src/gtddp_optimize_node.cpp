@@ -22,9 +22,10 @@ int main(int argc, char **argv)
 
     //Advertise trajectory data
     ros::Publisher traj_pub = traj_node.advertise<gtddp_drone_msgs::Trajectory>(traj_node.resolveName("/gtddp_drone/trajectory"), MAX_BUFFER);
+    ros::Publisher cur_state_pub = traj_node.advertise<gtddp_drone_msgs::state_data>(traj_node.resolveName("/gtddp_drone/cur_state_sim"), MAX_BUFFER);
 
     //Set up the trajectory optimizer
-    Optimizer traj_optimizer(traj_pub);
+    Optimizer traj_optimizer(traj_pub, cur_state_pub);
 
     //Subscribe to state estimation and target state topics
     ros::Subscriber estimate_sub;
@@ -42,10 +43,12 @@ int main(int argc, char **argv)
     }
 
     //Set up timer for recalculations
-    ros::Timer update_timer = traj_node.createTimer(ros::Duration(5.0), &Optimizer::traj_update_callback, &traj_optimizer, false);
+    ros::Timer update_timer = traj_node.createTimer(ros::Duration(1.0), &Optimizer::traj_update_callback, &traj_optimizer, false);
 
-    //Pump callbacks
-    ros::spin();
+//TODO:consider making this into a while loop instead?
+    //Pump multithreaded callbacks
+    ros::MultiThreadedSpinner spinner;
+    spinner.spin();
 
     return 0;
 }

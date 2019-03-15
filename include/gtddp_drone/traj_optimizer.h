@@ -30,7 +30,7 @@ class Optimizer
     public:
         //Constructors
         Optimizer();
-        Optimizer(ros::Publisher& publisher);
+        Optimizer(ros::Publisher& traj_publisher, ros::Publisher& state_publisher);
         
         //Callback functions
         void traj_update_callback(const ros::TimerEvent& time_event);
@@ -41,6 +41,9 @@ class Optimizer
     private:
         //Publisher for the trajectory data
         ros::Publisher traj_pub;
+
+        //Publisher for state estimate (simulation debugging)
+        ros::Publisher state_pub;
 
         //Save callback data here
         Eigen::VectorXd cur_state;
