@@ -143,6 +143,11 @@ void Optimizer::target_state_callback(const gtddp_drone_msgs::state_data::ConstP
     for(int i = 0; i < Constants::num_states; ++i)
     {
         this->goal_state(i) = target_event->states[i];
+
+        if(!goal_state_init)
+        {
+            printf("%f ", this->goal_state(i));
+        }
     }
 
     this->goal_state_init = true;

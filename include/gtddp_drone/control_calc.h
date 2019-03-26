@@ -18,9 +18,14 @@
 
 //Conversion Constants
 //TODO: These are simulator values, and may need to be tuned for real flights
-#define MAX_EULER_ANGLE (double)(4.2)   //Max angle (radians)
+#define MAX_ROLL_ANGLE (double)(1.0)   //Max angle (radians)
+#define MAX_PITCH_ANGLE (double)(1.0)  //Max angle (radians)
 #define MAX_YAW_RATE (double)(3.2)     //Max yaw rate (rads / sec)
-#define MAX_VERTICAL_VEL (double)(4.5)//(0.74) //Max vertical speed (m/s)
+#define MAX_VERTICAL_VEL (double)(1.5) //Max vertical speed (m/s)
+
+//PD Controller Constants
+#define KP (double)(0.7)
+#define KD (double)(0.3)
 
 /**
  * 

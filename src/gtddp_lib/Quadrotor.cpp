@@ -208,6 +208,17 @@ void Quadrotor::linearize_dynamics_mm(const vector<VectorXd>& x_traj, const vect
         A[i]=A_sec;
         B[i]=B_sec;
         C[i]=C_sec;
+
+        //B_sec(3, 0) = (cos_psi * sin_theta + cos_theta * sin_phi * sin_psi) / m;
+        //B_sec(4, 0) = (sin_psi * sin_theta - cos_theta * sin_phi * cos_psi) / m;
+        //B_sec(5, 0) = (cos_phi * cos_theta) / m;
+        //B_sec(9, 1)  = 1 / Ixx;
+        //B_sec(10, 2) = 1 / Iyy;
+        //B_sec(11, 3) = 1 / Izz;
+        //
+        //A[i]=A_sec;
+        //B[i]=B_sec;
+        //C[i]=B_sec;
         
     } //for (int i)
 }// linearize_dynamics

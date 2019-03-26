@@ -13,7 +13,7 @@ ControlCalculator::ControlCalculator()
     this->traj_init = false;
 
     //Set timestep to t0
-    this->timestep = 0;
+    this->timestep = -1;
 }
 
 
@@ -36,7 +36,7 @@ ControlCalculator::ControlCalculator(ros::Publisher ctrl_sig_pub, ros::Publisher
     this->traj_init = false;
 
     //Set timestep to t0
-    this->timestep = 0;
+    this->timestep = -1;
 }
 
 
@@ -59,10 +59,10 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         
         /* Form the control message */
         //Pitch (move forward) (theta)
-        this->ctrl_command.linear.x = this->x_traj[timestep](7) / MAX_EULER_ANGLE;
+        this->ctrl_command.linear.x = this->x_traj[timestep](7) / MAX_PITCH_ANGLE;
         
         //Roll (move side to side) (-phi)
-        this->ctrl_command.linear.y = -this->x_traj[timestep](6)/ MAX_EULER_ANGLE;
+        this->ctrl_command.linear.y = -this->x_traj[timestep](6)/ MAX_ROLL_ANGLE;
         
         //Yaw rate (how fast to spin) (r)
         this->ctrl_command.angular.z = this->x_traj[timestep](11) / MAX_YAW_RATE;
@@ -72,8 +72,12 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
     
         //Increment the timestep
         this->timestep++;
+
+        //Publish u(t) to the control signal topic
+        this->control_signal_pub.publish(this->ctrl_command);
     }
-    else
+    //TODO: will this crash a real-life drone? Currently used to help with laptop simulations
+    else if(this->timestep >= 0)
     {
         this->ctrl_command.linear.x = 0;
         this->ctrl_command.linear.y = 0;
@@ -81,14 +85,18 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         this->ctrl_command.angular.x = 0;
         this->ctrl_command.angular.y = 0;
         this->ctrl_command.angular.z = 0;
+
+        //Publish u(t) to the control signal topic
+        this->control_signal_pub.publish(this->ctrl_command);
     }
 
+    //TODO: see above todo. Will this crash a real drone?
     //Publish u(t) to the control signal topic
-    this->control_signal_pub.publish(this->ctrl_command);
+    //this->control_signal_pub.publish(this->ctrl_command);
 }
 
 
-
+//TODO: add PD controller here. add control policy back
 /**
  * 
  */
@@ -224,7 +232,7 @@ void ControlCalculator::trajectory_callback(const gtddp_drone_msgs::Trajectory::
     }
 
     //Forward propagate controls to find the correct output
-    quadrotor.feedforward_controls(this->cur_state, this->u_traj, this->K_traj, this->x_traj);
+    //quadrotor.feedforward_controls(this->cur_state, this->u_traj, this->K_traj, this->x_traj);
 
     //Reset the timestep variable to t0
     timestep = 0;
