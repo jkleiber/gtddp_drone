@@ -24,8 +24,8 @@
 #define MAX_VERTICAL_VEL (double)(1.5) //Max vertical speed (m/s)
 
 //PD Controller Constants
-#define KP (double)(0.7)
-#define KD (double)(0.3)
+#define KP (double)(0.25)
+#define KD (double)(0.09)
 
 /**
  * 
@@ -43,6 +43,9 @@ class ControlCalculator
         void trajectory_callback(const gtddp_drone_msgs::Trajectory::ConstPtr& traj_msg);
 
     private:
+        //PD Controller
+        geometry_msgs::Twist attitude_pd_control(const double phi, const double theta, const double phi_dot, const double theta_dot);
+
         //Publish control system data to the drone
         ros::Publisher control_signal_pub;
         ros::Publisher landing_pub;

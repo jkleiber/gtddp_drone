@@ -22,7 +22,7 @@ void Cost_Function::initialize_cost_matrix(){
      
      Edit the values in these matrices as necessary.
      */
-    Ru =  0.01 * MatrixXd::Identity(num_controls_u, num_controls_u); //TODO: mess with these. Higher Ru is more restrictive
+    Ru =  0.015 * MatrixXd::Identity(num_controls_u, num_controls_u); //TODO: mess with these. Higher Ru is more restrictive
     Rv = 0.1 * MatrixXd::Identity(num_controls_v, num_controls_v);
     Q_x = MatrixXd::Identity(num_states, num_states);
     Q_f = MatrixXd::Identity(num_states, num_states);
@@ -31,18 +31,18 @@ void Cost_Function::initialize_cost_matrix(){
     Q_f(0,0) = 1000000;
     Q_f(1,1) = 1000000;
     Q_f(2,2) = 1000000;
-    //    % angular states
-    Q_f(3,3) = 100000;
-    Q_f(4,4) = 100000;
+    //velocity states
+    Q_f(3,3) = 10000;
+    Q_f(4,4) = 10000;
     Q_f(5,5) = 100000;
-    //    % velocity states
-    Q_f(6,6) = 100000;
-    Q_f(7,7) = 100000;
-    Q_f(8,8) = 100000;
-    //    % angular velocity states
+    //anglular states
+    Q_f(6,6) = 10000;
+    Q_f(7,7) = 10000;
+    Q_f(8,8) = 10000;
+    //angular velocity states
     Q_f(9,9) = 1000;
     Q_f(10,10) = 1000;
-    Q_f(11,11) = 1000;
+    Q_f(11,11) = 10000;
 
     Q_x = 0.0001*Q_f;
     

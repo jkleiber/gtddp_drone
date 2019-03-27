@@ -59,10 +59,10 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         
         /* Form the control message */
         //Pitch (move forward) (theta)
-        this->ctrl_command.linear.x = this->x_traj[timestep](7) / MAX_PITCH_ANGLE;
+        this->ctrl_command.linear.x = this->x_traj[timestep](7);// / MAX_PITCH_ANGLE;
         
         //Roll (move side to side) (-phi)
-        this->ctrl_command.linear.y = -this->x_traj[timestep](6)/ MAX_ROLL_ANGLE;
+        this->ctrl_command.linear.y = -this->x_traj[timestep](6);// / MAX_ROLL_ANGLE;
         
         //Yaw rate (how fast to spin) (r)
         this->ctrl_command.angular.z = this->x_traj[timestep](11) / MAX_YAW_RATE;
@@ -72,9 +72,6 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
     
         //Increment the timestep
         this->timestep++;
-
-        //Publish u(t) to the control signal topic
-        this->control_signal_pub.publish(this->ctrl_command);
     }
     //TODO: will this crash a real-life drone? Currently used to help with laptop simulations
     else if(this->timestep >= 0)
@@ -85,9 +82,6 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         this->ctrl_command.angular.x = 0;
         this->ctrl_command.angular.y = 0;
         this->ctrl_command.angular.z = 0;
-
-        //Publish u(t) to the control signal topic
-        this->control_signal_pub.publish(this->ctrl_command);
     }
 
     //TODO: see above todo. Will this crash a real drone?
@@ -132,6 +126,9 @@ void ControlCalculator::ground_truth_callback(const nav_msgs::Odometry::ConstPtr
 
     //Set the current state as initialized
     this->cur_state_init = true;
+
+    //Publish control data from PD controller
+    control_signal_pub.publish(attitude_pd_control(this->cur_state(6), this->cur_state(9), this->cur_state(7), this->cur_state(10)));
 }
 
 
@@ -232,11 +229,34 @@ void ControlCalculator::trajectory_callback(const gtddp_drone_msgs::Trajectory::
     }
 
     //Forward propagate controls to find the correct output
-    //quadrotor.feedforward_controls(this->cur_state, this->u_traj, this->K_traj, this->x_traj);
+    quadrotor.feedforward_controls(this->cur_state, this->u_traj, this->K_traj, this->x_traj);
 
     //Reset the timestep variable to t0
     timestep = 0;
 
     //The trajectory is now initialized!
     this->traj_init = true;
+}
+
+
+
+geometry_msgs::Twist ControlCalculator::attitude_pd_control(const double phi, const double theta, const double phi_dot, const double theta_dot)
+{
+    //Phi PD control
+    double phi_error = (phi - this->ctrl_command.linear.y);
+    double pd_phi = (KP * phi_error) + (KD * phi_dot);
+
+    //Theta PD control
+    double theta_error = (theta - this->ctrl_command.linear.x);
+    double pd_theta = (KP * theta_error) + (KD * theta_dot);
+
+    //Make the augmented message
+    geometry_msgs::Twist pd_output;
+    pd_output = this->ctrl_command;
+
+    //Modify original output to handle the PD alterations
+    pd_output.linear.x = pd_theta / MAX_PITCH_ANGLE;
+    pd_output.linear.y = pd_phi / MAX_ROLL_ANGLE;
+
+    return pd_output;
 }

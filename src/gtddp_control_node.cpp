@@ -43,7 +43,7 @@ int main(int argc, char **argv)
     }
     
     //Set up a timer to call the control calculation function at the appropriate update rate
-    ros::Timer update_timer = control_node.createTimer(ros::Duration(0.01), &ControlCalculator::recalculate_control_callback, &control_calc, false);
+    ros::Timer update_timer = control_node.createTimer(ros::Duration(0.1), &ControlCalculator::recalculate_control_callback, &control_calc, false);
 
     //Set up and change the settings of tum_ardrone to use the Vicon system
     ros::Publisher tum_settings = control_node.advertise<std_msgs::String>(control_node.resolveName("switch_control"), 10);
