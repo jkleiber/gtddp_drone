@@ -72,6 +72,9 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
     
         //Increment the timestep
         this->timestep++;
+
+        //Publish u(t) to the control signal topic
+        this->control_signal_pub.publish(this->ctrl_command);
     }
     //TODO: will this crash a real-life drone? Currently used to help with laptop simulations
     else if(this->timestep >= 0)
