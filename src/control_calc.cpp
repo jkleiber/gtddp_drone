@@ -65,19 +65,19 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         this->ctrl_command.linear.y = -this->x_traj[timestep](6);// / MAX_ROLL_ANGLE;
         
         //Yaw rate (how fast to spin) (r)
-        this->ctrl_command.angular.z = this->x_traj[timestep](11) / MAX_YAW_RATE;
+        this->ctrl_command.angular.z = this->x_traj[timestep](11); // / MAX_YAW_RATE;
     
         //Vertical speed (how fast to move upward) (z dot)
-        this->ctrl_command.linear.z = this->x_traj[timestep](5) / MAX_VERTICAL_VEL;
+        this->ctrl_command.linear.z = this->x_traj[timestep](5); // / MAX_VERTICAL_VEL;
     
         //Increment the timestep
         this->timestep++;
 
         //Publish u(t) to the control signal topic
-        this->control_signal_pub.publish(this->ctrl_command);
+        this->control_signal_pub.publish(attitude_pd_control());
     }
     //TODO: will this crash a real-life drone? Currently used to help with laptop simulations
-    else if(this->timestep >= 0)
+    else if(this->cur_state_init && this->traj_init)
     {
         this->ctrl_command.linear.x = 0;
         this->ctrl_command.linear.y = 0;
@@ -85,6 +85,8 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         this->ctrl_command.angular.x = 0;
         this->ctrl_command.angular.y = 0;
         this->ctrl_command.angular.z = 0;
+
+        this->control_signal_pub.publish(attitude_pd_control());
     }
 
     //TODO: see above todo. Will this crash a real drone?
@@ -129,9 +131,6 @@ void ControlCalculator::ground_truth_callback(const nav_msgs::Odometry::ConstPtr
 
     //Set the current state as initialized
     this->cur_state_init = true;
-
-    //Publish control data from PD controller
-    control_signal_pub.publish(attitude_pd_control(this->cur_state(6), this->cur_state(9), this->cur_state(7), this->cur_state(10)));
 }
 
 
@@ -243,23 +242,137 @@ void ControlCalculator::trajectory_callback(const gtddp_drone_msgs::Trajectory::
 
 
 
-geometry_msgs::Twist ControlCalculator::attitude_pd_control(const double phi, const double theta, const double phi_dot, const double theta_dot)
+geometry_msgs::Twist ControlCalculator::attitude_pd_control()
 {
-    //Phi PD control
-    double phi_error = (phi - this->ctrl_command.linear.y);
-    double pd_phi = (KP * phi_error) + (KD * phi_dot);
+    /* Declare local variables */
+    double phi_error;
+    double phi_dot_error;
+    double pd_phi;
+    double theta_error;
+    double theta_dot_error;
+    double pd_theta;
 
-    //Theta PD control
-    double theta_error = (theta - this->ctrl_command.linear.x);
-    double pd_theta = (KP * theta_error) + (KD * theta_dot);
+    //If the timestep is before the start, assume hovering state at the origin (0, 0, 1)
+    if(timestep < 0)
+    {
+        //Phi PD control
+        phi_error = (this->cur_state(6) - 0.0);
+        phi_dot_error = (this->cur_state(9) - 0.0);
+        
+        //Theta PD control
+        theta_error = (this->cur_state(7) - 0.0);
+        theta_dot_error = (this->cur_state(10) - 0.0);
+    }
+    //If the timestep is after all trajectory points, assume goal state to be last state
+    else if(timestep >= this->x_traj.size())
+    {
+        //Phi PD control
+        phi_error = (this->cur_state(6) - this->x_traj[this->x_traj.size() - 1](6));
+        phi_dot_error = (this->cur_state(9) - this->x_traj[this->x_traj.size() - 1](9));
+        
+        //Theta PD control
+        theta_error = (this->cur_state(7) - this->x_traj[this->x_traj.size() - 1](7));
+        theta_dot_error = (this->cur_state(10) - this->x_traj[this->x_traj.size() - 1](10));
+    }
+    //Otherwise calculate the current timestep's PD errors
+    else
+    {
+        //Phi PD control
+        phi_error = (this->cur_state(6) - this->x_traj[timestep](6));
+        phi_dot_error = (this->cur_state(9) - this->x_traj[timestep](9));
+        
+        //Theta PD control
+        theta_error = (this->cur_state(7) - this->x_traj[timestep](7));
+        theta_dot_error = (this->cur_state(10) - this->x_traj[timestep](10));
+    }
+
+    //Compute the PD control gains
+    pd_phi = (KP * phi_error) + (KD * phi_dot_error);
+    pd_theta = (KP * theta_error) + (KD * theta_dot_error);
 
     //Make the augmented message
     geometry_msgs::Twist pd_output;
     pd_output = this->ctrl_command;
 
     //Modify original output to handle the PD alterations
-    pd_output.linear.x = pd_theta / MAX_PITCH_ANGLE;
-    pd_output.linear.y = pd_phi / MAX_ROLL_ANGLE;
+    pd_output.linear.x = (pd_output.linear.x + pd_theta) / MAX_PITCH_ANGLE;
+    pd_output.linear.y = (pd_output.linear.y + pd_phi ) / MAX_ROLL_ANGLE;
+
+    return pd_output;
+}
+
+geometry_msgs::Twist ControlCalculator::full_pd_control()
+{
+    /* Declare local variables */
+    double phi_error;
+    double phi_dot_error;
+    double pd_phi;
+    double theta_error;
+    double theta_dot_error;
+    double pd_theta;
+    double yaw_error;
+    double yaw_dot_error;
+    double pd_yaw;
+    double z_error;
+    double z_dot_error;
+    double pd_z;
+
+    geometry_msgs::Twist pd_output;
+
+    //If the timestep is out of bounds, assume hovering state
+    if(timestep < 0
+    || timestep >= this->x_traj.size())
+    {
+        //Phi PD control
+        phi_error = (this->cur_state(6) - 0.0);
+        phi_dot_error = (this->cur_state(9) - 0.0);
+        
+        //Theta PD control
+        theta_error = (this->cur_state(7) - 0.0);
+        theta_dot_error = (this->cur_state(10) - 0.0);
+
+        //Yaw PD control
+        yaw_error = (this->cur_state(8) - 0.0);
+        yaw_dot_error = (this->cur_state(11) - 0.0);
+
+        //Vertical Speed PD control
+        z_error = (this->cur_state(2) - 1.0);
+        z_dot_error = this->cur_state(5) - 0.0;
+    }
+    //Otherwise calculate the current timestep's PD errors
+    else
+    {
+        //Phi PD control
+        phi_error = (this->cur_state(6) - this->x_traj[timestep](6));
+        phi_dot_error = (this->cur_state(9) - this->x_traj[timestep](9));
+        
+        //Theta PD control
+        theta_error = (this->cur_state(7) - this->x_traj[timestep](7));
+        theta_dot_error = (this->cur_state(10) - this->x_traj[timestep](10));
+
+        //Yaw PD control
+        yaw_error = (this->cur_state(8) - this->x_traj[timestep](8));
+        yaw_dot_error = (this->cur_state(11) - this->x_traj[timestep](11));
+
+        //Vertical Speed PD control
+        z_error = (this->cur_state(2) - this->x_traj[timestep](2));
+        z_dot_error = this->cur_state(5) - this->x_traj[timestep](5);
+    }
+
+    //Compute the PD control gains
+    pd_phi = (KP * phi_error) + (KD * phi_dot_error);
+    pd_theta = (KP * theta_error) + (KD * theta_dot_error);
+    pd_yaw = (KP * yaw_error) + (KD * yaw_dot_error);
+    pd_z = (KP * z_error) + (KD * z_dot_error);
+
+    //Make the augmented message
+    pd_output = this->ctrl_command;
+
+    //Modify original output to handle the PD alterations
+    pd_output.linear.x = (pd_output.linear.x + pd_theta) / MAX_PITCH_ANGLE;
+    pd_output.linear.y = (pd_output.linear.y + pd_phi ) / MAX_ROLL_ANGLE;
+    pd_output.angular.z = (pd_output.angular.z + pd_yaw) / MAX_YAW_RATE;
+    pd_output.linear.z = (pd_output.linear.z + pd_z) / MAX_VERTICAL_VEL;
 
     return pd_output;
 }

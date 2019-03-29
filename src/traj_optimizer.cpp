@@ -48,7 +48,7 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
 
         printf("c\n");
 
-        //Publise the newly optimized trajectory data to the trajectory topic
+        //Publish the newly optimized trajectory data to the trajectory topic
         traj_pub.publish(this->get_traj_msg(ddpmain.get_x_traj(), ddpmain.get_u_traj(), ddpmain.get_Ku()));
     }
 }
