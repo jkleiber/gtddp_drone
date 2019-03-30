@@ -6,6 +6,9 @@
   <!-- Target node -->
   <node name="gtddp_target_node" pkg="gtddp_drone_target_trajectory" type="gtddp_target_node" output="screen"/>
 
+  <!-- AR.DRone Driver
+  <node name="ardrone_driver" pkg="ardrone_autonomy" type="ardrone_driver" output="screen" clear_params="true"/> -->
+
   <!-- Simulator -->
   <include file="$(find cvg_sim_gazebo)/launch/ardrone_testworld.launch"/>
 

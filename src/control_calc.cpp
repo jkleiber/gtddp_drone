@@ -58,11 +58,11 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         printf("]\n");
         
         /* Form the control message */
-        //Pitch (move forward) (theta)
-        this->ctrl_command.linear.x = this->angleWrap(this->x_traj[timestep](7));// / MAX_PITCH_ANGLE;
+        //X velocity (move forward) (x dot)
+        this->ctrl_command.linear.x = this->x_traj[timestep](3) / MAX_FWD_VEL;
         
-        //Roll (move side to side) (-phi)
-        this->ctrl_command.linear.y = this->angleWrap(-this->x_traj[timestep](6));// / MAX_ROLL_ANGLE;
+        //Y velocity (move side to side) (y dot)
+        this->ctrl_command.linear.y = this->x_traj[timestep](4) / MAX_SIDE_VEL;
         
         //Yaw rate (how fast to spin) (r)
         this->ctrl_command.angular.z = this->x_traj[timestep](11) / MAX_YAW_RATE;
@@ -71,7 +71,8 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         this->ctrl_command.linear.z = this->x_traj[timestep](5) / MAX_VERTICAL_VEL;
 
         //Publish u(t) to the control signal topic
-        this->control_signal_pub.publish(attitude_pd_control());
+        this->control_signal_pub.publish(this->ctrl_command);
+        //this->control_signal_pub.publish(attitude_pd_control());
 
         //Increment the timestep
         this->timestep++;
@@ -130,12 +131,12 @@ void ControlCalculator::ground_truth_callback(const nav_msgs::Odometry::ConstPtr
     this->cur_state(10) = odom->twist.twist.angular.y;
     this->cur_state(11) = odom->twist.twist.angular.z;
 
-    printf("CS: [");
-    for(int i = 0; i < Constants::num_states; ++i)
-    {
-        printf("%f ", this->cur_state(i));
-    }
-    printf("]\n");
+    //printf("CS: [");
+    //for(int i = 0; i < Constants::num_states; ++i)
+    //{
+    //    printf("%f ", this->cur_state(i));
+    //}
+    //printf("]\n");
 
     //Set the current state as initialized
     this->cur_state_init = true;
@@ -303,12 +304,12 @@ geometry_msgs::Twist ControlCalculator::attitude_pd_control()
     pd_output = this->ctrl_command;
 
     //Modify original output to handle the PD alterations
-    pd_output.linear.x = (pd_output.linear.x + pd_theta) / MAX_PITCH_ANGLE;
-    pd_output.linear.y = (pd_output.linear.y + pd_phi ) / MAX_ROLL_ANGLE;
+    pd_output.linear.x = (pd_output.linear.x + pd_theta) / MAX_FWD_VEL;
+    pd_output.linear.y = (pd_output.linear.y + pd_phi ) / MAX_SIDE_VEL;
 
     printf("u: [");
-    printf("Pitch: %f ", pd_output.linear.x);
-    printf("Roll: %f ", pd_output.linear.y);
+    printf("X speed: %f ", pd_output.linear.x);
+    printf("Y spped: %f ", pd_output.linear.y);
     printf("Yaw Rate: %f ", pd_output.angular.z);
     printf("V speed: %f ", pd_output.linear.z);
     printf("]\n");
@@ -384,8 +385,8 @@ geometry_msgs::Twist ControlCalculator::full_pd_control()
     pd_output = this->ctrl_command;
 
     //Modify original output to handle the PD alterations
-    pd_output.linear.x = (pd_output.linear.x + pd_theta) / MAX_PITCH_ANGLE;
-    pd_output.linear.y = (pd_output.linear.y + pd_phi ) / MAX_ROLL_ANGLE;
+    pd_output.linear.x = (pd_output.linear.x + pd_theta) / MAX_FWD_VEL;
+    pd_output.linear.y = (pd_output.linear.y + pd_phi ) / MAX_SIDE_VEL;
     pd_output.angular.z = (pd_output.angular.z + pd_yaw) / MAX_YAW_RATE;
     pd_output.linear.z = (pd_output.linear.z + pd_z) / MAX_VERTICAL_VEL;
 
