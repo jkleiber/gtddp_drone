@@ -36,7 +36,7 @@ void Cost_Function::initialize_cost_matrix(){
     Q_f = MatrixXd::Identity(num_states, num_states);
 
     //Set Ru values individually
-    Ru(0, 0) = 0.05;    //thrust
+    Ru(0, 0) = 0.03;    //thrust
     Ru(1, 1) = 0.01;   //u1 moment
     Ru(2, 2) = 0.01;   //u2 moment
     Ru(3, 3) = 0.01;   //u3 moment
@@ -48,10 +48,10 @@ void Cost_Function::initialize_cost_matrix(){
     //velocity states
     Q_f(3,3) = 10000;   //x dot
     Q_f(4,4) = 10000;   //y dot
-    Q_f(5,5) = 10000;  //z dot
+    Q_f(5,5) = 10000;   //z dot
     //anglular states
-    Q_f(6,6) = 100000;   //roll
-    Q_f(7,7) = 100000;   //pitch
+    Q_f(6,6) = 100000;  //roll
+    Q_f(7,7) = 100000;  //pitch
     Q_f(8,8) = 100000;  //yaw
     //angular velocity states
     Q_f(9,9) = 1000;    //roll rate

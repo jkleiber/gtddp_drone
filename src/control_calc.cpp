@@ -50,7 +50,7 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
     if(this->cur_state_init && this->traj_init
     && timestep >= 0 && timestep < this->x_traj.size())
     {
-        printf("[");
+        printf("x: [");
         for(int i = 0; i < Constants::num_states; ++i)
         {
             printf("%f ", this->x_traj[timestep](i));
@@ -59,22 +59,22 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         
         /* Form the control message */
         //Pitch (move forward) (theta)
-        this->ctrl_command.linear.x = this->x_traj[timestep](7);// / MAX_PITCH_ANGLE;
+        this->ctrl_command.linear.x = this->angleWrap(this->x_traj[timestep](7));// / MAX_PITCH_ANGLE;
         
         //Roll (move side to side) (-phi)
-        this->ctrl_command.linear.y = -this->x_traj[timestep](6);// / MAX_ROLL_ANGLE;
+        this->ctrl_command.linear.y = this->angleWrap(-this->x_traj[timestep](6));// / MAX_ROLL_ANGLE;
         
         //Yaw rate (how fast to spin) (r)
-        this->ctrl_command.angular.z = this->x_traj[timestep](11); // / MAX_YAW_RATE;
+        this->ctrl_command.angular.z = this->x_traj[timestep](11) / MAX_YAW_RATE;
     
         //Vertical speed (how fast to move upward) (z dot)
-        this->ctrl_command.linear.z = this->x_traj[timestep](5); // / MAX_VERTICAL_VEL;
-    
-        //Increment the timestep
-        this->timestep++;
+        this->ctrl_command.linear.z = this->x_traj[timestep](5) / MAX_VERTICAL_VEL;
 
         //Publish u(t) to the control signal topic
         this->control_signal_pub.publish(attitude_pd_control());
+
+        //Increment the timestep
+        this->timestep++;
     }
     //TODO: will this crash a real-life drone? Currently used to help with laptop simulations
     else if(this->cur_state_init && this->traj_init)
@@ -86,8 +86,10 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         this->ctrl_command.angular.y = 0;
         this->ctrl_command.angular.z = 0;
 
-        this->control_signal_pub.publish(attitude_pd_control());
+        //this->control_signal_pub.publish(attitude_pd_control());
+        this->control_signal_pub.publish(this->ctrl_command);
     }
+    
 
     //TODO: see above todo. Will this crash a real drone?
     //Publish u(t) to the control signal topic
@@ -95,7 +97,6 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
 }
 
 
-//TODO: add PD controller here. add control policy back
 /**
  * 
  */
@@ -128,6 +129,13 @@ void ControlCalculator::ground_truth_callback(const nav_msgs::Odometry::ConstPtr
     this->cur_state(9) = odom->twist.twist.angular.x;
     this->cur_state(10) = odom->twist.twist.angular.y;
     this->cur_state(11) = odom->twist.twist.angular.z;
+
+    printf("CS: [");
+    for(int i = 0; i < Constants::num_states; ++i)
+    {
+        printf("%f ", this->cur_state(i));
+    }
+    printf("]\n");
 
     //Set the current state as initialized
     this->cur_state_init = true;
@@ -231,7 +239,7 @@ void ControlCalculator::trajectory_callback(const gtddp_drone_msgs::Trajectory::
     }
 
     //Forward propagate controls to find the correct output
-    quadrotor.feedforward_controls(this->cur_state, this->u_traj, this->K_traj, this->x_traj);
+    //quadrotor.feedforward_controls(this->cur_state, this->u_traj, this->K_traj, this->x_traj);
 
     //Reset the timestep variable to t0
     timestep = 0;
@@ -267,22 +275,22 @@ geometry_msgs::Twist ControlCalculator::attitude_pd_control()
     else if(timestep >= this->x_traj.size())
     {
         //Phi PD control
-        phi_error = (this->cur_state(6) - this->x_traj[this->x_traj.size() - 1](6));
+        phi_error = (this->cur_state(6) - this->angleWrap(this->x_traj[this->x_traj.size() - 1](6)));
         phi_dot_error = (this->cur_state(9) - this->x_traj[this->x_traj.size() - 1](9));
         
         //Theta PD control
-        theta_error = (this->cur_state(7) - this->x_traj[this->x_traj.size() - 1](7));
+        theta_error = (this->cur_state(7) - this->angleWrap(this->x_traj[this->x_traj.size() - 1](7)));
         theta_dot_error = (this->cur_state(10) - this->x_traj[this->x_traj.size() - 1](10));
     }
     //Otherwise calculate the current timestep's PD errors
     else
     {
         //Phi PD control
-        phi_error = (this->cur_state(6) - this->x_traj[timestep](6));
+        phi_error = (this->cur_state(6) - this->angleWrap(this->x_traj[timestep](6)));
         phi_dot_error = (this->cur_state(9) - this->x_traj[timestep](9));
         
         //Theta PD control
-        theta_error = (this->cur_state(7) - this->x_traj[timestep](7));
+        theta_error = (this->cur_state(7) - this->angleWrap(this->x_traj[timestep](7)));
         theta_dot_error = (this->cur_state(10) - this->x_traj[timestep](10));
     }
 
@@ -297,6 +305,13 @@ geometry_msgs::Twist ControlCalculator::attitude_pd_control()
     //Modify original output to handle the PD alterations
     pd_output.linear.x = (pd_output.linear.x + pd_theta) / MAX_PITCH_ANGLE;
     pd_output.linear.y = (pd_output.linear.y + pd_phi ) / MAX_ROLL_ANGLE;
+
+    printf("u: [");
+    printf("Pitch: %f ", pd_output.linear.x);
+    printf("Roll: %f ", pd_output.linear.y);
+    printf("Yaw Rate: %f ", pd_output.angular.z);
+    printf("V speed: %f ", pd_output.linear.z);
+    printf("]\n");
 
     return pd_output;
 }
@@ -375,4 +390,22 @@ geometry_msgs::Twist ControlCalculator::full_pd_control()
     pd_output.linear.z = (pd_output.linear.z + pd_z) / MAX_VERTICAL_VEL;
 
     return pd_output;
+}
+
+
+double ControlCalculator::angleWrap(double angle)
+{
+    double wrapped_angle;
+
+    //Get the remainder of (angle shifted by pi) / 2pi to force the angle between -2pi and 2pi
+    wrapped_angle = fmod(angle + Constants::pi, 2 * Constants::pi);
+
+    //If the remainder is negative, add 2pi to make it positive
+    if(wrapped_angle < 0)
+    {
+        wrapped_angle += (2 * Constants::pi);
+    }
+
+    //Return the angle wrapped to -pi to pi
+    return (wrapped_angle - Constants::pi);
 }

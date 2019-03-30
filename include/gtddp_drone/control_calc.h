@@ -3,6 +3,7 @@
 
 //System libs
 #include "ros/ros.h"
+#include <math.h>
 #include <eigen3/Eigen/Dense>
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/Odometry.h>
@@ -46,6 +47,9 @@ class ControlCalculator
         //PD Controller
         geometry_msgs::Twist attitude_pd_control();
         geometry_msgs::Twist full_pd_control();
+        
+        //Output format utils
+        double angleWrap(double angle);
 
         //Publish control system data to the drone
         ros::Publisher control_signal_pub;
