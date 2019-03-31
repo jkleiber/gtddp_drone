@@ -19,10 +19,10 @@
 
 //Conversion Constants
 //TODO: These are simulator values, and may need to be tuned for real flights
-#define MAX_FWD_VEL (double)(2.5)       //Max forward velocity (m/s)
-#define MAX_SIDE_VEL (double)(2.5)      //Max side velocity (m/s)
+#define MAX_FWD_VEL (double)(2.0)       //Max forward velocity (m/s)
+#define MAX_SIDE_VEL (double)(2.0)      //Max side velocity (m/s)
 #define MAX_YAW_RATE (double)(3.2)      //Max yaw rate (rads / sec)
-#define MAX_VERTICAL_VEL (double)(1.8)  //Max vertical speed (m/s)
+#define MAX_VERTICAL_VEL (double)(0.5)  //Max vertical speed (m/s)
 
 //PD Controller Constants
 #define KP (double)(0.3)

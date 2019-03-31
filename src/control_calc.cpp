@@ -57,18 +57,19 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         }
         printf("]\n");
         
+        //TODO: Add clamp function
         /* Form the control message */
         //X velocity (move forward) (x dot)
-        this->ctrl_command.linear.x = this->x_traj[timestep](3) / MAX_FWD_VEL;
+        this->ctrl_command.linear.x = this->x_traj[timestep](3);// / MAX_FWD_VEL;
         
         //Y velocity (move side to side) (y dot)
-        this->ctrl_command.linear.y = this->x_traj[timestep](4) / MAX_SIDE_VEL;
+        this->ctrl_command.linear.y = this->x_traj[timestep](4);// / MAX_SIDE_VEL;
         
         //Yaw rate (how fast to spin) (r)
-        this->ctrl_command.angular.z = this->x_traj[timestep](11) / MAX_YAW_RATE;
+        this->ctrl_command.angular.z = this->x_traj[timestep](11);// / MAX_YAW_RATE;
     
         //Vertical speed (how fast to move upward) (z dot)
-        this->ctrl_command.linear.z = this->x_traj[timestep](5) / MAX_VERTICAL_VEL;
+        this->ctrl_command.linear.z = this->x_traj[timestep](5);// / MAX_VERTICAL_VEL;
 
         //Publish u(t) to the control signal topic
         this->control_signal_pub.publish(this->ctrl_command);
@@ -89,6 +90,11 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
 
         //this->control_signal_pub.publish(attitude_pd_control());
         this->control_signal_pub.publish(this->ctrl_command);
+    }
+    else
+    {
+        //this->ctrl_command.angular.z = 4;
+        //this->control_signal_pub.publish(this->ctrl_command);
     }
     
 

@@ -48,7 +48,7 @@ void Cost_Function::initialize_cost_matrix(){
     //velocity states
     Q_f(3,3) = 100000;   //x dot
     Q_f(4,4) = 100000;   //y dot
-    Q_f(5,5) = 100000;   //z dot
+    Q_f(5,5) = 1000000;  //z dot
     //anglular states
     Q_f(6,6) = 10000;  //roll
     Q_f(7,7) = 10000;  //pitch
