@@ -45,6 +45,7 @@ int main(int argc, char **argv)
     
     //Set up a timer to call the control calculation function at the appropriate update rate
     ros::Timer update_timer = control_node.createTimer(ros::Duration(0.001), &ControlCalculator::recalculate_control_callback, &control_calc, false);
+    control_calc.set_timer(update_timer);
 
     //Set up and change the settings of tum_ardrone to use the Vicon system
     ros::Publisher tum_settings = control_node.advertise<std_msgs::String>(control_node.resolveName("switch_control"), 10);
@@ -69,11 +70,11 @@ int main(int argc, char **argv)
     takeoff_pub.publish(empty_msg);
 
     //Pump multithreaded callbacks
-    //ros::MultiThreadedSpinner spinner;
-    //spinner.spin();
+    ros::MultiThreadedSpinner spinner;
+    spinner.spin();
 
     //Pump callbacks (single thread)
-    ros::spin();
+    //ros::spin();
 
     return 0;
 }

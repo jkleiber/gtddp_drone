@@ -76,12 +76,12 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-  geometry_msgs
-  nav_msgs
-)
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs
+#   geometry_msgs
+#   nav_msgs
+# )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -154,8 +154,8 @@ add_executable(gtddp_optimize_node src/gtddp_optimize_node.cpp src/traj_optimize
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(gtddp_control_node gtddp_drone_generate_messages_cpp gtddp_drone_msgs)
-add_dependencies(gtddp_optimize_node gtddp_drone_generate_messages_cpp gtddp_drone_msgs)
+# (gtddp_control_node gtddp_drone_generate_messages_cpp)
+# add_dependencies(gtddp_optimize_node gtddp_drone_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(gtddp_control_node ${catkin_LIBRARIES} GTDDP_LIB)

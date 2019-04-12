@@ -19,10 +19,11 @@ Optimizer::Optimizer()
 /**
  * 
  */
-Optimizer::Optimizer(ros::Publisher& traj_publisher, ros::Publisher& state_publisher)
+Optimizer::Optimizer(ros::Publisher& traj_publisher, ros::Publisher& state_publisher, ros::ServiceClient& target_client)
 {
     this->traj_pub = traj_publisher;
     this->state_pub = state_publisher;
+    this->target_client = target_client;
     
     //Flag the state data as uninitialized
     this->cur_state_init = false;
@@ -41,15 +42,30 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
 {
     //Check to make sure current state and target state are initialized
     //If they are, then optimize the current trajectory
-    if(this->cur_state_init && this->goal_state_init)
+    if(this->cur_state_init)
     {
-        ddpmain.update(this->cur_state, this->goal_state);
-        ddpmain.ddp_loop();
+        //Create a service to update the current target
+        gtddp_drone_msgs::target target_srv;
+        
+        //If the service succeeds, update the target and run the DDP
+        if(target_client.call(target_srv))
+        {
+            //Decode the target state from the service response
+            this->target_state_decode(target_srv.response.target_state);
 
-        printf("c\n");
+            //Update the DDP start and goals, then run the DDP loop to optimize the new trajectory
+            ddpmain.update(this->cur_state, this->goal_state);
+            ddpmain.ddp_loop();
 
-        //Publish the newly optimized trajectory data to the trajectory topic
-        traj_pub.publish(this->get_traj_msg(ddpmain.get_x_traj(), ddpmain.get_u_traj(), ddpmain.get_Ku()));
+            //Publish the newly optimized trajectory data to the trajectory topic
+            traj_pub.publish(this->get_traj_msg(ddpmain.get_x_traj(), ddpmain.get_u_traj(), ddpmain.get_Ku()));
+        }
+        //Otherwise notify user upon failure
+        else
+        {
+            printf("ERROR!!! Target service failed!!!\n");
+        }
+        
     }
 }
 
@@ -72,15 +88,11 @@ void Optimizer::ground_truth_callback(const nav_msgs::Odometry::ConstPtr& odom)
     //Convert the quaternion to euler angles of yaw, pitch, and roll
     //This should be in radians
     mat.getEulerYPR(this->cur_state(8), this->cur_state(7), this->cur_state(6));
-    //mat.getEulerYPR(this->cur_state(5), this->cur_state(4), this->cur_state(3));
 
     //Linear velocity
     this->cur_state(3) = odom->twist.twist.linear.x;
     this->cur_state(4) = odom->twist.twist.linear.y;
     this->cur_state(5) = odom->twist.twist.linear.z;
-    //this->cur_state(6) = odom->twist.twist.linear.x;
-    //this->cur_state(7) = odom->twist.twist.linear.y;
-    //this->cur_state(8) = odom->twist.twist.linear.z;
 
     //Angular velocity
     this->cur_state(9) = odom->twist.twist.angular.x;
@@ -90,13 +102,16 @@ void Optimizer::ground_truth_callback(const nav_msgs::Odometry::ConstPtr& odom)
     //Set the current state as initialized
     this->cur_state_init = true;
 
+    //Set up a debug message
     gtddp_drone_msgs::state_data current_state_dbg;
 
+    //Decode the current state
     for(int i = 0; i < Constants::num_states; ++i)
     {
         current_state_dbg.states[i] = this->cur_state(i);
     }
 
+    //Publish the debugging current state info
     this->state_pub.publish(current_state_dbg);
 }
 
@@ -122,14 +137,6 @@ void Optimizer::state_estimate_callback(const tum_ardrone::filter_state::ConstPt
     this->cur_state(10) = estimate_event->dpitch;
     this->cur_state(11) = estimate_event->dyaw;
 
-    //TODO: Review dynamics
-    //this->cur_state(3) = estimate_event->roll;
-    //this->cur_state(4) = estimate_event->pitch;
-    //this->cur_state(5) = estimate_event->yaw;
-    //this->cur_state(6) = estimate_event->dx;
-    //this->cur_state(7) = estimate_event->dy;
-    //this->cur_state(8) = estimate_event->dz;
-
     //Set the current state as initialized
     this->cur_state_init = true;
 }
@@ -138,19 +145,16 @@ void Optimizer::state_estimate_callback(const tum_ardrone::filter_state::ConstPt
 /**
  * 
  */
-void Optimizer::target_state_callback(const gtddp_drone_msgs::state_data::ConstPtr& target_event)
+void Optimizer::target_state_decode(const gtddp_drone_msgs::state_data& target_event)
 {
+    printf("TARGET: [");
     for(int i = 0; i < Constants::num_states; ++i)
     {
-        this->goal_state(i) = target_event->states[i];
+        this->goal_state(i) = target_event.states[i];
 
-        if(!goal_state_init)
-        {
-            printf("%f ", this->goal_state(i));
-        }
+        printf("%f ", this->goal_state(i));
     }
-
-    this->goal_state_init = true;
+    printf("]\n");
 }
 
 

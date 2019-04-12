@@ -77,8 +77,9 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
 
         //Increment the timestep
         this->timestep++;
+
+        ctrl_timer.setPeriod(ros::Duration(0.001));
     }
-    //TODO: will this crash a real-life drone? Currently used to help with laptop simulations
     else if(this->cur_state_init && this->traj_init)
     {
         this->ctrl_command.linear.x = 0;
@@ -90,7 +91,10 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
 
         //this->control_signal_pub.publish(attitude_pd_control());
         this->control_signal_pub.publish(this->ctrl_command);
+
+        ctrl_timer.setPeriod(ros::Duration(1.0));
     }
+    //TODO: will this crash a real-life drone? Currently used to help with laptop simulations
     else
     {
         //this->ctrl_command.angular.z = 4;
@@ -245,8 +249,9 @@ void ControlCalculator::trajectory_callback(const gtddp_drone_msgs::Trajectory::
         this->K_traj.push_back(K_traj_dat);
     }
 
-    //Forward propagate controls to find the correct output
-    //quadrotor.feedforward_controls(this->cur_state, this->u_traj, this->K_traj, this->x_traj);
+    //Forward propagate controls to find the correct output based on the starting position
+    //This serves to get the drone back on track when it strays due to hover, wind, etc.
+    quadrotor.feedforward_controls(this->cur_state, this->u_traj, this->K_traj, this->x_traj);
 
     //Reset the timestep variable to t0
     timestep = 0;
@@ -254,6 +259,16 @@ void ControlCalculator::trajectory_callback(const gtddp_drone_msgs::Trajectory::
     //The trajectory is now initialized!
     this->traj_init = true;
 }
+
+
+
+void ControlCalculator::set_timer(ros::Timer& timer)
+{
+    this->ctrl_timer = timer;
+}
+
+
+
 
 
 

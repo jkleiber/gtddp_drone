@@ -23,20 +23,23 @@
 #include <gtddp_drone_msgs/gain_data.h>
 #include <gtddp_drone_msgs/gain_vector.h>
 
-
+//User defined ROS srv
+#include <gtddp_drone_msgs/target.h>
 
 class Optimizer 
 {
     public:
         //Constructors
         Optimizer();
-        Optimizer(ros::Publisher& traj_publisher, ros::Publisher& state_publisher);
+        Optimizer(ros::Publisher& traj_publisher, ros::Publisher& state_publisher, ros::ServiceClient& target_client);
         
         //Callback functions
         void traj_update_callback(const ros::TimerEvent& time_event);
         void ground_truth_callback(const nav_msgs::Odometry::ConstPtr& odom);
         void state_estimate_callback(const tum_ardrone::filter_state::ConstPtr& estimate_event);
-        void target_state_callback(const gtddp_drone_msgs::state_data::ConstPtr& target_event);
+
+        //Target state helpers
+        void target_state_decode(const gtddp_drone_msgs::state_data& target_event);
 
     private:
         //Publisher for the trajectory data
@@ -44,6 +47,9 @@ class Optimizer
 
         //Publisher for state estimate (simulation debugging)
         ros::Publisher state_pub;
+
+        //ServiceClient for the target data
+        ros::ServiceClient target_client;
 
         //Save callback data here
         Eigen::VectorXd cur_state;
@@ -59,6 +65,7 @@ class Optimizer
         gtddp_drone_msgs::state_data get_state_data_msg(std::vector<Eigen::VectorXd> x_traj, int idx);
         gtddp_drone_msgs::ctrl_data get_ctrl_data_msg(std::vector<Eigen::VectorXd> u_traj, int idx);
         gtddp_drone_msgs::gain_data get_gain_data_msg(std::vector<Eigen::MatrixXd> K_traj, int idx);
+        
 };
 
 #endif

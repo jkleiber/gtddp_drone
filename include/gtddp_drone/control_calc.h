@@ -43,6 +43,9 @@ class ControlCalculator
         void state_estimate_callback(const tum_ardrone::filter_state::ConstPtr& estimate_event);
         void trajectory_callback(const gtddp_drone_msgs::Trajectory::ConstPtr& traj_msg);
 
+        //Timer configuration
+        void set_timer(ros::Timer& timer);
+
     private:
         //PD Controller
         geometry_msgs::Twist attitude_pd_control();
@@ -66,6 +69,9 @@ class ControlCalculator
 
         //Use quadrotor dynamics
         Quadrotor quadrotor;
+
+        //Change execution rate for the control callback
+        ros::Timer ctrl_timer;
 
         //Do time tracking
         int timestep;
