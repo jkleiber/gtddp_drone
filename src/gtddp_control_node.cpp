@@ -70,11 +70,11 @@ int main(int argc, char **argv)
     takeoff_pub.publish(empty_msg);
 
     //Pump multithreaded callbacks
-    ros::MultiThreadedSpinner spinner;
-    spinner.spin();
+    //ros::MultiThreadedSpinner spinner;
+    //spinner.spin();
 
     //Pump callbacks (single thread)
-    //ros::spin();
+    ros::spin();
 
     return 0;
 }
