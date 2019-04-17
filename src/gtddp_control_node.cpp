@@ -6,6 +6,9 @@
 #include <std_msgs/String.h>
 #include <sstream>
 
+//Include user msgs
+#include <gtddp_drone_msgs/Status.h>
+
 //Include package libraries
 #include "gtddp_drone/gtddp_lib/Constants.h"
 #include "gtddp_drone/control_calc.h"
@@ -21,12 +24,13 @@ int main(int argc, char **argv)
     //Initialize this node
     ros::NodeHandle control_node;
 
-    //Advertise control output and landing mode
+    //Advertise control output, status, and landing mode
     ros::Publisher ctrl_sig_pub = control_node.advertise<geometry_msgs::Twist>(control_node.resolveName("/cmd_vel"), MAX_BUFFER);
+    ros::Publisher stat_pub = control_node.advertise<gtddp_drone_msgs::Status>(control_node.resolveName("/gtddp_drone/status"), MAX_BUFFER);
     ros::Publisher land_pub = control_node.advertise<std_msgs::Empty>(control_node.resolveName("/ardrone/land"), MAX_BUFFER);
 
     //Set up the control calculator
-    ControlCalculator control_calc(ctrl_sig_pub, land_pub);
+    ControlCalculator control_calc(ctrl_sig_pub, stat_pub);
 
     //Set up callbacks for the current trajectory topic and the state estimation
     ros::Subscriber traj_sub = control_node.subscribe(control_node.resolveName("/gtddp_drone/trajectory"), MAX_BUFFER, &ControlCalculator::trajectory_callback, &control_calc);
@@ -70,11 +74,11 @@ int main(int argc, char **argv)
     takeoff_pub.publish(empty_msg);
 
     //Pump multithreaded callbacks
-    //ros::MultiThreadedSpinner spinner;
-    //spinner.spin();
+    ros::MultiThreadedSpinner spinner;
+    spinner.spin();
 
     //Pump callbacks (single thread)
-    ros::spin();
+    //ros::spin();
 
     return 0;
 }

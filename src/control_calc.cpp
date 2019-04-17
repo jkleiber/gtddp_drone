@@ -14,19 +14,22 @@ ControlCalculator::ControlCalculator()
 
     //Set timestep to t0
     this->timestep = -1;
+
+    //Set the status to idle
+    ctrl_status.status = gtddp_drone_msgs::Status::IDLE;
 }
 
 
 /**
  * 
  */
-ControlCalculator::ControlCalculator(ros::Publisher ctrl_sig_pub, ros::Publisher land_pub)
+ControlCalculator::ControlCalculator(ros::Publisher ctrl_sig_pub, ros::Publisher status_pub)
 {
     //Control signal to publish to AR Drone
     this->control_signal_pub = ctrl_sig_pub;
 
-    //For landing the drone, use the landing Publisher
-    this->landing_pub = land_pub;
+    //For publishing the control status
+    this->status_pub = status_pub;
 
     //Initialize current state size
     this->cur_state.resize(Constants::num_states);
@@ -37,6 +40,10 @@ ControlCalculator::ControlCalculator(ros::Publisher ctrl_sig_pub, ros::Publisher
 
     //Set timestep to t0
     this->timestep = -1;
+
+    //Set the status to idle
+    ctrl_status.status = gtddp_drone_msgs::Status::IDLE;
+    this->status_pub.publish(this->ctrl_status);
 }
 
 
@@ -50,6 +57,10 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
     if(this->cur_state_init && this->traj_init
     && timestep >= 0 && timestep < this->x_traj.size())
     {
+        //Set the status to flying
+        ctrl_status.status = gtddp_drone_msgs::Status::FLYING;
+        this->status_pub.publish(this->ctrl_status);
+
         printf("x: [");
         for(int i = 0; i < Constants::num_states; ++i)
         {
@@ -82,6 +93,11 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
     }
     else if(this->cur_state_init && this->traj_init)
     {
+        //Set the status to idle
+        ctrl_status.status = gtddp_drone_msgs::Status::IDLE;
+        this->status_pub.publish(this->ctrl_status);
+
+        //Hover until next command
         this->ctrl_command.linear.x = 0;
         this->ctrl_command.linear.y = 0;
         this->ctrl_command.linear.z = 0;
@@ -97,6 +113,10 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
     //TODO: will this crash a real-life drone? Currently used to help with laptop simulations
     else
     {
+        //Set the status to idle
+        ctrl_status.status = gtddp_drone_msgs::Status::IDLE;
+        this->status_pub.publish(this->ctrl_status);
+
         //this->ctrl_command.angular.z = 4;
         //this->control_signal_pub.publish(this->ctrl_command);
     }
@@ -199,6 +219,10 @@ void ControlCalculator::trajectory_callback(const gtddp_drone_msgs::Trajectory::
     int num_events; //number of events in the message
     int t;          //time iteration variable
     int r, c;       //rows and columns of gain matrix
+
+    //Set the status to flying
+    ctrl_status.status = gtddp_drone_msgs::Status::FLYING;
+    this->status_pub.publish(this->ctrl_status);
 
     //Get the components of the message
     const std::vector<gtddp_drone_msgs::state_data> &x_data = traj_msg->x_traj;

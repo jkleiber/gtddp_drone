@@ -22,6 +22,7 @@
 #include <gtddp_drone_msgs/ctrl_data.h>
 #include <gtddp_drone_msgs/gain_data.h>
 #include <gtddp_drone_msgs/gain_vector.h>
+#include <gtddp_drone_msgs/Status.h>
 
 //User defined ROS srv
 #include <gtddp_drone_msgs/target.h>
@@ -37,6 +38,7 @@ class Optimizer
         void traj_update_callback(const ros::TimerEvent& time_event);
         void ground_truth_callback(const nav_msgs::Odometry::ConstPtr& odom);
         void state_estimate_callback(const tum_ardrone::filter_state::ConstPtr& estimate_event);
+        void status_callback(const gtddp_drone_msgs::Status::ConstPtr& status);
 
         //Target state helpers
         void target_state_decode(const gtddp_drone_msgs::state_data& target_event);
@@ -50,6 +52,9 @@ class Optimizer
 
         //ServiceClient for the target data
         ros::ServiceClient target_client;
+
+        //Track the controller's state
+        int ctrl_status;
 
         //Save callback data here
         Eigen::VectorXd cur_state;

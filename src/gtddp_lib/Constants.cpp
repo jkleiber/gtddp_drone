@@ -31,7 +31,7 @@ namespace Constants {
     // DDP Constant doubles
     // Change as necessary, do not remove
     extern const double dt(0.001);
-    extern const double learning_rate(0.08);//(0.009);//(0.05);
+    extern const double learning_rate(0.1);//(0.08);
 
     // System Constant doubles
     // Change, add, or remove as necessary

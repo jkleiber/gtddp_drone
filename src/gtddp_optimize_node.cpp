@@ -33,8 +33,7 @@ int main(int argc, char **argv)
 
     //Subscribe to state estimation and target state topics
     ros::Subscriber estimate_sub;
-    //ros::Subscriber target_sub = traj_node.subscribe(traj_node.resolveName("/gtddp_drone_target_trajectory/target_state"), MAX_BUFFER, &Optimizer::target_state_callback, &traj_optimizer);
-
+    ros::Subscriber control_status_sub = traj_node.subscribe(traj_node.resolveName("/gtddp_drone/status"), MAX_BUFFER, &Optimizer::status_callback, &traj_optimizer);
     //In simulations, subscribe to ground truth
     if(SIMULATION)
     {
@@ -47,13 +46,13 @@ int main(int argc, char **argv)
     }
 
     //Set up timer for recalculations
-    ros::Timer update_timer = traj_node.createTimer(ros::Duration(20.0), &Optimizer::traj_update_callback, &traj_optimizer, false);
+    ros::Timer update_timer = traj_node.createTimer(ros::Duration(1.0), &Optimizer::traj_update_callback, &traj_optimizer, false);
 
     //Pump callbacks
-    //ros::MultiThreadedSpinner spinner;
-    //spinner.spin();
+    ros::MultiThreadedSpinner spinner;
+    spinner.spin();
 
-    ros::spin();
+    //ros::spin();
 
     return 0;
 }

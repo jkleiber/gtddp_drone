@@ -16,6 +16,7 @@
 //User msgs
 #include <tum_ardrone/filter_state.h>
 #include <gtddp_drone_msgs/Trajectory.h>
+#include <gtddp_drone_msgs/Status.h>
 
 //Conversion Constants
 //TODO: These are simulator values, and may need to be tuned for real flights
@@ -35,7 +36,7 @@ class ControlCalculator
 {
     public:
         ControlCalculator();
-        ControlCalculator(ros::Publisher ctrl_sig_pub, ros::Publisher land_pub);
+        ControlCalculator(ros::Publisher ctrl_sig_pub, ros::Publisher status_pub);
 
         //Callback functions
         void recalculate_control_callback(const ros::TimerEvent& time_event);
@@ -51,12 +52,15 @@ class ControlCalculator
         geometry_msgs::Twist attitude_pd_control();
         geometry_msgs::Twist full_pd_control();
         
+        //Controller status
+        gtddp_drone_msgs::Status ctrl_status;
+
         //Output format utils
         double angleWrap(double angle);
 
         //Publish control system data to the drone
         ros::Publisher control_signal_pub;
-        ros::Publisher landing_pub;
+        ros::Publisher status_pub;
         geometry_msgs::Twist ctrl_command;
 
         //Store the current trajectory information

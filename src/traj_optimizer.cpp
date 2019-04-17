@@ -13,6 +13,9 @@ Optimizer::Optimizer()
     //Initialize current state size
     this->cur_state.resize(Constants::num_states);
     this->goal_state.resize(Constants::num_states);
+
+    //Set the control status to unknown
+    this->ctrl_status = -1;
 }
 
 
@@ -32,6 +35,9 @@ Optimizer::Optimizer(ros::Publisher& traj_publisher, ros::Publisher& state_publi
     //Initialize current state size
     this->cur_state.resize(Constants::num_states);
     this->goal_state.resize(Constants::num_states);
+
+    //Set the control status to unknown
+    this->ctrl_status = -1;
 }
 
 
@@ -42,7 +48,7 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
 {
     //Check to make sure current state and target state are initialized
     //If they are, then optimize the current trajectory
-    if(this->cur_state_init)
+    if(this->cur_state_init && this->ctrl_status == gtddp_drone_msgs::Status::IDLE)
     {
         //Create a service to update the current target
         gtddp_drone_msgs::target target_srv;
@@ -59,6 +65,9 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
 
             //Publish the newly optimized trajectory data to the trajectory topic
             traj_pub.publish(this->get_traj_msg(ddpmain.get_x_traj(), ddpmain.get_u_traj(), ddpmain.get_Ku()));
+
+            //Set ctrl status to unknown so the controller can start flying
+            this->ctrl_status = -1;
         }
         //Otherwise notify user upon failure
         else
@@ -139,6 +148,15 @@ void Optimizer::state_estimate_callback(const tum_ardrone::filter_state::ConstPt
 
     //Set the current state as initialized
     this->cur_state_init = true;
+}
+
+
+/**
+ * 
+ */
+void Optimizer::status_callback(const gtddp_drone_msgs::Status::ConstPtr& status)
+{
+    this->ctrl_status = status->status;
 }
 
 
