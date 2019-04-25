@@ -30,6 +30,10 @@ DDP_main_mm::DDP_main_mm()
     trajectory_cost_mm.resize(num_iterations);
     
     ddp.initialize_trajectories_to_zero_mm(x_traj, u_traj, v_traj, dx_traj);
+
+    //Set the initial max iterations to the high value and initialize the leg counter
+    this->max_iterations = Constants::num_iterations;
+    this->num_legs = 0;
 }
 
 DDP_main_mm::DDP_main_mm(Eigen::VectorXd x, Eigen::VectorXd x_t)
@@ -54,6 +58,10 @@ DDP_main_mm::DDP_main_mm(Eigen::VectorXd x, Eigen::VectorXd x_t)
     
     ddp.initialize_trajectories_to_zero_mm(x_traj, u_traj, v_traj, dx_traj);
     x_traj[0]=x;
+
+    //Set the initial max iterations to the high value and initialize the leg counter
+    this->max_iterations = Constants::num_iterations;
+    this->num_legs = 0;
     
 }
 
@@ -76,8 +84,18 @@ void DDP_main_mm::update(Eigen::VectorXd x, Eigen::VectorXd x_t)
     
 void DDP_main_mm::ddp_loop() 
 {
+    //Increment the leg counter
+    ++num_legs;
+
+    //If the leg counter has exceeded the number of long legs required before short iterations,
+    //then switch to short iterations
+    if(num_legs > Constants::num_long_legs)
+    {
+        this->max_iterations = Constants::short_iterations;
+    }
+
     //int start_s=clock();
-    for (int i = 0; i < num_iterations; i++) 
+    for (int i = 0; i < max_iterations; i++) 
     {        
         // Play the controls on the real dynamics to generate new x_traj, u_traj, v_traj //
         quad.forward_propagate_mm(x_traj, u_traj, v_traj);

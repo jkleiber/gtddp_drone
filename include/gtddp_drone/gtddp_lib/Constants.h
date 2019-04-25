@@ -13,6 +13,8 @@ namespace Constants {
 	extern const int num_controls_v;
     extern const int num_time_steps;
     extern const int num_iterations;
+    extern const int num_long_legs;
+    extern const int short_iterations;
 
     extern const double dt;
     extern const double learning_rate;

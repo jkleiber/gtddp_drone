@@ -8,11 +8,12 @@ Optimizer::Optimizer()
 {
     //Flag the state data as uninitialized
     this->cur_state_init = false;
-    this->goal_state_init = false;
+    this->last_goal_state_init = false;
 
     //Initialize current state size
     this->cur_state.resize(Constants::num_states);
     this->goal_state.resize(Constants::num_states);
+    this->last_goal_state.resize(Constants::num_states);
 
     //Set the control status to unknown
     this->ctrl_status = -1;
@@ -30,11 +31,12 @@ Optimizer::Optimizer(ros::Publisher& traj_publisher, ros::Publisher& state_publi
     
     //Flag the state data as uninitialized
     this->cur_state_init = false;
-    this->goal_state_init = false;
+    this->last_goal_state_init = false;
 
     //Initialize current state size
     this->cur_state.resize(Constants::num_states);
     this->goal_state.resize(Constants::num_states);
+    this->last_goal_state.resize(Constants::num_states);
 
     //Set the control status to unknown
     this->ctrl_status = -1;
@@ -48,7 +50,7 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
 {
     //Check to make sure current state and target state are initialized
     //If they are, then optimize the current trajectory
-    if(this->cur_state_init && this->ctrl_status == gtddp_drone_msgs::Status::IDLE)
+    if(this->cur_state_init)// && this->ctrl_status == gtddp_drone_msgs::Status::IDLE)
     {
         //Create a service to update the current target
         gtddp_drone_msgs::target target_srv;
@@ -60,7 +62,12 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
             this->target_state_decode(target_srv.response.target_state);
 
             //Update the DDP start and goals, then run the DDP loop to optimize the new trajectory
-            ddpmain.update(this->cur_state, this->goal_state);
+            ddpmain.update(this->last_goal_state, this->goal_state);
+
+            //Update the last goal state to be the current goal state
+            this->last_goal_state = goal_state;
+
+            //Optimize trajectory
             ddpmain.ddp_loop();
 
             //Publish the newly optimized trajectory data to the trajectory topic
@@ -108,6 +115,12 @@ void Optimizer::ground_truth_callback(const nav_msgs::Odometry::ConstPtr& odom)
     this->cur_state(10) = odom->twist.twist.angular.y;
     this->cur_state(11) = odom->twist.twist.angular.z;
 
+    //Set the last goal to the current state if this is the first leg
+    if(!last_goal_state_init)
+    {
+        this->last_goal_state = this->cur_state;
+    }
+
     //Set the current state as initialized
     this->cur_state_init = true;
 
@@ -146,6 +159,12 @@ void Optimizer::state_estimate_callback(const tum_ardrone::filter_state::ConstPt
     this->cur_state(10) = estimate_event->dpitch;
     this->cur_state(11) = estimate_event->dyaw;
 
+    //Set the last goal to the current state if this is the first leg
+    if(!last_goal_state_init)
+    {
+        this->last_goal_state = this->cur_state;
+    }
+
     //Set the current state as initialized
     this->cur_state_init = true;
 }
@@ -173,6 +192,8 @@ void Optimizer::target_state_decode(const gtddp_drone_msgs::state_data& target_e
         printf("%f ", this->goal_state(i));
     }
     printf("]\n");
+
+    this->last_goal_state_init = true;
 }
 
 

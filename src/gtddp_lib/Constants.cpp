@@ -20,13 +20,16 @@ namespace Constants {
 //     extern const int num_controls_u(1);
 //	   extern const int num_controls_v(1);
 //    
-   //Quadrotor system
+    //Quadrotor system
     extern const int num_states(12);
     extern const int num_controls_u(4);
     extern const int num_controls_v(4);
-//    
+//  
+    // DDP Hyperparameters
     extern const int num_time_steps(501);
     extern const int num_iterations(15); 
+    extern const int num_long_legs(2);
+    extern const int short_iterations(3); 
 
     // DDP Constant doubles
     // Change as necessary, do not remove

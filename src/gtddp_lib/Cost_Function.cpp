@@ -36,7 +36,7 @@ void Cost_Function::initialize_cost_matrix(){
     Q_f = MatrixXd::Identity(num_states, num_states);
 
     //Set Ru values individually
-    Ru(0, 0) = 0.035;  //thrust
+    Ru(0, 0) = 0.02;  //thrust
     Ru(1, 1) = 0.02;   //u1 moment
     Ru(2, 2) = 0.02;   //u2 moment
     Ru(3, 3) = 0.02;   //u3 moment

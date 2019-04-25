@@ -46,6 +46,9 @@ private:
     std::vector<Eigen::VectorXd> x_traj, u_traj, v_traj, dx_traj;
     std::vector<Eigen::MatrixXd> A, B, C;
     std::vector<double> trajectory_cost_mm;
+
+    int num_legs;
+    int max_iterations;
     
 };
 

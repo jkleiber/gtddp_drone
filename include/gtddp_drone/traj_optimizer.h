@@ -59,8 +59,9 @@ class Optimizer
         //Save callback data here
         Eigen::VectorXd cur_state;
         Eigen::VectorXd goal_state;
+        Eigen::VectorXd last_goal_state;
         bool cur_state_init;
-        bool goal_state_init;
+        bool last_goal_state_init;
 
         //Save DDP loop state in class variable
         DDP_main_mm ddpmain;

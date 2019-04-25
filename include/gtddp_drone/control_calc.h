@@ -3,6 +3,9 @@
 
 //System libs
 #include "ros/ros.h"
+#include <iostream>
+#include <fstream>
+#include <string.h>
 #include <math.h>
 #include <eigen3/Eigen/Dense>
 #include <geometry_msgs/Twist.h>
@@ -47,6 +50,8 @@ class ControlCalculator
         //Timer configuration
         void set_timer(ros::Timer& timer);
 
+        ~ControlCalculator();
+
     private:
         //PD Controller
         geometry_msgs::Twist attitude_pd_control();
@@ -84,6 +89,8 @@ class ControlCalculator
         bool cur_state_init;
         bool traj_init;
 
+        std::ofstream ground_truth_data;
+        std::ofstream target_data;
 };
 
 

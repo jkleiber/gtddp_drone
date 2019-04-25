@@ -44,6 +44,8 @@ ControlCalculator::ControlCalculator(ros::Publisher ctrl_sig_pub, ros::Publisher
     //Set the status to idle
     ctrl_status.status = gtddp_drone_msgs::Status::IDLE;
     this->status_pub.publish(this->ctrl_status);
+
+    this->ground_truth_data.open("/home/jkleiber/gt_data.csv");
 }
 
 
@@ -60,13 +62,13 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         //Set the status to flying
         ctrl_status.status = gtddp_drone_msgs::Status::FLYING;
         this->status_pub.publish(this->ctrl_status);
-
+/*
         printf("x: [");
         for(int i = 0; i < Constants::num_states; ++i)
         {
             printf("%f ", this->x_traj[timestep](i));
         }
-        printf("]\n");
+        printf("]\n");*/
         
         //TODO: Add clamp function
         /* Form the control message */
@@ -167,6 +169,11 @@ void ControlCalculator::ground_truth_callback(const nav_msgs::Odometry::ConstPtr
     //    printf("%f ", this->cur_state(i));
     //}
     //printf("]\n");
+
+    //Output data to the logging file
+    std::string data_str = std::to_string(cur_state(0)) + "," + std::to_string(cur_state(1)) + "," + std::to_string(cur_state(2)) + "\n";
+    //std::cout << data_str << std::endl;
+    this->ground_truth_data << data_str;
 
     //Set the current state as initialized
     this->cur_state_init = true;
@@ -292,152 +299,11 @@ void ControlCalculator::set_timer(ros::Timer& timer)
 }
 
 
-
-
-
-
-geometry_msgs::Twist ControlCalculator::attitude_pd_control()
+ControlCalculator::~ControlCalculator()
 {
-    /* Declare local variables */
-    double phi_error;
-    double phi_dot_error;
-    double pd_phi;
-    double theta_error;
-    double theta_dot_error;
-    double pd_theta;
-
-    //If the timestep is before the start, assume hovering state at the origin (0, 0, 1)
-    if(timestep < 0)
-    {
-        //Phi PD control
-        phi_error = (this->cur_state(6) - 0.0);
-        phi_dot_error = (this->cur_state(9) - 0.0);
-        
-        //Theta PD control
-        theta_error = (this->cur_state(7) - 0.0);
-        theta_dot_error = (this->cur_state(10) - 0.0);
-    }
-    //If the timestep is after all trajectory points, assume goal state to be last state
-    else if(timestep >= this->x_traj.size())
-    {
-        //Phi PD control
-        phi_error = (this->cur_state(6) - this->angleWrap(this->x_traj[this->x_traj.size() - 1](6)));
-        phi_dot_error = (this->cur_state(9) - this->x_traj[this->x_traj.size() - 1](9));
-        
-        //Theta PD control
-        theta_error = (this->cur_state(7) - this->angleWrap(this->x_traj[this->x_traj.size() - 1](7)));
-        theta_dot_error = (this->cur_state(10) - this->x_traj[this->x_traj.size() - 1](10));
-    }
-    //Otherwise calculate the current timestep's PD errors
-    else
-    {
-        //Phi PD control
-        phi_error = (this->cur_state(6) - this->angleWrap(this->x_traj[timestep](6)));
-        phi_dot_error = (this->cur_state(9) - this->x_traj[timestep](9));
-        
-        //Theta PD control
-        theta_error = (this->cur_state(7) - this->angleWrap(this->x_traj[timestep](7)));
-        theta_dot_error = (this->cur_state(10) - this->x_traj[timestep](10));
-    }
-
-    //Compute the PD control gains
-    pd_phi = (KP * phi_error) + (KD * phi_dot_error);
-    pd_theta = (KP * theta_error) + (KD * theta_dot_error);
-
-    //Make the augmented message
-    geometry_msgs::Twist pd_output;
-    pd_output = this->ctrl_command;
-
-    //Modify original output to handle the PD alterations
-    pd_output.linear.x = (pd_output.linear.x + pd_theta) / MAX_FWD_VEL;
-    pd_output.linear.y = (pd_output.linear.y + pd_phi ) / MAX_SIDE_VEL;
-
-    printf("u: [");
-    printf("X speed: %f ", pd_output.linear.x);
-    printf("Y spped: %f ", pd_output.linear.y);
-    printf("Yaw Rate: %f ", pd_output.angular.z);
-    printf("V speed: %f ", pd_output.linear.z);
-    printf("]\n");
-
-    return pd_output;
+    this->ground_truth_data.close();
+    this->target_data.close();
 }
-
-geometry_msgs::Twist ControlCalculator::full_pd_control()
-{
-    /* Declare local variables */
-    double phi_error;
-    double phi_dot_error;
-    double pd_phi;
-    double theta_error;
-    double theta_dot_error;
-    double pd_theta;
-    double yaw_error;
-    double yaw_dot_error;
-    double pd_yaw;
-    double z_error;
-    double z_dot_error;
-    double pd_z;
-
-    geometry_msgs::Twist pd_output;
-
-    //If the timestep is out of bounds, assume hovering state
-    if(timestep < 0
-    || timestep >= this->x_traj.size())
-    {
-        //Phi PD control
-        phi_error = (this->cur_state(6) - 0.0);
-        phi_dot_error = (this->cur_state(9) - 0.0);
-        
-        //Theta PD control
-        theta_error = (this->cur_state(7) - 0.0);
-        theta_dot_error = (this->cur_state(10) - 0.0);
-
-        //Yaw PD control
-        yaw_error = (this->cur_state(8) - 0.0);
-        yaw_dot_error = (this->cur_state(11) - 0.0);
-
-        //Vertical Speed PD control
-        z_error = (this->cur_state(2) - 1.0);
-        z_dot_error = this->cur_state(5) - 0.0;
-    }
-    //Otherwise calculate the current timestep's PD errors
-    else
-    {
-        //Phi PD control
-        phi_error = (this->cur_state(6) - this->x_traj[timestep](6));
-        phi_dot_error = (this->cur_state(9) - this->x_traj[timestep](9));
-        
-        //Theta PD control
-        theta_error = (this->cur_state(7) - this->x_traj[timestep](7));
-        theta_dot_error = (this->cur_state(10) - this->x_traj[timestep](10));
-
-        //Yaw PD control
-        yaw_error = (this->cur_state(8) - this->x_traj[timestep](8));
-        yaw_dot_error = (this->cur_state(11) - this->x_traj[timestep](11));
-
-        //Vertical Speed PD control
-        z_error = (this->cur_state(2) - this->x_traj[timestep](2));
-        z_dot_error = this->cur_state(5) - this->x_traj[timestep](5);
-    }
-
-    //Compute the PD control gains
-    pd_phi = (KP * phi_error) + (KD * phi_dot_error);
-    pd_theta = (KP * theta_error) + (KD * theta_dot_error);
-    pd_yaw = (KP * yaw_error) + (KD * yaw_dot_error);
-    pd_z = (KP * z_error) + (KD * z_dot_error);
-
-    //Make the augmented message
-    pd_output = this->ctrl_command;
-
-    //Modify original output to handle the PD alterations
-    pd_output.linear.x = (pd_output.linear.x + pd_theta) / MAX_FWD_VEL;
-    pd_output.linear.y = (pd_output.linear.y + pd_phi ) / MAX_SIDE_VEL;
-    pd_output.angular.z = (pd_output.angular.z + pd_yaw) / MAX_YAW_RATE;
-    pd_output.linear.z = (pd_output.linear.z + pd_z) / MAX_VERTICAL_VEL;
-
-    return pd_output;
-}
-
 
 double ControlCalculator::angleWrap(double angle)
 {
