@@ -89,7 +89,7 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
 /**
  * 
  */
-void Optimizer::ground_truth_callback(const nav_msgs::Odometry::ConstPtr& odom)
+void Optimizer::state_estimate_callback(const nav_msgs::Odometry::ConstPtr& odom)
 {
     //Position
     this->cur_state(0) = odom->pose.pose.position.x;
@@ -140,6 +140,7 @@ void Optimizer::ground_truth_callback(const nav_msgs::Odometry::ConstPtr& odom)
 /**
  * 
  */
+/*
 void Optimizer::state_estimate_callback(const tum_ardrone::filter_state::ConstPtr& estimate_event)
 {
     //Update the current state from the tum_ardrone
@@ -167,7 +168,7 @@ void Optimizer::state_estimate_callback(const tum_ardrone::filter_state::ConstPt
 
     //Set the current state as initialized
     this->cur_state_init = true;
-}
+}*/
 
 
 /**

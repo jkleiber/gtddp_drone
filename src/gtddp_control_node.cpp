@@ -14,7 +14,7 @@
 #include "gtddp_drone/control_calc.h"
 
 #define MAX_BUFFER 100
-#define SIMULATION 1
+#define SIMULATION 0
 
 int main(int argc, char **argv)
 {
@@ -40,11 +40,11 @@ int main(int argc, char **argv)
     if(SIMULATION)
     {
         ROS_INFO("Simulation mode active");
-        estimate_sub = control_node.subscribe(control_node.resolveName("/ground_truth/state"), MAX_BUFFER, &ControlCalculator::ground_truth_callback, &control_calc);
+        estimate_sub = control_node.subscribe(control_node.resolveName("/ground_truth/state"), MAX_BUFFER, &ControlCalculator::state_estimate_callback, &control_calc);
     }
     else
     {
-        estimate_sub = control_node.subscribe(control_node.resolveName("/ardrone/predictedPose"), MAX_BUFFER, &ControlCalculator::state_estimate_callback, &control_calc);
+        estimate_sub = control_node.subscribe(control_node.resolveName("/vicon/ardrone1/odom"), MAX_BUFFER, &ControlCalculator::state_estimate_callback, &control_calc);
     }
     
     //Set up a timer to call the control calculation function at the appropriate update rate
@@ -52,11 +52,11 @@ int main(int argc, char **argv)
     control_calc.set_timer(update_timer);
 
     //Set up and change the settings of tum_ardrone to use the Vicon system
-    ros::Publisher tum_settings = control_node.advertise<std_msgs::String>(control_node.resolveName("switch_control"), 10);
+    /*ros::Publisher tum_settings = control_node.advertise<std_msgs::String>(control_node.resolveName("switch_control"), 10);
     std_msgs::String str;
     std::stringstream ss("Vicon");
     str.data = ss.str();
-    tum_settings.publish(str);
+    tum_settings.publish(str);*/
 
     //Create an empty message
     std_msgs::Empty empty_msg;

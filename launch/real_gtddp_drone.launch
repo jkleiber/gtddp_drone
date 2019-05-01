@@ -1,0 +1,30 @@
+<launch>
+  <!-- GT-DDP nodes -->
+  <node name="gtddp_control_node" pkg="gtddp_drone" type="gtddp_control_node" output="screen"/>
+  <node name="gtddp_optimize_node" pkg="gtddp_drone" type="gtddp_optimize_node" output="screen"/>
+
+  <!-- Target node -->
+  <node name="gtddp_target_node" pkg="gtddp_drone_target_trajectory" type="gtddp_target_node" output="screen"/>
+
+  <!-- AR.Drone Driver -->
+  <include file="$(find ardrone_autonomy)/launch/ardrone.launch">
+    <!-- Change the ip argument to configuret the IP address of the AR.Drone to connect to -->
+    <arg name="ip" value="192.168.1.11"/>
+  </include> 
+
+  <!-- VICON -->
+  <!-- Make sure to follow compile instructions in mocap_vicon -->
+  <node pkg="mocap_vicon" type="mocap_vicon_node" name="vicon" output="screen">
+    <!-- Set the server address to the IP of the computer running the VICON Tracker program -->
+    <!-- Set the port number according to the UDP port set in Tracker -->
+    <!-- Format: IP:PORT like 192.168.X.ABC:PORT -->
+    <param name="server_address" value="192.168.1.119:801"/>
+    <param name="frame_rate" value="100"/>
+    <param name="max_accel" value="10.0"/>
+    <param name="publish_tf" value="false"/>
+    <param name="fixed_frame_id" value="mocap"/>
+    <rosparam param="model_list">[]</rosparam>
+    <!--remap from="vicon/model_name/odom" to="/model_name/odom"/-->
+  </node>
+
+</launch>

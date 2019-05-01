@@ -36,8 +36,9 @@ class Optimizer
         
         //Callback functions
         void traj_update_callback(const ros::TimerEvent& time_event);
-        void ground_truth_callback(const nav_msgs::Odometry::ConstPtr& odom);
-        void state_estimate_callback(const tum_ardrone::filter_state::ConstPtr& estimate_event);
+        void state_estimate_callback(const nav_msgs::Odometry::ConstPtr& odom);
+        //TODO: rename the state_estimate_callback below to something else
+        //void state_estimate_callback(const tum_ardrone::filter_state::ConstPtr& estimate_event);
         void status_callback(const gtddp_drone_msgs::Status::ConstPtr& status);
 
         //Target state helpers

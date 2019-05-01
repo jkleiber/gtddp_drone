@@ -8,7 +8,7 @@
 
 //Define program constants
 #define MAX_BUFFER 100
-#define SIMULATION 1
+#define SIMULATION 0
 
 /**
  * 
@@ -37,12 +37,12 @@ int main(int argc, char **argv)
     //In simulations, subscribe to ground truth
     if(SIMULATION)
     {
-        estimate_sub = traj_node.subscribe(traj_node.resolveName("ground_truth/state"), MAX_BUFFER, &Optimizer::ground_truth_callback, &traj_optimizer);
+        estimate_sub = traj_node.subscribe(traj_node.resolveName("ground_truth/state"), MAX_BUFFER, &Optimizer::state_estimate_callback, &traj_optimizer);
     }
     //Otherwise subscribe to the vicon system
     else
     {
-        estimate_sub = traj_node.subscribe(traj_node.resolveName("ardrone/predictedPose"), MAX_BUFFER, &Optimizer::state_estimate_callback, &traj_optimizer);
+        estimate_sub = traj_node.subscribe(traj_node.resolveName("/vicon/ardrone1/odom"), MAX_BUFFER, &Optimizer::state_estimate_callback, &traj_optimizer);
     }
 
     //Set up timer for recalculations

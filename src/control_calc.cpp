@@ -54,9 +54,22 @@ ControlCalculator::ControlCalculator(ros::Publisher ctrl_sig_pub, ros::Publisher
  */
 void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time_event)
 {
+    //FIXME: Stop doing this hack when the drone looks like it can fly
+    if(true)
+    {
+        //Hover until next command
+        this->ctrl_command.linear.x = 0;
+        this->ctrl_command.linear.y = 0;
+        this->ctrl_command.linear.z = 0;
+        this->ctrl_command.angular.x = 0;
+        this->ctrl_command.angular.y = 0;
+        this->ctrl_command.angular.z = 0;
+
+        this->control_signal_pub.publish(this->ctrl_command);
+    }
     //Only output to the control topic if the localization has happened and the trajectory has been built
     //Also only output if the timestep is in bounds
-    if(this->cur_state_init && this->traj_init
+    else if(this->cur_state_init && this->traj_init
     && timestep >= 0 && timestep < this->x_traj.size())
     {
         //Set the status to flying
@@ -119,8 +132,15 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         ctrl_status.status = gtddp_drone_msgs::Status::IDLE;
         this->status_pub.publish(this->ctrl_status);
 
-        //this->ctrl_command.angular.z = 4;
-        //this->control_signal_pub.publish(this->ctrl_command);
+        //Hover until next command
+        this->ctrl_command.linear.x = 0;
+        this->ctrl_command.linear.y = 0;
+        this->ctrl_command.linear.z = 0;
+        this->ctrl_command.angular.x = 0;
+        this->ctrl_command.angular.y = 0;
+        this->ctrl_command.angular.z = 0;
+
+        this->control_signal_pub.publish(this->ctrl_command);
     }
     
 
@@ -133,7 +153,7 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
 /**
  * 
  */
-void ControlCalculator::ground_truth_callback(const nav_msgs::Odometry::ConstPtr& odom)
+void ControlCalculator::state_estimate_callback(const nav_msgs::Odometry::ConstPtr& odom)
 {
     //Position
     this->cur_state(0) = odom->pose.pose.position.x;
@@ -184,6 +204,7 @@ void ControlCalculator::ground_truth_callback(const nav_msgs::Odometry::ConstPtr
 /**
  * 
  */
+/*
 void ControlCalculator::state_estimate_callback(const tum_ardrone::filter_state::ConstPtr& estimate_event)
 {
     //Update the current state from the tum_ardrone
@@ -214,7 +235,7 @@ void ControlCalculator::state_estimate_callback(const tum_ardrone::filter_state:
     //Set the current state as initialized
     this->cur_state_init = true;
 }
-
+*/
 
 /**
  * 
