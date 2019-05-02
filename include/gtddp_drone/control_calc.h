@@ -15,6 +15,7 @@
 //User libs
 #include "gtddp_drone/gtddp_lib/Constants.h"
 #include "gtddp_drone/gtddp_lib/Quadrotor.h"
+#include "gtddp_drone/flight_controller.h"
 
 //User msgs
 #include <tum_ardrone/filter_state.h>

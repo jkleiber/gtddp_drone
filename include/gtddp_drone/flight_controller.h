@@ -1,0 +1,101 @@
+#ifndef FLIGHT_CONTROLLER_H
+#define FLIGHT_CONTROLLER_H
+
+#include <ros/ros.h>
+#include <eigen3/Eigen/Dense>
+#include <geometry_msgs/Twist.h>
+
+/**
+ * PID CONSTANTS
+ */
+//Time constant
+#define TIME_CONST (double)(0.0)
+
+//ROLL
+#define ROLL_KP (double)(10.0)
+#define ROLL_KI (double)(0.0)
+#define ROLL_KD (double)(5.0)
+#define ROLL_LIMIT (double)(0.5)
+
+//PITCH
+#define PITCH_KP (double)(10.0)
+#define PITCH_KI (double)(0.0)
+#define PITCH_KD (double)(5.0)
+#define PITCH_LIMIT (double)(0.5)
+
+//YAW
+#define YAW_KP (double)(2.0)
+#define YAW_KI (double)(0.0)
+#define YAW_KD (double)(1.0)
+#define YAW_LIMIT (double)(1.5)
+
+//X VEL
+#define XVEL_KP (double)(5.0)
+#define XVEL_KI (double)(0.0)
+#define XVEL_KD (double)(1.0)
+#define XVEL_LIMIT (double)(2.0)
+
+//Y VEL
+#define YVEL_KP (double)(5.0)
+#define YVEL_KI (double)(0.0)
+#define YVEL_KD (double)(1.0)
+#define YVEL_LIMIT (double)(2.0)
+
+//Z VEL
+#define ZVEL_KP (double)(5.0)
+#define ZVEL_KI (double)(0.0)
+#define ZVEL_KD (double)(1.0)
+#define ZVEL_LIMIT (double)(1.0)
+
+class FlightController
+{
+    public:
+        FlightController();
+        void set_current_state(Eigen::VectorXd cur_state);
+        void publish_control(geometry_msgs::Twist ctrl_cmd);
+
+    private:
+        //Current state
+        Eigen::VectorXd current_state;
+
+        //Define the PID controller used to handle flight
+        class PIDController 
+        {
+            public:
+                PIDController();
+                virtual ~PIDController();
+                void init(double p, double i, double d, double time_cnst, double limit);
+
+                double gain_p;
+                double gain_i;
+                double gain_d;
+                double time_constant;
+                double limit;
+
+                double input;
+                double dinput;
+                double output;
+                double p, i, d;
+
+                double update(double input, double x, double dx, double dt);
+                void reset(); 
+        };
+
+        //Struct of all the controllers
+        typedef struct controllers_t 
+        {
+            PIDController roll;
+            PIDController pitch;
+            PIDController yaw;
+            PIDController velocity_x;
+            PIDController velocity_y;
+            PIDController velocity_z;
+        } Controllers;
+
+        Controllers controllers;
+
+        /// \brief save last_time
+        ros::Time last_time;
+};
+
+#endif

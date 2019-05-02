@@ -54,22 +54,10 @@ ControlCalculator::ControlCalculator(ros::Publisher ctrl_sig_pub, ros::Publisher
  */
 void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time_event)
 {
-    //FIXME: Stop doing this hack when the drone looks like it can fly
-    if(true)
-    {
-        //Hover until next command
-        this->ctrl_command.linear.x = 0;
-        this->ctrl_command.linear.y = 0;
-        this->ctrl_command.linear.z = 0;
-        this->ctrl_command.angular.x = 0;
-        this->ctrl_command.angular.y = 0;
-        this->ctrl_command.angular.z = 0;
-
-        this->control_signal_pub.publish(this->ctrl_command);
-    }
+    
     //Only output to the control topic if the localization has happened and the trajectory has been built
     //Also only output if the timestep is in bounds
-    else if(this->cur_state_init && this->traj_init
+    if(this->cur_state_init && this->traj_init
     && timestep >= 0 && timestep < this->x_traj.size())
     {
         //Set the status to flying
@@ -97,8 +85,9 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         //Vertical speed (how fast to move upward) (z dot)
         this->ctrl_command.linear.z = this->x_traj[timestep](5);// / MAX_VERTICAL_VEL;
 
-        //Publish u(t) to the control signal topic
-        this->control_signal_pub.publish(this->ctrl_command);
+        //Publish u(t) to the control signal topic through PID transformation
+        this->real_output_transform();
+        //this->control_signal_pub.publish(this->ctrl_command);
         //this->control_signal_pub.publish(attitude_pd_control());
 
         //Increment the timestep
@@ -341,4 +330,9 @@ double ControlCalculator::angleWrap(double angle)
 
     //Return the angle wrapped to -pi to pi
     return (wrapped_angle - Constants::pi);
+}
+
+void ControlCalculator::real_output_transform()
+{
+
 }
