@@ -9,11 +9,12 @@ add_compile_options(-std=c++11)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  rospy
   std_msgs
   geometry_msgs
   nav_msgs
   tf
-  tum_ardrone
+  mocap_vicon
   gtddp_drone_msgs
   message_generation
 )
@@ -115,7 +116,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
 # LIBRARIES gtddp_drone
-  CATKIN_DEPENDS roscpp std_msgs message_runtime tum_ardrone gtddp_drone_msgs
+  CATKIN_DEPENDS roscpp rospy std_msgs message_runtime mocap_vicon gtddp_drone_msgs
 # DEPENDS system_lib
 )
 
@@ -143,7 +144,7 @@ add_library(GTDDP_LIB
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(gtddp_control_node src/gtddp_control_node.cpp src/control_calc.cpp)
+add_executable(gtddp_control_node src/gtddp_control_node.cpp src/control_calc.cpp src/flight_controller.cpp)
 add_executable(gtddp_optimize_node src/gtddp_optimize_node.cpp src/traj_optimizer.cpp)
 
 ## Rename C++ executable without prefix

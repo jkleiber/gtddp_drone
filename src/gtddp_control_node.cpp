@@ -30,7 +30,7 @@ int main(int argc, char **argv)
     ros::Publisher land_pub = control_node.advertise<std_msgs::Empty>(control_node.resolveName("/ardrone/land"), MAX_BUFFER);
 
     //Set up the control calculator
-    ControlCalculator control_calc(ctrl_sig_pub, stat_pub);
+    ControlCalculator control_calc(ctrl_sig_pub, stat_pub, SIMULATION);
 
     //Set up callbacks for the current trajectory topic and the state estimation
     ros::Subscriber traj_sub = control_node.subscribe(control_node.resolveName("/gtddp_drone/trajectory"), MAX_BUFFER, &ControlCalculator::trajectory_callback, &control_calc);

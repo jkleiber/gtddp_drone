@@ -41,17 +41,20 @@
   <buildtool_depend>catkin</buildtool_depend>
   
   <build_depend>roscpp</build_depend>
+  <build_depend>rospy</build_depend>
   <build_depend>std_msgs</build_depend>
-  <build_depend>tum_ardrone</build_depend>
+  <build_depend>mocap_vicon</build_depend>
   <build_depend>gtddp_drone_msgs</build_depend>
   <build_depend>message_generation</build_depend>
   
   <build_export_depend>roscpp</build_export_depend>
+  <build_export_depend>rospy</build_export_depend>
   <build_export_depend>std_msgs</build_export_depend>
   
   <exec_depend>roscpp</exec_depend>
+  <exec_depend>rospy</exec_depend>
   <exec_depend>std_msgs</exec_depend>
-  <exec_depend>tum_ardrone</exec_depend>
+  <exec_depend>mocap_vicon</exec_depend>
   <exec_depend>gtddp_drone_msgs</exec_depend>
   <exec_depend>message_runtime</exec_depend>
 

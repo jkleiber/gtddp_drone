@@ -47,16 +47,23 @@
 #define ZVEL_KD (double)(1.0)
 #define ZVEL_LIMIT (double)(1.0)
 
+//Environment constants
+#define GRAVITY (double)(-9.81)  //TODO: should this be positive or negative
+
 class FlightController
 {
     public:
         FlightController();
-        void set_current_state(Eigen::VectorXd cur_state);
+        geometry_msgs::Twist update_state(Eigen::VectorXd cur_state);
         void publish_control(geometry_msgs::Twist ctrl_cmd);
+        void reset();
 
     private:
         //Current state
         Eigen::VectorXd current_state;
+
+        //Current command
+        geometry_msgs::Twist cur_cmd;
 
         //Define the PID controller used to handle flight
         class PIDController 

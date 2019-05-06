@@ -17,13 +17,16 @@ ControlCalculator::ControlCalculator()
 
     //Set the status to idle
     ctrl_status.status = gtddp_drone_msgs::Status::IDLE;
+
+    //Initialize logging
+    this->logging_init();
 }
 
 
 /**
  * 
  */
-ControlCalculator::ControlCalculator(ros::Publisher ctrl_sig_pub, ros::Publisher status_pub)
+ControlCalculator::ControlCalculator(ros::Publisher ctrl_sig_pub, ros::Publisher status_pub, int sim_status)
 {
     //Control signal to publish to AR Drone
     this->control_signal_pub = ctrl_sig_pub;
@@ -45,7 +48,61 @@ ControlCalculator::ControlCalculator(ros::Publisher ctrl_sig_pub, ros::Publisher
     ctrl_status.status = gtddp_drone_msgs::Status::IDLE;
     this->status_pub.publish(this->ctrl_status);
 
-    this->ground_truth_data.open("/home/jkleiber/gt_data.csv");
+    //Set simulation status
+    this->is_sim = sim_status;
+
+    //Initialize logging
+    this->logging_init();
+}
+
+
+
+void ControlCalculator::logging_init()
+{
+    //Declare local variables
+    std::string filename;
+    const char *home_dir;
+    std::stringstream ss;
+
+    //Find the user's home directory
+    if ((home_dir = getenv("HOME")) == NULL) 
+    {
+        home_dir = getpwuid(getuid())->pw_dir;
+    }
+
+    //If the home directory checks failed, don't log anything
+    if(home_dir == NULL)
+    {
+        //Print a lot of errors so somebody notices
+        printf("LOGGING FAILED TO REGISTER!!!!!!!!\n");
+        printf("LOGGING FAILED TO REGISTER!!!!!!!!\n");
+        printf("LOGGING FAILED TO REGISTER!!!!!!!!\n");
+        printf("LOGGING FAILED TO REGISTER!!!!!!!!\n");
+        printf("LOGGING FAILED TO REGISTER!!!!!!!!\n");
+        printf("LOGGING FAILED TO REGISTER!!!!!!!!\n");
+        return;
+    }
+
+    //Convert the home directory into a string
+    std::string filepath(home_dir);
+
+    //Add a / to the end of the home directory if needed
+    if(home_dir[strlen(home_dir)-1] != '/')
+    {
+        filepath += "/";
+    }
+
+    //Get the timestamp
+    auto cur_stamp = std::chrono::system_clock::now();
+    std::time_t timestamp = std::chrono::system_clock::to_time_t(cur_stamp);
+
+    //Form the file name
+    ss << filepath << "gt_data_" << timestamp << ".csv";
+    ss >> filename;
+    std::cout << "Logging ground_truth_data to " << filename << std::endl; 
+
+    //Open the ground truth log file
+    this->ground_truth_data.open(filename);
 }
 
 
@@ -71,7 +128,6 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         }
         printf("]\n");*/
         
-        //TODO: Add clamp function
         /* Form the control message */
         //X velocity (move forward) (x dot)
         this->ctrl_command.linear.x = this->x_traj[timestep](3);// / MAX_FWD_VEL;
@@ -85,17 +141,14 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         //Vertical speed (how fast to move upward) (z dot)
         this->ctrl_command.linear.z = this->x_traj[timestep](5);// / MAX_VERTICAL_VEL;
 
-        //Publish u(t) to the control signal topic through PID transformation
-        this->real_output_transform();
-        //this->control_signal_pub.publish(this->ctrl_command);
-        //this->control_signal_pub.publish(attitude_pd_control());
-
         //Increment the timestep
         this->timestep++;
 
         ctrl_timer.setPeriod(ros::Duration(0.001));
     }
-    else if(this->cur_state_init && this->traj_init)
+    //TODO: will removing this code crash a real-life drone? (probably) 
+    //TODO: Currently excluded for simulations only (due to accumulation of error)
+    else if((this->cur_state_init && this->traj_init) || !this->is_sim)
     {
         //Set the status to idle
         ctrl_status.status = gtddp_drone_msgs::Status::IDLE;
@@ -108,34 +161,25 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         this->ctrl_command.angular.x = 0;
         this->ctrl_command.angular.y = 0;
         this->ctrl_command.angular.z = 0;
+        //TODO: is a separate hover controller necessary for a real drone?
 
-        //this->control_signal_pub.publish(attitude_pd_control());
-        this->control_signal_pub.publish(this->ctrl_command);
-
-        ctrl_timer.setPeriod(ros::Duration(1.0));
-    }
-    //TODO: will this crash a real-life drone? Currently used to help with laptop simulations
-    else
-    {
-        //Set the status to idle
-        ctrl_status.status = gtddp_drone_msgs::Status::IDLE;
-        this->status_pub.publish(this->ctrl_status);
-
-        //Hover until next command
-        this->ctrl_command.linear.x = 0;
-        this->ctrl_command.linear.y = 0;
-        this->ctrl_command.linear.z = 0;
-        this->ctrl_command.angular.x = 0;
-        this->ctrl_command.angular.y = 0;
-        this->ctrl_command.angular.z = 0;
-
-        this->control_signal_pub.publish(this->ctrl_command);
+        //Slow down updates in the simulator because this will make the hover less bad
+        if(is_sim)
+        {
+            ctrl_timer.setPeriod(ros::Duration(1.0));
+        }
     }
     
-
-    //TODO: see above todo. Will this crash a real drone?
-    //Publish u(t) to the control signal topic
-    //this->control_signal_pub.publish(this->ctrl_command);
+    //If this is a simulation, publish the control command directly
+    if(this->is_sim)
+    {
+        this->control_signal_pub.publish(this->ctrl_command);
+    }
+    //Otherwise, publish data after going through the flight controller
+    else
+    {
+        flight_controller.publish_control(this->ctrl_command);
+    }
 }
 
 
@@ -186,10 +230,17 @@ void ControlCalculator::state_estimate_callback(const nav_msgs::Odometry::ConstP
 
     //Set the current state as initialized
     this->cur_state_init = true;
+
+    //If this is real-life, update the output
+    if(this->is_sim == false)
+    {
+        this->control_signal_pub.publish(flight_controller.update_state(this->cur_state));
+    }
 }
 
 
 
+//TODO: use tum_ardrone or not?
 /**
  * 
  */
@@ -330,9 +381,4 @@ double ControlCalculator::angleWrap(double angle)
 
     //Return the angle wrapped to -pi to pi
     return (wrapped_angle - Constants::pi);
-}
-
-void ControlCalculator::real_output_transform()
-{
-
 }
