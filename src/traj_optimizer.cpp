@@ -131,7 +131,7 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
 {
     //Check to make sure current state and target state are initialized
     //If they are, then optimize the current trajectory
-    if(this->cur_state_init && initialized)// && this->ctrl_status == gtddp_drone_msgs::Status::IDLE)
+    if(this->cur_state_init && initialized && this->ctrl_status == gtddp_drone_msgs::Status::IDLE)
     {
         //Create a service to update the current target
         gtddp_drone_msgs::target target_srv;
@@ -143,10 +143,10 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
             this->target_state_decode(target_srv.response.target_state);
 
             //Update the DDP start and goals, then run the DDP loop to optimize the new trajectory
-            ddpmain.update(this->last_goal_state, this->goal_state);
+            ddpmain.update(this->cur_state, this->goal_state);
 
             //Update the last goal state to be the current goal state
-            this->last_goal_state = goal_state;
+            //this->last_goal_state = goal_state;
 
             //Optimize trajectory
             ddpmain.ddp_loop();

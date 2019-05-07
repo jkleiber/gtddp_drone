@@ -163,20 +163,21 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
             this->ctrl_command.linear.x = this->x_traj[timestep](6);
 
             //Roll (move sideways) (theta)
-            this->ctrl_command.linear.y = -this->x_traj[timestep](7);
+            this->ctrl_command.linear.y = -this->x_traj[timestep](7) / 0.3; //TODO: make this a named constant MAX_ROLL_ANGLE
         }
         
         //Yaw rate (how fast to spin) (r)
-        //this->ctrl_command.angular.z = this->angleWrap(this->x_traj[timestep](11));// / MAX_YAW_RATE;
+        //this->ctrl_command.angular.z = this->angleWrap(this->x_traj[timestep](11)) > 0.2 ? 0.2 : this->angleWrap(this->x_traj[timestep](11));// / MAX_YAW_RATE;
+        //this->ctrl_command.angular.z = this->ctrl_command.angular.z < -0.2 ? -0.2 : this->ctrl_command.angular.z;
         this->ctrl_command.angular.z = 0;
 
         //Vertical speed (how fast to move upward) (z dot)
         this->ctrl_command.linear.z = this->x_traj[timestep](5);// / MAX_VERTICAL_VEL;
 
         //Increment the timestep
-        this->timestep++;
+        this->timestep += 10;
 
-        ctrl_timer.setPeriod(ros::Duration(0.001));
+        ctrl_timer.setPeriod(ros::Duration(0.01));
     }
     //TODO: will removing this code crash a real-life drone? (probably) 
     //TODO: Currently excluded for simulations only (due to accumulation of error)

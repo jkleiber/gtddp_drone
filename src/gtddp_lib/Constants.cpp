@@ -29,7 +29,8 @@ namespace Constants {
     extern const int num_time_steps(501);
     extern const int num_iterations(15); 
     extern const int num_long_legs(2);
-    extern const int short_iterations(3); 
+    //extern const int short_iterations(3); 
+    extern const int short_iterations(15); 
 
     // DDP Constant doubles
     // Change as necessary, do not remove

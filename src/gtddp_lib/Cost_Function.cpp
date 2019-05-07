@@ -37,9 +37,9 @@ void Cost_Function::initialize_cost_matrix(){
 
     //Set Ru values individually
     Ru(0, 0) = 0.02;  //thrust
-    Ru(1, 1) = 0.02;   //u1 moment
-    Ru(2, 2) = 0.02;   //u2 moment
-    Ru(3, 3) = 0.02;   //u3 moment
+    Ru(1, 1) = 0.04;   //u1 moment //0.02 worked pretty well in case this breaks
+    Ru(2, 2) = 0.04;   //u2 moment
+    Ru(3, 3) = 0.04;   //u3 moment
 
     //Quadrotor Cost
     Q_f(0,0) = 1000000; //x
