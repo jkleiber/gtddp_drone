@@ -23,6 +23,9 @@ Optimizer::Optimizer()
 
     //Initialize logging
     this->logging_init();
+
+    //Set the beginning time
+    this->begin_time = ros::Time::now();
 }
 
 
@@ -53,6 +56,9 @@ Optimizer::Optimizer(ros::Publisher& traj_publisher, ros::Publisher& state_publi
 
     //Initialize logging
     this->logging_init();
+
+    //Set the beginning time
+    this->begin_time = ros::Time::now();
 }
 
 /**
@@ -278,8 +284,10 @@ void Optimizer::init_optimizer(const std_msgs::Empty::ConstPtr& init_msg)
         //Initialize the target trajectory generator
         this->init_pub.publish(current_state);
 
+        double cur_time = (ros::Time::now() - begin_time).toSec();
+
         //Log the initial conditions
-        std::string data_str = std::to_string(cur_state(0)) + "," + std::to_string(cur_state(1)) + "," + std::to_string(cur_state(2)) + "\n";
+        std::string data_str = std::to_string(cur_time) + "," + std::to_string(cur_state(0)) + "," + std::to_string(cur_state(1)) + "," + std::to_string(cur_state(2)) + "\n";
         this->init_data << data_str;
 
         //Set the optimizer as initialized

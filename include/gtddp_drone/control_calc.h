@@ -86,6 +86,7 @@ class ControlCalculator
 
         //Do time tracking
         int timestep;
+        ros::Time begin_time;
 
         //Flags for initialization
         bool cur_state_init;
@@ -95,7 +96,7 @@ class ControlCalculator
         bool is_sim;
 
         std::ofstream ground_truth_data;
-        std::ofstream target_data;
+        std::ofstream command_data;
 };
 
 

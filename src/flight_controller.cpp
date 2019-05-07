@@ -25,6 +25,9 @@ FlightController::FlightController()
 
     //Save the last time for future integration
     last_time = ros::Time::now();
+
+    //Set the current state as uninitialized
+    this->initialized = false;
 }
 
 
@@ -51,6 +54,17 @@ void FlightController::publish_control(geometry_msgs::Twist ctrl_cmd)
 
 geometry_msgs::Twist FlightController::update_state(Eigen::VectorXd cur_state)
 {
+    //Create a command to publish
+    geometry_msgs::Twist pid_cmd;
+
+    if(!initialized)
+    {
+        this->current_state = cur_state;
+        last_time = ros::Time::now();
+        initialized = true;
+        return pid_cmd;
+    }
+
     //Find the time difference in nanoseconds, then convert to seconds
     double dt = (double)((ros::Time::now() - last_time).toNSec()) / 1000.0 / 1000.0 / 1000.0;
 
@@ -63,8 +77,7 @@ geometry_msgs::Twist FlightController::update_state(Eigen::VectorXd cur_state)
     double pitch_command =  controllers.velocity_x.update(this->cur_cmd.linear.x, cur_state(3), accel_x, dt) / GRAVITY;
     double roll_command  = -controllers.velocity_y.update(this->cur_cmd.linear.y, cur_state(4), accel_y, dt) / GRAVITY;
 
-    //Create a command to publish
-    geometry_msgs::Twist pid_cmd;
+    printf("Pitch commanded: %f\n", pitch_command);
 
     //Add the PID output to the control command, and then pass through the commanded vertical speed and yaw rate
     pid_cmd.linear.x = pitch_command;

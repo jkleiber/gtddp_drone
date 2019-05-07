@@ -12,15 +12,15 @@
 #define TIME_CONST (double)(0.0)
 
 //ROLL
-#define ROLL_KP (double)(10.0)
+#define ROLL_KP (double)(0.50)
 #define ROLL_KI (double)(0.0)
-#define ROLL_KD (double)(5.0)
+#define ROLL_KD (double)(0.50)
 #define ROLL_LIMIT (double)(0.5)
 
 //PITCH
-#define PITCH_KP (double)(10.0)
+#define PITCH_KP (double)(0.50)
 #define PITCH_KI (double)(0.0)
-#define PITCH_KD (double)(5.0)
+#define PITCH_KD (double)(0.50)
 #define PITCH_LIMIT (double)(0.5)
 
 //YAW
@@ -103,6 +103,8 @@ class FlightController
 
         /// \brief save last_time
         ros::Time last_time;
+
+        bool initialized;
 };
 
 #endif

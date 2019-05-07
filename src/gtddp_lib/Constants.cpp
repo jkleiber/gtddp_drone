@@ -38,7 +38,8 @@ namespace Constants {
 
     // System Constant doubles
     // Change, add, or remove as necessary
-    extern const double m(1.52);
+    //extern const double m(1.52);
+    extern const double m(2.50);
     extern const double M(10.0);
     extern const double length(0.5);
     extern const double Ixx(0.0347563);

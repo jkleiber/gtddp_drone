@@ -20,6 +20,9 @@ ControlCalculator::ControlCalculator()
 
     //Initialize logging
     this->logging_init();
+
+    //Set the beginning time
+    this->begin_time = ros::Time::now();
 }
 
 
@@ -53,6 +56,9 @@ ControlCalculator::ControlCalculator(ros::Publisher ctrl_sig_pub, ros::Publisher
 
     //Initialize logging
     this->logging_init();
+
+    //Set the beginning time
+    this->begin_time = ros::Time::now();
 }
 
 
@@ -103,6 +109,16 @@ void ControlCalculator::logging_init()
 
     //Open the ground truth log file
     this->ground_truth_data.open(filename);
+
+    //Reset the filename for the command data log file
+    filename = "";
+    ss.clear();
+    ss << filepath << timestamp << "_cmd_data" << ".csv";
+    ss >> filename;
+    std::cout << "Logging control commands to " << filename << std::endl;
+
+    //Open the command log file
+    this->command_data.open(filename);
 }
 
 
@@ -111,7 +127,9 @@ void ControlCalculator::logging_init()
  */
 void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time_event)
 {
-    
+    //Get the current time
+    double cur_time = (ros::Time::now() - begin_time).toSec();
+
     //Only output to the control topic if the localization has happened and the trajectory has been built
     //Also only output if the timestep is in bounds
     if(this->cur_state_init && this->traj_init
@@ -129,15 +147,29 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         printf("]\n");*/
         
         /* Form the control message */
-        //X velocity (move forward) (x dot)
-        this->ctrl_command.linear.x = this->x_traj[timestep](3);// / MAX_FWD_VEL;
-        
-        //Y velocity (move side to side) (y dot)
-        this->ctrl_command.linear.y = this->x_traj[timestep](4);// / MAX_SIDE_VEL;
+        //Simulation takes velocity
+        if(this->is_sim)
+        {
+            //X velocity (move forward) (x dot)
+            this->ctrl_command.linear.x = this->x_traj[timestep](3);// / MAX_FWD_VEL;
+
+            //Y velocity (move side to side) (y dot)
+            this->ctrl_command.linear.y = this->x_traj[timestep](4);// / MAX_SIDE_VEL;
+        }
+        //Real drones take pitch and negative roll
+        else
+        {
+            //Pitch (move forward) (phi)
+            this->ctrl_command.linear.x = this->x_traj[timestep](6);
+
+            //Roll (move sideways) (theta)
+            this->ctrl_command.linear.y = -this->x_traj[timestep](7);
+        }
         
         //Yaw rate (how fast to spin) (r)
-        this->ctrl_command.angular.z = this->x_traj[timestep](11);// / MAX_YAW_RATE;
-    
+        //this->ctrl_command.angular.z = this->angleWrap(this->x_traj[timestep](11));// / MAX_YAW_RATE;
+        this->ctrl_command.angular.z = 0;
+
         //Vertical speed (how fast to move upward) (z dot)
         this->ctrl_command.linear.z = this->x_traj[timestep](5);// / MAX_VERTICAL_VEL;
 
@@ -169,7 +201,11 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
             ctrl_timer.setPeriod(ros::Duration(1.0));
         }
     }
-    
+
+    //Log the commands
+    std::string data_str = std::to_string(cur_time) + "," + std::to_string(ctrl_command.linear.x) + "," + std::to_string(ctrl_command.linear.y) + "," + std::to_string(ctrl_command.linear.z) + "," + std::to_string(ctrl_command.angular.z) + "\n";
+    this->command_data << data_str;
+
     //If this is a simulation, publish the control command directly
     if(this->is_sim)
     {
@@ -178,7 +214,10 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
     //Otherwise, publish data after going through the flight controller
     else
     {
-        flight_controller.publish_control(this->ctrl_command);
+        //FIXME: PID controller commands a really weird pitch
+        //flight_controller.publish_control(this->ctrl_command);
+
+        this->control_signal_pub.publish(this->ctrl_command);
     }
 }
 
@@ -222,20 +261,23 @@ void ControlCalculator::state_estimate_callback(const nav_msgs::Odometry::ConstP
     //    printf("%f ", this->cur_state(i));
     //}
     //printf("]\n");
+    double cur_time = (ros::Time::now() - begin_time).toSec();
 
     //Output data to the logging file
-    std::string data_str = std::to_string(cur_state(0)) + "," + std::to_string(cur_state(1)) + "," + std::to_string(cur_state(2)) + "\n";
+    std::string data_str = std::to_string(cur_time) + "," + std::to_string(cur_state(0)) + "," + std::to_string(cur_state(1)) + "," + std::to_string(cur_state(2)) + "\n";
     //std::cout << data_str << std::endl;
     this->ground_truth_data << data_str;
 
     //Set the current state as initialized
     this->cur_state_init = true;
 
+    //FIXME: drone flies forward, PID control doesn't work right
+    /*
     //If this is real-life, update the output
     if(this->is_sim == false)
     {
         this->control_signal_pub.publish(flight_controller.update_state(this->cur_state));
-    }
+    }*/
 }
 
 
@@ -363,7 +405,7 @@ void ControlCalculator::set_timer(ros::Timer& timer)
 ControlCalculator::~ControlCalculator()
 {
     this->ground_truth_data.close();
-    this->target_data.close();
+    this->command_data.close();
 }
 
 double ControlCalculator::angleWrap(double angle)

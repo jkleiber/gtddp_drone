@@ -98,6 +98,7 @@ class Optimizer
         
         //Logging
         std::ofstream init_data;
+        ros::Time begin_time;
 };
 
 #endif
