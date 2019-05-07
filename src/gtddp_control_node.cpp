@@ -14,7 +14,7 @@
 #include "gtddp_drone/control_calc.h"
 
 #define MAX_BUFFER 100
-#define SIMULATION 0
+//#define SIMULATION 1
 
 int main(int argc, char **argv)
 {
@@ -23,6 +23,8 @@ int main(int argc, char **argv)
 
     //Initialize this node
     ros::NodeHandle control_node;
+
+    const int SIMULATION = control_node.param("/gtddp_control_node/is_simulation", 0);
 
     //Advertise control output, status, and landing mode
     ros::Publisher ctrl_sig_pub = control_node.advertise<geometry_msgs::Twist>(control_node.resolveName("/cmd_vel"), MAX_BUFFER);

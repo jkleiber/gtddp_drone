@@ -43,8 +43,9 @@ if __name__=="__main__":
     settings = termios.tcgetattr(sys.stdin)
 
     # Set up ROS publishers
-    land_pub = rospy.Publisher('/ardrone/land', Empty, queue_size=10)   # emergency land the drone
-
+    land_pub = rospy.Publisher('/ardrone/land', Empty, queue_size=10)       # emergency land the drone
+    init_pub = rospy.Publisher('/gtddp_drone/start', Empty, queue_size=10)  # GO button
+    
     # Initialize the ROS node
     rospy.init_node('keyboard_node')
 
@@ -65,6 +66,10 @@ if __name__=="__main__":
         if(key == ' '):
             land_msg = Empty()
             land_pub.publish(land_msg)
+        # G is for go. Initialize the optimizer
+        elif(key == 'g'):
+            init_msg = Empty()
+            init_pub.publish(init_msg)
         # If the key is one of the exit keys, close the program
         elif(key in exitKeys):
             break

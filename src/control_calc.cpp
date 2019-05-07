@@ -74,12 +74,12 @@ void ControlCalculator::logging_init()
     if(home_dir == NULL)
     {
         //Print a lot of errors so somebody notices
-        printf("LOGGING FAILED TO REGISTER!!!!!!!!\n");
-        printf("LOGGING FAILED TO REGISTER!!!!!!!!\n");
-        printf("LOGGING FAILED TO REGISTER!!!!!!!!\n");
-        printf("LOGGING FAILED TO REGISTER!!!!!!!!\n");
-        printf("LOGGING FAILED TO REGISTER!!!!!!!!\n");
-        printf("LOGGING FAILED TO REGISTER!!!!!!!!\n");
+        printf("CONTROL LOGGING FAILED TO REGISTER!!!!!!!!\n");
+        printf("CONTROL LOGGING FAILED TO REGISTER!!!!!!!!\n");
+        printf("CONTROL LOGGING FAILED TO REGISTER!!!!!!!!\n");
+        printf("CONTROL LOGGING FAILED TO REGISTER!!!!!!!!\n");
+        printf("CONTROL LOGGING FAILED TO REGISTER!!!!!!!!\n");
+        printf("CONTROL LOGGING FAILED TO REGISTER!!!!!!!!\n");
         return;
     }
 
@@ -97,7 +97,7 @@ void ControlCalculator::logging_init()
     std::time_t timestamp = std::chrono::system_clock::to_time_t(cur_stamp);
 
     //Form the file name
-    ss << filepath << "gt_data_" << timestamp << ".csv";
+    ss << filepath << timestamp << "_gt_data" << ".csv";
     ss >> filename;
     std::cout << "Logging ground_truth_data to " << filename << std::endl; 
 

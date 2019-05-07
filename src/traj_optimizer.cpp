@@ -17,16 +17,23 @@ Optimizer::Optimizer()
 
     //Set the control status to unknown
     this->ctrl_status = -1;
+
+    //Set the optimizer to uninitialized
+    this->initialized = false;
+
+    //Initialize logging
+    this->logging_init();
 }
 
 
 /**
  * 
  */
-Optimizer::Optimizer(ros::Publisher& traj_publisher, ros::Publisher& state_publisher, ros::ServiceClient& target_client)
+Optimizer::Optimizer(ros::Publisher& traj_publisher, ros::Publisher& state_publisher, ros::Publisher& init_publisher, ros::ServiceClient& target_client)
 {
     this->traj_pub = traj_publisher;
     this->state_pub = state_publisher;
+    this->init_pub = init_publisher;
     this->target_client = target_client;
     
     //Flag the state data as uninitialized
@@ -40,6 +47,74 @@ Optimizer::Optimizer(ros::Publisher& traj_publisher, ros::Publisher& state_publi
 
     //Set the control status to unknown
     this->ctrl_status = -1;
+
+    //Set the optimizer to uninitialized
+    this->initialized = false;
+
+    //Initialize logging
+    this->logging_init();
+}
+
+/**
+ * @brief Destroy the Optimizer:: Optimizer object
+ * 
+ */
+Optimizer::~Optimizer()
+{
+    this->init_data.close();
+}
+
+
+/**
+ * @brief 
+ * 
+ */
+void Optimizer::logging_init()
+{
+    //Declare local variables
+    std::string filename;
+    const char *home_dir;
+    std::stringstream ss;
+
+    //Find the user's home directory
+    if ((home_dir = getenv("HOME")) == NULL) 
+    {
+        home_dir = getpwuid(getuid())->pw_dir;
+    }
+
+    //If the home directory checks failed, don't log anything
+    if(home_dir == NULL)
+    {
+        //Print a lot of errors so somebody notices
+        printf("OPTIMIZER LOGGING FAILED TO REGISTER!!!!!!!!\n");
+        printf("OPTIMIZER LOGGING FAILED TO REGISTER!!!!!!!!\n");
+        printf("OPTIMIZER LOGGING FAILED TO REGISTER!!!!!!!!\n");
+        printf("OPTIMIZER LOGGING FAILED TO REGISTER!!!!!!!!\n");
+        printf("OPTIMIZER LOGGING FAILED TO REGISTER!!!!!!!!\n");
+        printf("OPTIMIZER LOGGING FAILED TO REGISTER!!!!!!!!\n");
+        return;
+    }
+
+    //Convert the home directory into a string
+    std::string filepath(home_dir);
+
+    //Add a / to the end of the home directory if needed
+    if(home_dir[strlen(home_dir)-1] != '/')
+    {
+        filepath += "/";
+    }
+
+    //Get the timestamp
+    auto cur_stamp = std::chrono::system_clock::now();
+    std::time_t timestamp = std::chrono::system_clock::to_time_t(cur_stamp);
+
+    //Form the file name
+    ss << filepath << timestamp << "_init_data" << ".csv";
+    ss >> filename;
+    std::cout << "Logging initial conditions to " << filename << std::endl; 
+
+    //Open the ground truth log file
+    this->init_data.open(filename);
 }
 
 
@@ -50,7 +125,7 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
 {
     //Check to make sure current state and target state are initialized
     //If they are, then optimize the current trajectory
-    if(this->cur_state_init)// && this->ctrl_status == gtddp_drone_msgs::Status::IDLE)
+    if(this->cur_state_init && initialized)// && this->ctrl_status == gtddp_drone_msgs::Status::IDLE)
     {
         //Create a service to update the current target
         gtddp_drone_msgs::target target_srv;
@@ -124,17 +199,14 @@ void Optimizer::state_estimate_callback(const nav_msgs::Odometry::ConstPtr& odom
     //Set the current state as initialized
     this->cur_state_init = true;
 
-    //Set up a debug message
-    gtddp_drone_msgs::state_data current_state_dbg;
-
     //Decode the current state
     for(int i = 0; i < Constants::num_states; ++i)
     {
-        current_state_dbg.states[i] = this->cur_state(i);
+        this->current_state.states[i] = this->cur_state(i);
     }
 
     //Publish the debugging current state info
-    this->state_pub.publish(current_state_dbg);
+    this->state_pub.publish(this->current_state);
 }
 
 /**
@@ -195,6 +267,25 @@ void Optimizer::target_state_decode(const gtddp_drone_msgs::state_data& target_e
     printf("]\n");
 
     this->last_goal_state_init = true;
+}
+
+
+void Optimizer::init_optimizer(const std_msgs::Empty::ConstPtr& init_msg)
+{
+    //IF the optimizer has not been initialized yet, edit the target trajectory settings
+    if(!initialized)
+    {
+        //Initialize the target trajectory generator
+        this->init_pub.publish(current_state);
+
+        //Log the initial conditions
+        std::string data_str = std::to_string(cur_state(0)) + "," + std::to_string(cur_state(1)) + "," + std::to_string(cur_state(2)) + "\n";
+        this->init_data << data_str;
+
+        //Set the optimizer as initialized
+        this->initialized = true;
+        printf("Optimization started!\n");
+    }
 }
 
 
