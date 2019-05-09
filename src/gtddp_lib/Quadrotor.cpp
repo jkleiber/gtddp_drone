@@ -98,7 +98,7 @@ void Quadrotor::forward_propagate_mm(vector<VectorXd>& x_traj, const vector<Vect
 } //forward_propagate_mm
 
 
-void Quadrotor::feedforward_controls(VectorXd current_state, const vector<VectorXd>& u_traj, const vector<MatrixXd>& K_traj, vector<VectorXd>& x_traj)
+void Quadrotor::feedforward_controls(VectorXd current_state, const deque<VectorXd>& u_traj, const deque<MatrixXd>& K_traj, deque<VectorXd>& x_traj)
 {
     // initial condition
     VectorXd x = current_state;

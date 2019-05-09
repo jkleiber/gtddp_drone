@@ -21,6 +21,12 @@ Optimizer::Optimizer()
     //Set the optimizer to uninitialized
     this->initialized = false;
 
+    //Set the mode to online optimization
+    this->generation_mode = false;
+
+    //Default to real time operation
+    this->real_time = true;
+
     //Initialize logging
     this->logging_init();
 
@@ -32,7 +38,12 @@ Optimizer::Optimizer()
 /**
  * 
  */
-Optimizer::Optimizer(ros::Publisher& traj_publisher, ros::Publisher& state_publisher, ros::Publisher& init_publisher, ros::ServiceClient& target_client)
+Optimizer::Optimizer(ros::Publisher& traj_publisher, 
+                    ros::Publisher& state_publisher, 
+                    ros::Publisher& init_publisher, 
+                    ros::ServiceClient& target_client,
+                    bool generate_traj,
+                    bool real_time)
 {
     this->traj_pub = traj_publisher;
     this->state_pub = state_publisher;
@@ -53,6 +64,18 @@ Optimizer::Optimizer(ros::Publisher& traj_publisher, ros::Publisher& state_publi
 
     //Set the optimizer to uninitialized
     this->initialized = false;
+
+    //Select the optimization mode and real_time mode
+    this->generation_mode = generate_traj;
+    this->real_time = real_time;
+
+    //If the trajectory is going to be generated, set the current state to be hovering at origin 1 meter off ground
+    //TODO: stop hardcoding this? Accept args or something idk
+    if(this->generation_mode)
+    {
+        this->cur_state.setZero();
+        this->cur_state(2) = 1;
+    }
 
     //Initialize logging
     this->logging_init();
@@ -131,7 +154,7 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
 {
     //Check to make sure current state and target state are initialized
     //If they are, then optimize the current trajectory
-    if(this->cur_state_init && initialized && this->ctrl_status == gtddp_drone_msgs::Status::IDLE)
+    if((this->cur_state_init && initialized) || this->generation_mode) // && this->ctrl_status == gtddp_drone_msgs::Status::IDLE)
     {
         //Create a service to update the current target
         gtddp_drone_msgs::target target_srv;
@@ -145,14 +168,27 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
             //Update the DDP start and goals, then run the DDP loop to optimize the new trajectory
             ddpmain.update(this->cur_state, this->goal_state);
 
-            //Update the last goal state to be the current goal state
-            //this->last_goal_state = goal_state;
-
             //Optimize trajectory
             ddpmain.ddp_loop();
 
-            //Publish the newly optimized trajectory data to the trajectory topic
-            traj_pub.publish(this->get_traj_msg(ddpmain.get_x_traj(), ddpmain.get_u_traj(), ddpmain.get_Ku()));
+            //TODO: Experiment with this being the last state calculated by GTDDP
+            //Update the last goal state to be the current goal state
+            this->last_goal_state = goal_state;
+            //v.s.
+            //Update the last goal state to be the last state in the generated trajectory
+            //this->last_goal_state = ddpmain.get_x_traj().back();
+
+            //When not generating a trajectory offline (i.e. if you are in real time mode) then publish trajectory data
+            if(!this->generation_mode)
+            {
+                //Publish the newly optimized trajectory data to the trajectory topic
+                traj_pub.publish(this->get_traj_msg(ddpmain.get_x_traj(), ddpmain.get_u_traj(), ddpmain.get_Ku()));
+            }
+            //Otherwise save the offline trajectory to a file
+            else
+            {
+                this->write_traj_to_files(ddpmain.get_x_traj(), ddpmain.get_u_traj(), ddpmain.get_Ku());
+            }
 
             //Set ctrl status to unknown so the controller can start flying
             this->ctrl_status = -1;
@@ -164,6 +200,13 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
         }
         
     }
+}
+
+
+
+void Optimizer::offline_traj_callback(const ros::TimerEvent& time_event)
+{
+
 }
 
 

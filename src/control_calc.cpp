@@ -133,7 +133,7 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
     //Only output to the control topic if the localization has happened and the trajectory has been built
     //Also only output if the timestep is in bounds
     if(this->cur_state_init && this->traj_init
-    && timestep >= 0 && timestep < this->x_traj.size())
+    && !this->x_traj.empty())
     {
         //Set the status to flying
         ctrl_status.status = gtddp_drone_msgs::Status::FLYING;
@@ -151,37 +151,39 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         if(this->is_sim)
         {
             //X velocity (move forward) (x dot)
-            this->ctrl_command.linear.x = this->x_traj[timestep](3);// / MAX_FWD_VEL;
+            this->ctrl_command.linear.x = this->x_traj.front()(3);// / MAX_FWD_VEL;
 
             //Y velocity (move side to side) (y dot)
-            this->ctrl_command.linear.y = this->x_traj[timestep](4);// / MAX_SIDE_VEL;
+            this->ctrl_command.linear.y = this->x_traj.front()(4);// / MAX_SIDE_VEL;
         }
         //Real drones take pitch and negative roll
         else
         {
             //Pitch (move forward) (phi)
-            this->ctrl_command.linear.x = this->x_traj[timestep](6);
+            this->ctrl_command.linear.x = this->x_traj.front()(6);
 
             //Roll (move sideways) (theta)
-            this->ctrl_command.linear.y = -this->x_traj[timestep](7) / 0.3; //TODO: make this a named constant MAX_ROLL_ANGLE
+            this->ctrl_command.linear.y = -this->x_traj.front()(7) / 0.3; //TODO: make this a named constant MAX_ROLL_ANGLE
         }
         
         //Yaw rate (how fast to spin) (r)
-        //this->ctrl_command.angular.z = this->angleWrap(this->x_traj[timestep](11)) > 0.2 ? 0.2 : this->angleWrap(this->x_traj[timestep](11));// / MAX_YAW_RATE;
+        //this->ctrl_command.angular.z = this->angleWrap(this->x_traj.front()(11)) > 0.2 ? 0.2 : this->angleWrap(this->x_traj[timestep](11));// / MAX_YAW_RATE;
         //this->ctrl_command.angular.z = this->ctrl_command.angular.z < -0.2 ? -0.2 : this->ctrl_command.angular.z;
         this->ctrl_command.angular.z = 0;
 
         //Vertical speed (how fast to move upward) (z dot)
-        this->ctrl_command.linear.z = this->x_traj[timestep](5);// / MAX_VERTICAL_VEL;
+        this->ctrl_command.linear.z = this->x_traj.front()(5);// / MAX_VERTICAL_VEL;
 
         //Increment the timestep
-        this->timestep += 10;
+        this->timestep += 10;   //TODO: is this needed still?
 
         ctrl_timer.setPeriod(ros::Duration(0.01));
     }
-    //TODO: will removing this code crash a real-life drone? (probably) 
-    //TODO: Currently excluded for simulations only (due to accumulation of error)
-    else if((this->cur_state_init && this->traj_init) || !this->is_sim)
+    //Hover if the state and/or trajectory do not exist. 
+    //Also, do not hover on the first optimization in a simulated environment
+    else if((this->cur_state_init && this->traj_init) 
+         || !this->is_sim
+         || this->x_traj.empty())
     {
         //Set the status to idle
         ctrl_status.status = gtddp_drone_msgs::Status::IDLE;
@@ -194,7 +196,6 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         this->ctrl_command.angular.x = 0;
         this->ctrl_command.angular.y = 0;
         this->ctrl_command.angular.z = 0;
-        //TODO: is a separate hover controller necessary for a real drone?
 
         //Slow down updates in the simulator because this will make the hover less bad
         if(is_sim)
@@ -343,10 +344,11 @@ void ControlCalculator::trajectory_callback(const gtddp_drone_msgs::Trajectory::
     //Find the number of events
     num_events = x_data.size();
 
+    //TODO: remove these because we use queues around here
     //Clear the trajectory vectors
-    this->x_traj.clear();
-    this->u_traj.clear();
-    this->K_traj.clear();
+    //this->x_traj.clear();
+    //this->u_traj.clear();
+    //this->K_traj.clear();
 
     //Create temporary vectors for the trajectory data
     Eigen::VectorXd x_traj_dat(Constants::num_states);
@@ -387,9 +389,6 @@ void ControlCalculator::trajectory_callback(const gtddp_drone_msgs::Trajectory::
     //Forward propagate controls to find the correct output based on the starting position
     //This serves to get the drone back on track when it strays due to hover, wind, etc.
     quadrotor.feedforward_controls(this->cur_state, this->u_traj, this->K_traj, this->x_traj);
-
-    //Reset the timestep variable to t0
-    timestep = 0;
 
     //The trajectory is now initialized!
     this->traj_init = true;

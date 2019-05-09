@@ -44,13 +44,19 @@ class Optimizer
         //Constructors
         Optimizer();
         ~Optimizer();
-        Optimizer(ros::Publisher& traj_publisher, ros::Publisher& state_publisher, ros::Publisher& init_publisher, ros::ServiceClient& target_client);
+        Optimizer(ros::Publisher& traj_publisher, 
+                ros::Publisher& state_publisher, 
+                ros::Publisher& init_publisher, 
+                ros::ServiceClient& target_client, 
+                bool generate_traj,
+                bool real_time);
         
         //Logging
         void logging_init();
 
         //Callback functions
         void traj_update_callback(const ros::TimerEvent& time_event);
+        void offline_traj_callback(const ros::TimerEvent& time_event);
         void state_estimate_callback(const nav_msgs::Odometry::ConstPtr& odom);
         //TODO: rename the state_estimate_callback below to something else
         //void state_estimate_callback(const tum_ardrone::filter_state::ConstPtr& estimate_event);
@@ -96,9 +102,21 @@ class Optimizer
         gtddp_drone_msgs::ctrl_data get_ctrl_data_msg(std::vector<Eigen::VectorXd> u_traj, int idx);
         gtddp_drone_msgs::gain_data get_gain_data_msg(std::vector<Eigen::MatrixXd> K_traj, int idx);
         
+        //Data parsing for saving messages
+        void write_traj_to_files(std::vector<Eigen::VectorXd> x_traj, std::vector<Eigen::VectorXd> u_traj, std::vector<Eigen::MatrixXd> K_traj);
+        std::ofstream x_traj_out;
+        std::ofstream u_traj_out;
+        std::ofstream K_traj_out;
+
         //Logging
         std::ofstream init_data;
         ros::Time begin_time;
+
+        //Offline trajectory generation
+        bool generation_mode;
+
+        //Real-time optimization
+        bool real_time;
 };
 
 #endif

@@ -12,6 +12,7 @@
 #include <iostream>
 #include <math.h>
 #include <pwd.h>
+#include <queue>
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -71,9 +72,9 @@ class ControlCalculator
         geometry_msgs::Twist ctrl_command;
 
         //Store the current trajectory information
-        std::vector<Eigen::VectorXd> x_traj;
-        std::vector<Eigen::VectorXd> u_traj;
-        std::vector<Eigen::MatrixXd> K_traj;
+        std::deque<Eigen::VectorXd> x_traj;
+        std::deque<Eigen::VectorXd> u_traj;
+        std::deque<Eigen::MatrixXd> K_traj;
 
         //Store current state data
         Eigen::VectorXd cur_state;
