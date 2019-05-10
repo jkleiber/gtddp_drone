@@ -249,7 +249,7 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
         if(target_client.call(target_srv))
         {
             printf("LEG #%d\n", num_legs);
-            
+
             //Decode the target state from the service response
             this->target_state_decode(target_srv.response.target_state);
 
@@ -694,6 +694,10 @@ void Optimizer::write_traj_to_files(std::vector<Eigen::VectorXd> x_traj, std::ve
             if(s != (Constants::num_states - 1))
             {
                 output += ",";
+            }
+            else
+            {
+                output += "\n";
             }
         }
 
