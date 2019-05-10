@@ -39,9 +39,10 @@ int main(int argc, char **argv)
     //Initialize this node
     ros::NodeHandle traj_node;
 
-    const int SIMULATION = traj_node.param("/gtddp_optimize_node/is_simulation", 0);
+    const int SIMULATION    = traj_node.param("/gtddp_optimize_node/is_simulation", 0);
     const int GENERATE_TRAJ = traj_node.param("/gtddp_optimize_node/is_gen", 0);
-    const int REAL_TIME = traj_node.param("/gtddp_optimize_node/is_real_time", 1);
+    const int REAL_TIME     = traj_node.param("/gtddp_optimize_node/is_real_time", 1);
+    const int NUM_GEN_LEGS  = traj_node.param("/gtddp_optimize_node/gen_legs", 0);
 
     //Advertise trajectory data
     traj_pub = traj_node.advertise<gtddp_drone_msgs::Trajectory>(traj_node.resolveName("/gtddp_drone/trajectory"), MAX_BUFFER);
@@ -53,6 +54,7 @@ int main(int argc, char **argv)
 
     //Set up the trajectory optimizer
     Optimizer traj_optimizer(traj_pub, cur_state_pub, init_pub, target_client, GENERATE_TRAJ, REAL_TIME);
+    traj_optimizer.set_num_legs(NUM_GEN_LEGS);
 
     //If a test is occuring, set up for a flight
     if(!GENERATE_TRAJ)

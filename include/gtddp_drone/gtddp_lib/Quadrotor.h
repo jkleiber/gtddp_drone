@@ -4,6 +4,7 @@
 #include <eigen3/Eigen/Dense>
 #include <boost/numeric/odeint.hpp>
 #include <boost/numeric/odeint/algebra/vector_space_algebra.hpp>
+#include <queue>
 
 #include "Constants.h"
 

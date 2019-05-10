@@ -32,6 +32,9 @@ Optimizer::Optimizer()
 
     //Set the beginning time
     this->begin_time = ros::Time::now();
+
+    //Reset number of legs
+    this->num_legs = 0;
 }
 
 
@@ -69,12 +72,18 @@ Optimizer::Optimizer(ros::Publisher& traj_publisher,
     this->generation_mode = generate_traj;
     this->real_time = real_time;
 
-    //If the trajectory is going to be generated, set the current state to be hovering at origin 1 meter off ground
-    //TODO: stop hardcoding this? Accept args or something idk
+    //Set up for trajectory generation if needed
     if(this->generation_mode)
     {
+        //Set the current state to the origin
         this->cur_state.setZero();
-        this->cur_state(2) = 1;
+        current_state.states.fill(0.0);
+
+        //Initialize the target trajectory generator
+        this->init_pub.publish(current_state);
+
+        //Open all of the files
+        this->open_genfiles();
     }
 
     //Initialize logging
@@ -82,6 +91,9 @@ Optimizer::Optimizer(ros::Publisher& traj_publisher,
 
     //Set the beginning time
     this->begin_time = ros::Time::now();
+
+    //Reset number of legs
+    this->num_legs = 0;
 }
 
 /**
@@ -90,7 +102,18 @@ Optimizer::Optimizer(ros::Publisher& traj_publisher,
  */
 Optimizer::~Optimizer()
 {
+    //Close logging
     this->init_data.close();
+
+    //Close traj generation files
+    this->x_traj_out.close();
+    this->u_traj_out.close();
+    this->K_traj_out.close();
+
+    //Close the offline files
+    this->x_traj_in.close();
+    this->u_traj_in.close();
+    this->K_traj_in.close();
 }
 
 
@@ -147,6 +170,69 @@ void Optimizer::logging_init()
 }
 
 
+void Optimizer::open_genfiles()
+{
+    std::string x_file, u_file, K_file;
+    const char *home_dir;
+    std::stringstream ss;
+
+    //Find the user's home directory
+    if ((home_dir = getenv("HOME")) == NULL) 
+    {
+        home_dir = getpwuid(getuid())->pw_dir;
+    }
+
+    //If the home directory checks failed, don't log anything
+    if(home_dir == NULL)
+    {
+        //Print a lot of errors so somebody notices
+        printf("OFFLINE GENERATION FAILED TO OPEN FILES!!!!!!!!\n");
+        printf("OFFLINE GENERATION FAILED TO OPEN FILES!!!!!!!!\n");
+        printf("OFFLINE GENERATION FAILED TO OPEN FILES!!!!!!!!\n");
+        printf("OFFLINE GENERATION FAILED TO OPEN FILES!!!!!!!!\n");
+        printf("OFFLINE GENERATION FAILED TO OPEN FILES!!!!!!!!\n");
+        printf("OFFLINE GENERATION FAILED TO OPEN FILES!!!!!!!!\n");
+        return;
+    }
+    
+    //Convert the home directory into a string
+    std::string filepath(home_dir);
+
+    //Add a / to the end of the home directory if needed
+    if(home_dir[strlen(home_dir)-1] != '/')
+    {
+        filepath += "/";
+    }
+
+    //Find the file on the filepath
+    x_file = filepath + "x_traj.csv";
+    u_file = filepath + "u_traj.csv";
+    K_file = filepath + "K_file.csv";
+
+    //If trajectory generation is to occur, open the output files
+    if(this->generation_mode)
+    {
+        this->x_traj_out.open(x_file);
+        this->u_traj_out.open(u_file);
+        this->K_traj_out.open(K_file);
+    }
+    //If an offline trajectory is expected, open the input files
+    else if(!this->real_time)
+    {
+        this->x_traj_in.open(x_file);
+        this->u_traj_in.open(u_file);
+        this->K_traj_in.open(K_file);
+    }
+
+}
+
+
+void Optimizer::set_num_legs(int legs)
+{
+    this->max_num_legs = legs;
+}
+
+
 /**
  * 
  */
@@ -154,7 +240,7 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
 {
     //Check to make sure current state and target state are initialized
     //If they are, then optimize the current trajectory
-    if((this->cur_state_init && initialized) || this->generation_mode) // && this->ctrl_status == gtddp_drone_msgs::Status::IDLE)
+    if((this->cur_state_init && initialized) || (this->generation_mode && this->num_legs < this->max_num_legs)) // && this->ctrl_status == gtddp_drone_msgs::Status::IDLE)
     {
         //Create a service to update the current target
         gtddp_drone_msgs::target target_srv;
@@ -162,6 +248,8 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
         //If the service succeeds, update the target and run the DDP
         if(target_client.call(target_srv))
         {
+            printf("LEG #%d\n", num_legs);
+            
             //Decode the target state from the service response
             this->target_state_decode(target_srv.response.target_state);
 
@@ -173,10 +261,10 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
 
             //TODO: Experiment with this being the last state calculated by GTDDP
             //Update the last goal state to be the current goal state
-            this->last_goal_state = goal_state;
+            //this->last_goal_state = goal_state;
             //v.s.
             //Update the last goal state to be the last state in the generated trajectory
-            //this->last_goal_state = ddpmain.get_x_traj().back();
+            this->last_goal_state = ddpmain.get_x_traj().back();
 
             //When not generating a trajectory offline (i.e. if you are in real time mode) then publish trajectory data
             if(!this->generation_mode)
@@ -192,6 +280,13 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
 
             //Set ctrl status to unknown so the controller can start flying
             this->ctrl_status = -1;
+
+            //Increment the leg counter
+            this->num_legs++;
+        }
+        else if(this->generation_mode && this->num_legs >= this->max_num_legs)
+        {
+            printf("Trajectory generation complete!!\n");
         }
         //Otherwise notify user upon failure
         else
@@ -206,7 +301,137 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
 
 void Optimizer::offline_traj_callback(const ros::TimerEvent& time_event)
 {
+    //Declare local variables
+    std::vector<Eigen::VectorXd> x_traj;
+    std::vector<Eigen::VectorXd> u_traj;
+    std::vector<Eigen::MatrixXd> K_traj;
+    Eigen::VectorXd temp_vector;
+    Eigen::MatrixXd temp_matrix;
+    std::string cell;
+    std::string line;
+    int cell_idx;
+    int tmp_row;
+    int tmp_col;
 
+    //Read the x_traj file
+    for(int i = 0; i < Constants::num_time_steps; ++i)
+    {
+        //Check to see if this file is OK to read
+        if(!x_traj_in.good())
+        {
+            break;
+        }
+
+        //Get the next line from the CSV file
+        getline(x_traj_in, line);
+
+        //Process the file using comma as a delimiter
+        std::stringstream ss(line);
+
+        //Reset the cell counter
+        cell_idx = 0;
+
+        //Read each column in the line
+        while(getline(ss, cell, ','))
+        {
+            temp_vector(cell_idx) = std::stod(cell);
+
+            //Apply the x, y, z offsets
+            //X
+            if(cell_idx == 0)
+            {
+                temp_vector(cell_idx) += x_offset;
+            }
+            //Y
+            else if(cell_idx == 1)
+            {
+                temp_vector(cell_idx) += y_offset;
+            }
+            //Z
+            else if(cell_idx == 2)
+            {
+                temp_vector(cell_idx) += z_offset;
+            }
+
+            //Increment the cell index
+            cell_idx++;
+        }
+
+        //Push the temporary Eigen vector to the x traj c++ vector
+        x_traj.push_back(temp_vector);
+    }
+
+    //Read the u_traj file
+    for(int i = 0; i < Constants::num_time_steps; ++i)
+    {
+        //Check to see if this file is OK to read
+        if(!u_traj_in.good())
+        {
+            break;
+        }
+
+        //Get the next line from the CSV file
+        getline(u_traj_in, line);
+
+        //Process the file using comma as a delimiter
+        std::stringstream ss(line);
+
+        //Reset the cell counter
+        cell_idx = 0;
+
+        //Read each column in the line
+        while(getline(ss, cell, ','))
+        {
+            temp_vector(cell_idx) = std::stod(cell);
+            cell_idx++;
+        }
+
+        //Push the temporary Eigen vector to the u traj c++ vector
+        u_traj.push_back(temp_vector);
+    }
+
+    //Read the K_traj file
+    for(int i = 0; i < Constants::num_time_steps; ++i)
+    {
+        //Check to see if this file is OK to read
+        if(!K_traj_in.good())
+        {
+            break;
+        }
+
+        //Get the next line from the CSV file
+        getline(K_traj_in, line);
+
+        //Process the file using comma as a delimiter
+        std::stringstream ss(line);
+
+        //Reset the cell counter
+        tmp_row = 0;
+        tmp_col = 0;
+
+        //Read each column in the line
+        while(getline(ss, cell, ','))
+        {
+            temp_matrix(tmp_row, tmp_col) = std::stod(cell);
+
+            //Increment the row or column appropriately
+            if(tmp_col == (Constants::num_states - 1))
+            {
+                tmp_col = 0;
+                tmp_row++;
+            }
+            else
+            {
+                tmp_col++;
+            }
+        }
+
+        //Push the temporary Eigen vector to the K traj c++ vector
+        K_traj.push_back(temp_vector);
+    }
+
+    //Publish this data
+    this->traj_pub.publish(this->get_traj_msg(x_traj, u_traj, K_traj));
 }
 
 
@@ -322,7 +547,7 @@ void Optimizer::target_state_decode(const gtddp_drone_msgs::state_data& target_e
 void Optimizer::init_optimizer(const std_msgs::Empty::ConstPtr& init_msg)
 {
     //IF the optimizer has not been initialized yet, edit the target trajectory settings
-    if(!initialized)
+    if(!initialized && this->real_time)
     {
         //Initialize the target trajectory generator
         this->init_pub.publish(current_state);
@@ -336,6 +561,14 @@ void Optimizer::init_optimizer(const std_msgs::Empty::ConstPtr& init_msg)
         //Set the optimizer as initialized
         this->initialized = true;
         printf("Optimization started!\n");
+    }
+    //If the optimizer hasn't been initialized, set the offset from the offline trajectory
+    else if(!initialized && !this->real_time)
+    {
+        //Set the offsets
+        x_offset = current_state.states[0];
+        y_offset = current_state.states[1];
+        z_offset = current_state.states[2];
     }
 }
 
@@ -352,7 +585,7 @@ gtddp_drone_msgs::Trajectory Optimizer::get_traj_msg(std::vector<Eigen::VectorXd
 
     //Loop through each time step and encode the data into ROS messages
     //Note: the ddp only initializes values from 0 to num_time_steps - 1. Thus, 100 timesteps will yield 99 values
-    for(i = 0; i < Constants::num_time_steps - 1; ++i)
+    for(i = 0; i < x_traj.size(); ++i)
     {
         traj_msg.x_traj.push_back(this->get_state_data_msg(x_traj, i));
         traj_msg.u_traj.push_back(this->get_ctrl_data_msg(u_traj, i));
@@ -436,4 +669,84 @@ gtddp_drone_msgs::gain_data Optimizer::get_gain_data_msg(std::vector<Eigen::Matr
 
     //Return the processed gain message
     return gain_msg;
+}
+
+
+
+void Optimizer::write_traj_to_files(std::vector<Eigen::VectorXd> x_traj, std::vector<Eigen::VectorXd> u_traj, std::vector<Eigen::MatrixXd> K_traj)
+{
+    //CSV output string
+    std::string output;
+
+    //Append the most recent x_traj to the x trajectory file
+    for(int i = 0; i < x_traj.size(); ++i)
+    {
+        //Reset output
+        output = "";
+
+        //Go state by state
+        for(int s = 0; s < Constants::num_states; ++s)
+        {
+            //Add the data
+            output += std::to_string(x_traj[i](s));
+
+            //Add the comma after all but the last element
+            if(s != (Constants::num_states - 1))
+            {
+                output += ",";
+            }
+        }
+
+        //Append trajectory
+        x_traj_out << output;
+    }
+
+    //Append the most recent u_traj to the u trajectory file
+    for(int i = 0; i < u_traj.size(); ++i)
+    {
+        //Reset output
+        output = "";
+
+        //Go state by state
+        for(int s = 0; s < Constants::num_controls_u; ++s)
+        {
+            //Add the data
+            output += std::to_string(u_traj[i](s));
+
+            //Add the comma after all but the last element
+            if(s != (Constants::num_controls_u - 1))
+            {
+                output += ",";
+            }
+        }
+
+        //Append trajectory
+        u_traj_out << output;
+    }
+
+    //Append the most recent K traj to the K trajectory file
+    for(int i = 0; i < u_traj.size(); ++i)
+    {
+        //Reset output
+        output = "";
+
+        //Add data in row major order
+        for(int r = 0; r < Constants::num_controls_u; ++r)
+        {
+            for(int c = 0; c < Constants::num_states; ++c)
+            {
+                //Add the data
+                output += std::to_string(K_traj[i](r,c));
+                
+                //Add the comma after all but the last element
+                if(r != (Constants::num_controls_u - 1) || c != (Constants::num_states - 1))
+                {
+                    output += ",";
+                }
+            }
+        }
+
+        //Append trajectory
+        K_traj_out << output;
+    }
 }

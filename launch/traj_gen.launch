@@ -15,7 +15,4 @@
     <param name="target_dt" value="$(arg target_timestep)"/>
   </node>
 
-  <!-- Keyboard node -->
-  <node pkg="gtddp_drone" type="keyboard_node.py" name="keyboard_node" output="screen"/>
-
 </launch>

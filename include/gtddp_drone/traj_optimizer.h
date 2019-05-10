@@ -54,6 +54,10 @@ class Optimizer
         //Logging
         void logging_init();
 
+        //Trajectory generation
+        void open_genfiles();
+        void set_num_legs(int legs);
+
         //Callback functions
         void traj_update_callback(const ros::TimerEvent& time_event);
         void offline_traj_callback(const ros::TimerEvent& time_event);
@@ -108,12 +112,24 @@ class Optimizer
         std::ofstream u_traj_out;
         std::ofstream K_traj_out;
 
+        //Data parsing for reading messages
+        std::ifstream x_traj_in;
+        std::ifstream u_traj_in;
+        std::ifstream K_traj_in;
+
         //Logging
         std::ofstream init_data;
         ros::Time begin_time;
 
         //Offline trajectory generation
         bool generation_mode;
+        int max_num_legs;
+        int num_legs;
+
+        //Offline trajectory control
+        double x_offset;
+        double y_offset;
+        double z_offset;
 
         //Real-time optimization
         bool real_time;
