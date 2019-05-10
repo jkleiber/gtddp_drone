@@ -49,7 +49,7 @@ void Cost_Function::initialize_cost_matrix(){
     Q_f(3,3) = 10000;   //x dot
     Q_f(4,4) = 10000;   //y dot
     Q_f(5,5) = 10000;   //z dot
-    //anglular states
+    //angular states
     Q_f(6,6) = 10000;  //roll
     Q_f(7,7) = 10000;  //pitch
     Q_f(8,8) = 10000;  //yaw

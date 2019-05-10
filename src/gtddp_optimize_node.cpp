@@ -87,7 +87,7 @@ int main(int argc, char **argv)
         else
         {
             //Send the new trajectories at a faster update rate than the DDP would normally run
-            update_timer = traj_node.createTimer(ros::Duration(0.1), &Optimizer::offline_traj_callback, &traj_optimizer, false);
+            update_timer = traj_node.createTimer(ros::Duration(0.9), &Optimizer::offline_traj_callback, &traj_optimizer, false);
         }
     }
     //If the trajectory is being generated for an offline run, optimize small trajectories but only output to a file

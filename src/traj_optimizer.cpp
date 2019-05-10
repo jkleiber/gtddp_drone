@@ -85,9 +85,19 @@ Optimizer::Optimizer(ros::Publisher& traj_publisher,
         //Open all of the files
         this->open_genfiles();
     }
+    else if(!this->real_time)
+    {
+        std::cout << "Real-Time operation disabled! Using generated trajectory.\n";
 
-    //Initialize logging
-    this->logging_init();
+        //Open all of the files
+        this->open_genfiles();
+    }
+
+    //Initialize logging if we are flying a drone
+    if(!generation_mode)
+    {
+        this->logging_init();
+    }
 
     //Set the beginning time
     this->begin_time = ros::Time::now();
@@ -102,9 +112,6 @@ Optimizer::Optimizer(ros::Publisher& traj_publisher,
  */
 Optimizer::~Optimizer()
 {
-    //Close logging
-    this->init_data.close();
-
     //Close traj generation files
     this->x_traj_out.close();
     this->u_traj_out.close();
@@ -186,12 +193,12 @@ void Optimizer::open_genfiles()
     if(home_dir == NULL)
     {
         //Print a lot of errors so somebody notices
-        printf("OFFLINE GENERATION FAILED TO OPEN FILES!!!!!!!!\n");
-        printf("OFFLINE GENERATION FAILED TO OPEN FILES!!!!!!!!\n");
-        printf("OFFLINE GENERATION FAILED TO OPEN FILES!!!!!!!!\n");
-        printf("OFFLINE GENERATION FAILED TO OPEN FILES!!!!!!!!\n");
-        printf("OFFLINE GENERATION FAILED TO OPEN FILES!!!!!!!!\n");
-        printf("OFFLINE GENERATION FAILED TO OPEN FILES!!!!!!!!\n");
+        printf("OFFLINE GENERATION FAILED TO FIND FILES!!!!!!!!\n");
+        printf("OFFLINE GENERATION FAILED TO FIND FILES!!!!!!!!\n");
+        printf("OFFLINE GENERATION FAILED TO FIND FILES!!!!!!!!\n");
+        printf("OFFLINE GENERATION FAILED TO FIND FILES!!!!!!!!\n");
+        printf("OFFLINE GENERATION FAILED TO FIND FILES!!!!!!!!\n");
+        printf("OFFLINE GENERATION FAILED TO FIND FILES!!!!!!!!\n");
         return;
     }
     
@@ -224,6 +231,7 @@ void Optimizer::open_genfiles()
         this->K_traj_in.open(K_file);
     }
 
+    std::cout << "Offline trajectory files opened!\n";
 }
 
 
@@ -261,10 +269,11 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
 
             //TODO: Experiment with this being the last state calculated by GTDDP
             //Update the last goal state to be the current goal state
-            //this->last_goal_state = goal_state;
+            this->last_goal_state = goal_state;
+            this->cur_state = this->last_goal_state;
             //v.s.
             //Update the last goal state to be the last state in the generated trajectory
-            this->last_goal_state = ddpmain.get_x_traj().back();
+            //this->last_goal_state = ddpmain.get_x_traj().back();
 
             //When not generating a trajectory offline (i.e. if you are in real time mode) then publish trajectory data
             if(!this->generation_mode)
@@ -313,125 +322,158 @@ void Optimizer::offline_traj_callback(const ros::TimerEvent& time_event)
     int tmp_row;
     int tmp_col;
 
-    //Read the x_traj file
-    for(int i = 0; i < Constants::num_time_steps; ++i)
+    //Only publish if the drone is ready to fly
+    if(initialized)
     {
-        //Check to see if this file is OK to read
-        if(!x_traj_in.good())
+        std::cout << "Reading Leg #" << num_legs << std::endl;
+        ++num_legs;
+
+        //init temp vector for a state vector
+        temp_vector.resize(Constants::num_states);
+        temp_vector.setZero();
+
+        //Read the x_traj file
+        for(int i = 0; i < Constants::num_time_steps; ++i)
         {
-            break;
+            //Check to see if this file is OK to read
+            if(!x_traj_in.good())
+            {
+                break;
+            }
+
+            //Get the next line from the CSV file
+            getline(x_traj_in, line);
+            //printf("1\n");
+
+            //Process the file using comma as a delimiter
+            std::stringstream ss(line);
+            //printf("2\n");
+
+            //Reset the cell counter
+            cell_idx = 0;
+
+            //Read each column in the line
+            while(getline(ss, cell, ','))
+            {
+                //printf("3\n");
+                temp_vector(cell_idx) = std::atof(cell.c_str());
+                //printf("4\n");
+
+                //Apply the x, y, z offsets
+                //X
+                if(cell_idx == 0)
+                {
+                    temp_vector(cell_idx) += x_offset;
+                }
+                //Y
+                else if(cell_idx == 1)
+                {
+                    temp_vector(cell_idx) += y_offset;
+                }
+                //Z
+                else if(cell_idx == 2)
+                {
+                    temp_vector(cell_idx) += z_offset;
+                }
+                //printf("5\n");
+
+                //Increment the cell index
+                cell_idx++;
+            }
+
+            //Push the temporary Eigen vector to the x traj c++ vector
+            x_traj.push_back(temp_vector);
         }
 
-        //Get the next line from the CSV file
-        getline(x_traj_in, line);
+        //std::cout <<"x_traj ready!\n";
 
-        //Process the file using comma as a delimiter
-        std::stringstream ss(line);
+        //init the temp vector for a control vector
+        temp_vector.resize(Constants::num_controls_u);
+        temp_vector.setZero();
 
-        //Reset the cell counter
-        cell_idx = 0;
-
-        //Read each column in the line
-        while(getline(ss, cell, ','))
+        //Read the u_traj file
+        for(int i = 0; i < Constants::num_time_steps; ++i)
         {
-            temp_vector(cell_idx) = std::stod(cell);
-
-            //Apply the x, y, z offsets
-            //X
-            if(cell_idx == 0)
+            //Check to see if this file is OK to read
+            if(!u_traj_in.good())
             {
-                temp_vector(cell_idx) += x_offset;
-            }
-            //Y
-            else if(cell_idx == 1)
-            {
-                temp_vector(cell_idx) += y_offset;
-            }
-            //Z
-            else if(cell_idx == 2)
-            {
-                temp_vector(cell_idx) += z_offset;
+                break;
             }
 
-            //Increment the cell index
-            cell_idx++;
+            //Get the next line from the CSV file
+            getline(u_traj_in, line);
+
+            //Process the file using comma as a delimiter
+            std::stringstream ss(line);
+
+            //Reset the cell counter
+            cell_idx = 0;
+
+            //Read each column in the line
+            while(getline(ss, cell, ','))
+            {
+                temp_vector(cell_idx) = std::stod(cell, 0);
+                cell_idx++;
+            }
+
+            //Push the temporary Eigen vector to the u traj c++ vector
+            u_traj.push_back(temp_vector);
         }
 
-        //Push the temporary Eigen vector to the x traj c++ vector
-        x_traj.push_back(temp_vector);
+        //std::cout <<"u_traj ready!\n";
+
+        //Init the temp matrix for a gain matrix
+        temp_matrix.resize(Constants::num_controls_u, Constants::num_states);
+        temp_matrix.setZero();
+
+        //Read the K_traj file
+        for(int i = 0; i < Constants::num_time_steps; ++i)
+        {
+            //Check to see if this file is OK to read
+            if(!K_traj_in.good())
+            {
+                break;
+            }
+
+            //Get the next line from the CSV file
+            getline(K_traj_in, line);
+
+            //Process the file using comma as a delimiter
+            std::stringstream ss(line);
+
+            //Reset the cell counter
+            tmp_row = 0;
+            tmp_col = 0;
+
+            //Read each column in the line
+            while(getline(ss, cell, ','))
+            {
+                temp_matrix(tmp_row, tmp_col) = std::stod(cell, 0);
+
+                //Increment the row or column appropriately
+                if(tmp_col == (Constants::num_states - 1))
+                {
+                    tmp_col = 0;
+                    tmp_row++;
+                }
+                else
+                {
+                    tmp_col++;
+                }
+            }
+
+            //Push the temporary Eigen vector to the K traj c++ vector
+            K_traj.push_back(temp_vector);
+        }
+
+        //std::cout <<"K_traj ready!\n";
+
+        //Publish this data
+        if(x_traj.size() > 0)
+        {
+            this->traj_pub.publish(this->get_traj_msg(x_traj, u_traj, K_traj));
+        }
     }
-
-    //Read the u_traj file
-    for(int i = 0; i < Constants::num_time_steps; ++i)
-    {
-        //Check to see if this file is OK to read
-        if(!u_traj_in.good())
-        {
-            break;
-        }
-
-        //Get the next line from the CSV file
-        getline(u_traj_in, line);
-
-        //Process the file using comma as a delimiter
-        std::stringstream ss(line);
-
-        //Reset the cell counter
-        cell_idx = 0;
-
-        //Read each column in the line
-        while(getline(ss, cell, ','))
-        {
-            temp_vector(cell_idx) = std::stod(cell);
-            cell_idx++;
-        }
-
-        //Push the temporary Eigen vector to the u traj c++ vector
-        u_traj.push_back(temp_vector);
-    }
-
-    //Read the K_traj file
-    for(int i = 0; i < Constants::num_time_steps; ++i)
-    {
-        //Check to see if this file is OK to read
-        if(!K_traj_in.good())
-        {
-            break;
-        }
-
-        //Get the next line from the CSV file
-        getline(K_traj_in, line);
-
-        //Process the file using comma as a delimiter
-        std::stringstream ss(line);
-
-        //Reset the cell counter
-        tmp_row = 0;
-        tmp_col = 0;
-
-        //Read each column in the line
-        while(getline(ss, cell, ','))
-        {
-            temp_matrix(tmp_row, tmp_col) = std::stod(cell);
-
-            //Increment the row or column appropriately
-            if(tmp_col == (Constants::num_states - 1))
-            {
-                tmp_col = 0;
-                tmp_row++;
-            }
-            else
-            {
-                tmp_col++;
-            }
-        }
-
-        //Push the temporary Eigen vector to the K traj c++ vector
-        K_traj.push_back(temp_vector);
-    }
-
-    //Publish this data
-    this->traj_pub.publish(this->get_traj_msg(x_traj, u_traj, K_traj));
 }
 
 
@@ -569,7 +611,21 @@ void Optimizer::init_optimizer(const std_msgs::Empty::ConstPtr& init_msg)
         x_offset = current_state.states[0];
         y_offset = current_state.states[1];
         z_offset = current_state.states[2];
+
+        double cur_time = (ros::Time::now() - begin_time).toSec();
+
+        //Log the initial conditions
+        std::string data_str = std::to_string(cur_time) + "," + std::to_string(cur_state(0)) + "," + std::to_string(cur_state(1)) + "," + std::to_string(cur_state(2)) + "\n";
+        std::cout << "INITIAL CONDITIONS: " << data_str << std::endl;
+        this->init_data << data_str;
+
+        //Set the optimizer as initialized
+        this->initialized = true;
+        printf("Optimization started!\n");
     }
+
+    //Close init logging
+    this->init_data.close();
 }
 
 
@@ -722,6 +778,10 @@ void Optimizer::write_traj_to_files(std::vector<Eigen::VectorXd> x_traj, std::ve
             {
                 output += ",";
             }
+            else
+            {
+                output += "\n";
+            }
         }
 
         //Append trajectory
@@ -743,9 +803,13 @@ void Optimizer::write_traj_to_files(std::vector<Eigen::VectorXd> x_traj, std::ve
                 output += std::to_string(K_traj[i](r,c));
                 
                 //Add the comma after all but the last element
-                if(r != (Constants::num_controls_u - 1) || c != (Constants::num_states - 1))
+                if(!(r == (Constants::num_controls_u - 1) && c == (Constants::num_states - 1)))
                 {
                     output += ",";
+                }
+                else
+                {
+                    output += "\n";
                 }
             }
         }
