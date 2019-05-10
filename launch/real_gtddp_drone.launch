@@ -1,7 +1,7 @@
 <launch>
   <arg name="is_sim" value="0" />
   <arg name="real_time" value="0"/>
-  <arg name="target_timestep" value="0.5"/>
+  <arg name="target_timestep" value="1.0"/>
 
   <!-- GT-DDP nodes -->
   <node name="gtddp_control_node" pkg="gtddp_drone" type="gtddp_control_node" output="screen">
