@@ -462,8 +462,8 @@ void Optimizer::offline_traj_callback(const ros::TimerEvent& time_event)
                 }
             }
 
-            //Push the temporary Eigen vector to the K traj c++ vector
-            K_traj.push_back(temp_vector);
+            //Push the temporary Eigen matrix to the K traj c++ vector
+            K_traj.push_back(temp_matrix);
         }
 
         //std::cout <<"K_traj ready!\n";

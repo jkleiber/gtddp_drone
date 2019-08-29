@@ -108,7 +108,7 @@ void Quadrotor::feedforward_controls(VectorXd current_state, const deque<VectorX
     double t=0;
     // main integration loop : propagation over time step
     for (int i = 0; i < x_traj.size() - 1; i++) {
-       //update current inputs
+        // update current inputs
         ui_ = u_traj[i] + K_traj[i] * (x - x_traj[i]);
         vi_ = v_zero;
         

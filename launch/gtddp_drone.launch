@@ -18,7 +18,7 @@
   </node>
 
   <!-- Simulator -->
-  <include file="$(find cvg_sim_gazebo)/launch/ardrone_testworld.launch"/>
+  <include file="$(find cvg_sim_gazebo)/launch/ardrone_emptyworld.launch"/>
 
   <!-- Keyboard node -->
   <node pkg="gtddp_drone" type="keyboard_node.py" name="keyboard_node" output="screen"/>

@@ -289,44 +289,6 @@ void ControlCalculator::state_estimate_callback(const nav_msgs::Odometry::ConstP
 }
 
 
-
-//TODO: use tum_ardrone or not?
-/**
- * 
- */
-/*
-void ControlCalculator::state_estimate_callback(const tum_ardrone::filter_state::ConstPtr& estimate_event)
-{
-    //Update the current state from the tum_ardrone
-    this->cur_state(0) = estimate_event->x;
-    this->cur_state(1) = estimate_event->y;
-    this->cur_state(2) = estimate_event->z;
-
-    this->cur_state(3) = estimate_event->dx;
-    this->cur_state(4) = estimate_event->dy;
-    this->cur_state(5) = estimate_event->dz;
-
-    this->cur_state(6) = estimate_event->roll;
-    this->cur_state(7) = estimate_event->pitch;
-    this->cur_state(8) = estimate_event->yaw;
-    
-    this->cur_state(9) = estimate_event->droll;
-    this->cur_state(10) = estimate_event->dpitch;
-    this->cur_state(11) = estimate_event->dyaw;
-
-    //TODO: Review dynamics
-    //this->cur_state(3) = estimate_event->roll;
-    //this->cur_state(4) = estimate_event->pitch;
-    //this->cur_state(5) = estimate_event->yaw;
-    //this->cur_state(6) = estimate_event->dx;
-    //this->cur_state(7) = estimate_event->dy;
-    //this->cur_state(8) = estimate_event->dz;
-
-    //Set the current state as initialized
-    this->cur_state_init = true;
-}
-*/
-
 /**
  * 
  */
@@ -349,12 +311,6 @@ void ControlCalculator::trajectory_callback(const gtddp_drone_msgs::Trajectory::
 
     //Find the number of events
     num_events = x_data.size();
-
-    //TODO: remove these because we use queues around here
-    //Clear the trajectory vectors
-    //this->x_traj.clear();
-    //this->u_traj.clear();
-    //this->K_traj.clear();
 
     //Create temporary vectors for the trajectory data
     Eigen::VectorXd x_traj_dat(Constants::num_states);
