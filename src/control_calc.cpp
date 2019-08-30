@@ -3,7 +3,7 @@
 /**
  *
  */
-ControlCalculator::ControlCalculator()
+ControlCalculator::ControlCalculator() : x_traj(0), u_traj(0), K_traj(0)
 {
     //Initialize current state size
     this->cur_state.resize(Constants::num_states);
@@ -20,13 +20,16 @@ ControlCalculator::ControlCalculator()
 
     //Set the beginning time
     this->begin_time = ros::Time::now();
+
+    // Track timestep
+    this->timestep = 0;
 }
 
 
 /**
  *
  */
-ControlCalculator::ControlCalculator(ros::Publisher ctrl_sig_pub, ros::Publisher status_pub, int sim_status)
+ControlCalculator::ControlCalculator(ros::Publisher ctrl_sig_pub, ros::Publisher status_pub, int sim_status) : x_traj(0), u_traj(0), K_traj(0)
 {
     //Control signal to publish to AR Drone
     this->control_signal_pub = ctrl_sig_pub;
@@ -53,6 +56,9 @@ ControlCalculator::ControlCalculator(ros::Publisher ctrl_sig_pub, ros::Publisher
 
     //Set the beginning time
     this->begin_time = ros::Time::now();
+
+    // Track timestep
+    this->timestep = 0;
 }
 
 
@@ -128,16 +134,36 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
     if(this->cur_state_init && this->traj_init
     && !this->x_traj.empty())
     {
+        // Only predict the next set of timesteps once per interval
+        if(this->timestep == 0 && this->x_traj.size() >= Constants::num_time_steps)
+        {
+            printf("yo\n");
+            //Forward propagate controls to find the correct output based on the starting position
+            //This serves to get the drone back on track when it strays due to hover, wind, etc.
+            quadrotor.feedforward_controls(this->cur_state, this->u_traj, this->K_traj, this->x_traj);
+            ++this->timestep;
+        }
+        // Increment the timestep and reset if needed
+        else
+        {
+            ++this->timestep;
+            if(this->timestep > Constants::num_time_steps)
+            {
+                this->timestep = 0;
+            }
+        }
+
+        //TODO: is this being used still?
         //Set the status to flying
         ctrl_status.status = gtddp_drone_msgs::Status::FLYING;
         this->status_pub.publish(this->ctrl_status);
 
-        //printf("x: {{");
-        //for(int i = 0; i < Constants::num_states; ++i)
-        //{
-        //    printf("%f ", this->x_traj.front()(i));
-        //}
-        //printf("}}\n");
+        // printf("x: {{");
+        // for(int i = 0; i < Constants::num_states; ++i)
+        // {
+        //     printf("%f ", this->x_traj.front()(i));
+        // }
+        // printf("}}\n");
 
         /* Form the control message */
         //Simulation takes velocity
@@ -284,7 +310,6 @@ void ControlCalculator::trajectory_callback(const gtddp_drone_msgs::Trajectory::
     int num_events; //number of events in the message
     int t;          //time iteration variable
     int r, c;       //rows and columns of gain matrix
-    std::deque<Eigen::VectorXd> tmp_x_traj;
 
     //Set the status to flying
     ctrl_status.status = gtddp_drone_msgs::Status::FLYING;
@@ -329,38 +354,10 @@ void ControlCalculator::trajectory_callback(const gtddp_drone_msgs::Trajectory::
         }
 
         //Push the new data into storage
-        //tmp_x_traj.push_back(x_traj_dat);
         this->x_traj.push_back(x_traj_dat);
         this->u_traj.push_back(u_traj_dat);
         this->K_traj.push_back(K_traj_dat);
     }
-
-    // printf("Control signal received!\n");
-
-    // printf("x: [");
-    //     for(int i = 0; i < Constants::num_states; ++i)
-    //     {
-    //         printf("%f ", tmp_x_traj[0](i));
-    //     }
-    // printf("]\n");
-
-    //Forward propagate controls to find the correct output based on the starting position
-    //This serves to get the drone back on track when it strays due to hover, wind, etc.
-    //tmp_x_traj = quadrotor.feedforward_controls(this->cur_state, this->u_traj, this->K_traj, tmp_x_traj);
-
-    // Add the modified elements to the deque
-    // while(!tmp_x_traj.empty())
-    // {
-    //     this->x_traj.push_back(tmp_x_traj.front());
-    //     tmp_x_traj.pop_front();
-    // }
-//
-    printf("x: {");
-        for(int i = 0; i < Constants::num_states; ++i)
-        {
-            printf("%f ", this->x_traj[0](i));
-        }
-    printf("}\n");
 
     //The trajectory is now initialized!
     this->traj_init = true;

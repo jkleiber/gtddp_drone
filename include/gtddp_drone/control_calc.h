@@ -87,6 +87,7 @@ class ControlCalculator
 
         //Do time tracking
         ros::Time begin_time;
+        int timestep;
 
         //Flags for initialization
         bool cur_state_init;

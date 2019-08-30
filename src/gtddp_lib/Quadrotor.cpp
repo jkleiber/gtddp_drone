@@ -98,7 +98,7 @@ void Quadrotor::forward_propagate_mm(vector<VectorXd>& x_traj, const vector<Vect
 } //forward_propagate_mm
 
 
-deque<VectorXd> Quadrotor::feedforward_controls(VectorXd current_state, const deque<VectorXd>& u_traj, const deque<MatrixXd>& K_traj, const deque<VectorXd>& x_traj)
+void Quadrotor::feedforward_controls(VectorXd current_state, const deque<VectorXd>& u_traj, const deque<MatrixXd>& K_traj, deque<VectorXd>& x_traj)
 {
     // initial condition
     VectorXd x = current_state;
@@ -106,11 +106,11 @@ deque<VectorXd> Quadrotor::feedforward_controls(VectorXd current_state, const de
     v_zero << 0, 0, 0, 0;
 
     // Result
-    deque<VectorXd> result;
+    deque<VectorXd> result = x_traj;
 
     double t=0;
     // main integration loop : propagation over time step
-    for (int i = 0; i < x_traj.size() - 1; i++) {
+    for (int i = 0; i < Constants::num_time_steps - 1; i++) {
         // update current inputs
         ui_ = u_traj[i] + K_traj[i] * (x - x_traj[i]);
         vi_ = v_zero;
@@ -118,9 +118,12 @@ deque<VectorXd> Quadrotor::feedforward_controls(VectorXd current_state, const de
         using namespace std::placeholders;
         stepper.do_step(std::bind(&::Quadrotor::dynamics_mm, this, _1, _2, _3), x, t, dt);
         t += dt;
-        result.push_back(x); //save x trajectory
+        result[i] = x; //save x trajectory
         t += dt;
     } //for num_time_steps-1
+
+    // Set x_traj to the new state
+    x_traj = result;
 
 } //forward_propagate_mm
 
