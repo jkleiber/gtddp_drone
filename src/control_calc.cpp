@@ -1,7 +1,7 @@
 #include "gtddp_drone/control_calc.h"
 
 /**
- * 
+ *
  */
 ControlCalculator::ControlCalculator()
 {
@@ -11,9 +11,6 @@ ControlCalculator::ControlCalculator()
     //Reset flags
     this->cur_state_init = false;
     this->traj_init = false;
-
-    //Set timestep to t0
-    this->timestep = -1;
 
     //Set the status to idle
     ctrl_status.status = gtddp_drone_msgs::Status::IDLE;
@@ -27,7 +24,7 @@ ControlCalculator::ControlCalculator()
 
 
 /**
- * 
+ *
  */
 ControlCalculator::ControlCalculator(ros::Publisher ctrl_sig_pub, ros::Publisher status_pub, int sim_status)
 {
@@ -43,9 +40,6 @@ ControlCalculator::ControlCalculator(ros::Publisher ctrl_sig_pub, ros::Publisher
     //Reset flags
     this->cur_state_init = false;
     this->traj_init = false;
-
-    //Set timestep to t0
-    this->timestep = -1;
 
     //Set the status to idle
     ctrl_status.status = gtddp_drone_msgs::Status::IDLE;
@@ -71,7 +65,7 @@ void ControlCalculator::logging_init()
     std::stringstream ss;
 
     //Find the user's home directory
-    if ((home_dir = getenv("HOME")) == NULL) 
+    if ((home_dir = getenv("HOME")) == NULL)
     {
         home_dir = getpwuid(getuid())->pw_dir;
     }
@@ -105,7 +99,7 @@ void ControlCalculator::logging_init()
     //Form the file name
     ss << filepath << timestamp << "_gt_data" << ".csv";
     ss >> filename;
-    std::cout << "Logging ground_truth_data to " << filename << std::endl; 
+    std::cout << "Logging ground_truth_data to " << filename << std::endl;
 
     //Open the ground truth log file
     this->ground_truth_data.open(filename);
@@ -123,7 +117,7 @@ void ControlCalculator::logging_init()
 
 
 /**
- * 
+ *
  */
 void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time_event)
 {
@@ -131,21 +125,20 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
     double cur_time = (ros::Time::now() - begin_time).toSec();
 
     //Only output to the control topic if the localization has happened and the trajectory has been built
-    //Also only output if the timestep is in bounds
     if(this->cur_state_init && this->traj_init
     && !this->x_traj.empty())
     {
         //Set the status to flying
         ctrl_status.status = gtddp_drone_msgs::Status::FLYING;
         this->status_pub.publish(this->ctrl_status);
-/*
-        printf("x: [");
-        for(int i = 0; i < Constants::num_states; ++i)
-        {
-            printf("%f ", this->x_traj[timestep](i));
-        }
-        printf("]\n");*/
-        
+
+        //printf("x: {{");
+        //for(int i = 0; i < Constants::num_states; ++i)
+        //{
+        //    printf("%f ", this->x_traj.front()(i));
+        //}
+        //printf("}}\n");
+
         /* Form the control message */
         //Simulation takes velocity
         if(this->is_sim)
@@ -166,28 +159,23 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
             //Roll (move sideways) (theta)
             this->ctrl_command.linear.y = this->x_traj.front()(6) / 0.3;
         }
-        
+
         //Yaw rate (how fast to spin) (r)
-        //this->ctrl_command.angular.z = this->angleWrap(this->x_traj.front()(11)) > 0.2 ? 0.2 : this->angleWrap(this->x_traj[timestep](11));// / MAX_YAW_RATE;
-        //this->ctrl_command.angular.z = this->ctrl_command.angular.z < -0.2 ? -0.2 : this->ctrl_command.angular.z;
         this->ctrl_command.angular.z = 0;
-        
+
         //Vertical speed (how fast to move upward) (z dot)
         this->ctrl_command.linear.z = this->x_traj.front()(5);// / MAX_VERTICAL_VEL;
-        
+
         //Pop the front element off the deques
         this->x_traj.pop_front();
         this->u_traj.pop_front();
         this->K_traj.pop_front();
 
-        //Increment the timestep
-        //this->timestep += 10;   //TODO: is this needed still?
-
         ctrl_timer.setPeriod(ros::Duration(0.001));
     }
-    //Hover if the state and/or trajectory do not exist. 
+    //Hover if the state and/or trajectory do not exist.
     //Also, do not hover on the first optimization in a simulated environment
-    else if((this->cur_state_init && this->traj_init) 
+    else if((this->cur_state_init && this->traj_init)
          || !this->is_sim
          || this->x_traj.empty())
     {
@@ -231,7 +219,7 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
 
 
 /**
- * 
+ *
  */
 void ControlCalculator::state_estimate_callback(const nav_msgs::Odometry::ConstPtr& odom)
 {
@@ -254,9 +242,6 @@ void ControlCalculator::state_estimate_callback(const nav_msgs::Odometry::ConstP
     this->cur_state(3) = odom->twist.twist.linear.x;
     this->cur_state(4) = odom->twist.twist.linear.y;
     this->cur_state(5) = odom->twist.twist.linear.z;
-    //this->cur_state(6) = odom->twist.twist.linear.x;
-    //this->cur_state(7) = odom->twist.twist.linear.y;
-    //this->cur_state(8) = odom->twist.twist.linear.z;
 
     //Angular velocity
     this->cur_state(9) = odom->twist.twist.angular.x;
@@ -290,7 +275,7 @@ void ControlCalculator::state_estimate_callback(const nav_msgs::Odometry::ConstP
 
 
 /**
- * 
+ *
  */
 void ControlCalculator::trajectory_callback(const gtddp_drone_msgs::Trajectory::ConstPtr& traj_msg)
 {
@@ -299,6 +284,7 @@ void ControlCalculator::trajectory_callback(const gtddp_drone_msgs::Trajectory::
     int num_events; //number of events in the message
     int t;          //time iteration variable
     int r, c;       //rows and columns of gain matrix
+    std::deque<Eigen::VectorXd> tmp_x_traj;
 
     //Set the status to flying
     ctrl_status.status = gtddp_drone_msgs::Status::FLYING;
@@ -316,8 +302,6 @@ void ControlCalculator::trajectory_callback(const gtddp_drone_msgs::Trajectory::
     Eigen::VectorXd x_traj_dat(Constants::num_states);
     Eigen::VectorXd u_traj_dat(Constants::num_controls_u);
     Eigen::MatrixXd K_traj_dat(Constants::num_controls_u, Constants::num_states);
-
-    std::cout << "x size: " << x_data.size()  << " " << std::endl;
 
     //Parse the message to get the trajectory
     for(t = 0; t < num_events; ++t)
@@ -345,16 +329,38 @@ void ControlCalculator::trajectory_callback(const gtddp_drone_msgs::Trajectory::
         }
 
         //Push the new data into storage
+        //tmp_x_traj.push_back(x_traj_dat);
         this->x_traj.push_back(x_traj_dat);
         this->u_traj.push_back(u_traj_dat);
         this->K_traj.push_back(K_traj_dat);
     }
 
-    printf("Control signal received!\n");
+    // printf("Control signal received!\n");
+
+    // printf("x: [");
+    //     for(int i = 0; i < Constants::num_states; ++i)
+    //     {
+    //         printf("%f ", tmp_x_traj[0](i));
+    //     }
+    // printf("]\n");
 
     //Forward propagate controls to find the correct output based on the starting position
     //This serves to get the drone back on track when it strays due to hover, wind, etc.
-    //quadrotor.feedforward_controls(this->cur_state, this->u_traj, this->K_traj, this->x_traj);
+    //tmp_x_traj = quadrotor.feedforward_controls(this->cur_state, this->u_traj, this->K_traj, tmp_x_traj);
+
+    // Add the modified elements to the deque
+    // while(!tmp_x_traj.empty())
+    // {
+    //     this->x_traj.push_back(tmp_x_traj.front());
+    //     tmp_x_traj.pop_front();
+    // }
+//
+    printf("x: {");
+        for(int i = 0; i < Constants::num_states; ++i)
+        {
+            printf("%f ", this->x_traj[0](i));
+        }
+    printf("}\n");
 
     //The trajectory is now initialized!
     this->traj_init = true;

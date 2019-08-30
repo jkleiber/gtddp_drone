@@ -11,7 +11,7 @@
     <param name="is_simulation" value="$(arg is_sim)"/>
     <param name="is_real_time" value="$(arg real_time)"/>
   </node>
-  
+
   <!-- Target node -->
   <node name="gtddp_target_node" pkg="gtddp_drone_target_trajectory" type="gtddp_target_node" output="screen">
     <param name="target_dt" value="$(arg target_timestep)"/>

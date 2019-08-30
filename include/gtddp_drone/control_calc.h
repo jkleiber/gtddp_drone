@@ -6,7 +6,7 @@
 
 //System libs
 #include <chrono>
-#include <ctime> 
+#include <ctime>
 #include <eigen3/Eigen/Dense>
 #include <fstream>
 #include <iostream>
@@ -33,7 +33,7 @@
 
 
 /**
- * 
+ *
  */
 class ControlCalculator
 {
@@ -59,7 +59,7 @@ class ControlCalculator
     private:
         //Flight controller
         FlightController flight_controller;
-        
+
         //Controller status
         gtddp_drone_msgs::Status ctrl_status;
 
@@ -86,7 +86,6 @@ class ControlCalculator
         ros::Timer ctrl_timer;
 
         //Do time tracking
-        int timestep;
         ros::Time begin_time;
 
         //Flags for initialization
