@@ -127,17 +127,16 @@ void ControlCalculator::logging_init()
  */
 void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time_event)
 {
-    //Get the current time
+    // Get the current time
     double cur_time = (ros::Time::now() - begin_time).toSec();
 
-    //Only output to the control topic if the localization has happened and the trajectory has been built
+    // Only output to the control topic if the localization has happened and the trajectory has been built
     if(this->cur_state_init && this->traj_init
     && !this->x_traj.empty())
     {
         // Only predict the next set of timesteps once per interval
         if(this->timestep == 0 && this->x_traj.size() >= Constants::num_time_steps)
         {
-            printf("yo\n");
             //Forward propagate controls to find the correct output based on the starting position
             //This serves to get the drone back on track when it strays due to hover, wind, etc.
             quadrotor.feedforward_controls(this->cur_state, this->u_traj, this->K_traj, this->x_traj);
@@ -153,8 +152,8 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
             }
         }
 
-        //TODO: is this being used still?
-        //Set the status to flying
+        // TODO: is this being used still?
+        // Set the status to flying
         ctrl_status.status = gtddp_drone_msgs::Status::FLYING;
         this->status_pub.publish(this->ctrl_status);
 
@@ -166,41 +165,43 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         // printf("}}\n");
 
         /* Form the control message */
-        //Simulation takes velocity
+        // Simulation takes velocity
         if(this->is_sim)
         {
-            //X velocity (move forward) (x dot)
+            // X velocity (move forward) (x dot)
             this->ctrl_command.linear.x = this->x_traj.front()(3);// / MAX_FWD_VEL;
 
-            //Y velocity (move side to side) (y dot)
+            // Y velocity (move side to side) (y dot)
             this->ctrl_command.linear.y = this->x_traj.front()(4);// / MAX_SIDE_VEL;
         }
-        //Real drones take pitch and negative roll
+        // Real drones take pitch and negative roll
         else
         {
-            //TODO: for some reason, 7 = pitch and 6 = roll? Pls investigate further
-            //Pitch (move forward) (phi)
+            // TODO: for some reason, 7 = pitch and 6 = roll? Pls investigate further
+            // Pitch (move forward) (phi)
+            // Ensure the pitch is in the range of allowed pitches
             this->ctrl_command.linear.x = this->x_traj.front()(7) / 0.3;
 
-            //Roll (move sideways) (theta)
-            this->ctrl_command.linear.y = this->x_traj.front()(6) / 0.3;
+            // -Roll (move sideways) (theta)
+            // Ensure the roll is in the range of allowed rolls
+            this->ctrl_command.linear.y = this->clamp(-this->x_traj.front()(6) / 0.3, -0.3, 0.3);
         }
 
-        //Yaw rate (how fast to spin) (r)
+        // Yaw rate (how fast to spin) (r)
         this->ctrl_command.angular.z = 0;
 
-        //Vertical speed (how fast to move upward) (z dot)
+        // Vertical speed (how fast to move upward) (z dot)
         this->ctrl_command.linear.z = this->x_traj.front()(5);// / MAX_VERTICAL_VEL;
 
-        //Pop the front element off the deques
+        // Pop the front element off the deques
         this->x_traj.pop_front();
         this->u_traj.pop_front();
         this->K_traj.pop_front();
 
         ctrl_timer.setPeriod(ros::Duration(0.001));
     }
-    //Hover if the state and/or trajectory do not exist.
-    //Also, do not hover on the first optimization in a simulated environment
+    // Hover if the state and/or trajectory do not exist.
+    // Also, do not hover on the first optimization in a simulated environment
     else if((this->cur_state_init && this->traj_init)
          || !this->is_sim
          || this->x_traj.empty())
@@ -209,7 +210,7 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         ctrl_status.status = gtddp_drone_msgs::Status::IDLE;
         this->status_pub.publish(this->ctrl_status);
 
-        //Hover until next command
+        // Hover until next command
         this->ctrl_command.linear.x = 0;
         this->ctrl_command.linear.y = 0;
         this->ctrl_command.linear.z = 0;
@@ -217,27 +218,27 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         this->ctrl_command.angular.y = 0;
         this->ctrl_command.angular.z = 0;
 
-        //Slow down updates in the simulator because this will make the hover less bad
+        // Slow down updates in the simulator because this will make the hover less bad
         if(is_sim)
         {
             ctrl_timer.setPeriod(ros::Duration(1.0));
         }
     }
 
-    //Log the commands
+    // Log the commands
     std::string data_str = std::to_string(cur_time) + "," + std::to_string(ctrl_command.linear.x) + "," + std::to_string(ctrl_command.linear.y) + "," + std::to_string(ctrl_command.linear.z) + "," + std::to_string(ctrl_command.angular.z) + "\n";
     this->command_data << data_str;
 
-    //If this is a simulation, publish the control command directly
+    // If this is a simulation, publish the control command directly
     if(this->is_sim)
     {
         this->control_signal_pub.publish(this->ctrl_command);
     }
-    //Otherwise, publish data after going through the flight controller
+    // Otherwise, publish data after going through the flight controller
     else
     {
-        //FIXME: PID controller commands a really weird pitch
-        //flight_controller.publish_control(this->ctrl_command);
+        // FIXME: PID controller commands a really weird pitch
+        // flight_controller.publish_control(this->ctrl_command);
 
         this->control_signal_pub.publish(this->ctrl_command);
     }
@@ -392,4 +393,21 @@ double ControlCalculator::angleWrap(double angle)
 
     //Return the angle wrapped to -pi to pi
     return (wrapped_angle - Constants::pi);
+}
+
+double ControlCalculator::clamp(double val, double min_val, double max_val)
+{
+    // Cap the value at maximum if it is too large
+    if(val > max_val)
+    {
+        val = max_val;
+    }
+    // Make sure the value isn't too small
+    else if (val < min_val)
+    {
+        val = min_val;
+    }
+
+    // Return a value that is in range now
+    return val;
 }

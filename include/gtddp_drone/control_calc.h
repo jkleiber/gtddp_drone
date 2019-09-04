@@ -65,6 +65,7 @@ class ControlCalculator
 
         //Output format utils
         double angleWrap(double angle);
+        double clamp(double val, double min_val, double max_val);
 
         //Publish control system data to the drone
         ros::Publisher control_signal_pub;
