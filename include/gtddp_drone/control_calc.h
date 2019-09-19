@@ -51,6 +51,9 @@ class ControlCalculator
         //void state_estimate_callback(const tum_ardrone::filter_state::ConstPtr& estimate_event);
         void trajectory_callback(const gtddp_drone_msgs::Trajectory::ConstPtr& traj_msg);
 
+        // Test Code
+        void open_loop_control(const ros::TimerEvent& time_event);
+
         //Timer configuration
         void set_timer(ros::Timer& timer);
 

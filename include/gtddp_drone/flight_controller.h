@@ -4,6 +4,7 @@
 #include <ros/ros.h>
 #include <eigen3/Eigen/Dense>
 #include <geometry_msgs/Twist.h>
+#include <math.h>
 
 /**
  * PID CONSTANTS
@@ -12,40 +13,40 @@
 #define TIME_CONST (double)(0.0)
 
 //ROLL
-#define ROLL_KP (double)(0.50)
+#define ROLL_KP (double)(5.0)
 #define ROLL_KI (double)(0.0)
-#define ROLL_KD (double)(0.50)
-#define ROLL_LIMIT (double)(0.5)
+#define ROLL_KD (double)(0.00)
+#define ROLL_LIMIT (double)(1.0)
 
 //PITCH
-#define PITCH_KP (double)(0.50)
+#define PITCH_KP (double)(5.0)
 #define PITCH_KI (double)(0.0)
-#define PITCH_KD (double)(0.50)
-#define PITCH_LIMIT (double)(0.5)
+#define PITCH_KD (double)(0.00)
+#define PITCH_LIMIT (double)(1.0)
 
-//YAW
-#define YAW_KP (double)(2.0)
-#define YAW_KI (double)(0.0)
-#define YAW_KD (double)(1.0)
-#define YAW_LIMIT (double)(1.5)
-
-//X VEL
-#define XVEL_KP (double)(5.0)
-#define XVEL_KI (double)(0.0)
-#define XVEL_KD (double)(1.0)
-#define XVEL_LIMIT (double)(2.0)
-
-//Y VEL
-#define YVEL_KP (double)(5.0)
-#define YVEL_KI (double)(0.0)
-#define YVEL_KD (double)(1.0)
-#define YVEL_LIMIT (double)(2.0)
-
-//Z VEL
-#define ZVEL_KP (double)(5.0)
-#define ZVEL_KI (double)(0.0)
-#define ZVEL_KD (double)(1.0)
-#define ZVEL_LIMIT (double)(1.0)
+// //YAW
+// #define YAW_KP (double)(2.0)
+// #define YAW_KI (double)(0.0)
+// #define YAW_KD (double)(1.0)
+// #define YAW_LIMIT (double)(1.5)
+//
+// //X VEL
+// #define XVEL_KP (double)(5.0)
+// #define XVEL_KI (double)(0.0)
+// #define XVEL_KD (double)(1.0)
+// #define XVEL_LIMIT (double)(2.0)
+//
+// //Y VEL
+// #define YVEL_KP (double)(5.0)
+// #define YVEL_KI (double)(0.0)
+// #define YVEL_KD (double)(1.0)
+// #define YVEL_LIMIT (double)(2.0)
+//
+// //Z VEL
+// #define ZVEL_KP (double)(5.0)
+// #define ZVEL_KI (double)(0.0)
+// #define ZVEL_KD (double)(1.0)
+// #define ZVEL_LIMIT (double)(1.0)
 
 //Environment constants
 #define GRAVITY (double)(-9.81)  //TODO: should this be positive or negative
@@ -66,7 +67,7 @@ class FlightController
         geometry_msgs::Twist cur_cmd;
 
         //Define the PID controller used to handle flight
-        class PIDController 
+        class PIDController
         {
             public:
                 PIDController();
@@ -85,11 +86,11 @@ class FlightController
                 double p, i, d;
 
                 double update(double input, double x, double dx, double dt);
-                void reset(); 
+                void reset();
         };
 
         //Struct of all the controllers
-        typedef struct controllers_t 
+        typedef struct controllers_t
         {
             PIDController roll;
             PIDController pitch;

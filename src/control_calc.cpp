@@ -177,21 +177,28 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         // Real drones take pitch and negative roll
         else
         {
+            // X velocity (move forward) (x dot)
+            this->ctrl_command.linear.x = this->clamp(this->x_traj.front()(3), -1.0, 1.0);// / MAX_FWD_VEL;
+
+            // Y velocity (move side to side) (y dot)
+            this->ctrl_command.linear.y = this->clamp(this->x_traj.front()(4), -1.0, 1.0);// / MAX_SIDE_VEL;
+
             // TODO: for some reason, 7 = pitch and 6 = roll? Pls investigate further
             // Pitch (move forward) (phi)
             // Ensure the pitch is in the range of allowed pitches
-            this->ctrl_command.linear.x = this->x_traj.front()(7) / 0.3;
+            //this->ctrl_command.linear.x = this->clamp(this->x_traj.front()(7) / 0.5, -1.0, 1.0);
 
             // -Roll (move sideways) (theta)
             // Ensure the roll is in the range of allowed rolls
-            this->ctrl_command.linear.y = this->clamp(-this->x_traj.front()(6) / 0.3, -0.3, 0.3);
+            //this->ctrl_command.linear.y = this->clamp(-this->x_traj.front()(6) / 0.5, -1.0, 1.0);
         }
+
 
         // Yaw rate (how fast to spin) (r)
         this->ctrl_command.angular.z = 0;
 
         // Vertical speed (how fast to move upward) (z dot)
-        this->ctrl_command.linear.z = this->x_traj.front()(5);// / MAX_VERTICAL_VEL;
+        this->ctrl_command.linear.z = this->clamp(this->x_traj.front()(5), -0.6, 0.6);// / MAX_VERTICAL_VEL;
 
         // Pop the front element off the deques
         this->x_traj.pop_front();
@@ -238,12 +245,55 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
     else
     {
         // FIXME: PID controller commands a really weird pitch
-        // flight_controller.publish_control(this->ctrl_command);
+        //flight_controller.publish_control(this->ctrl_command);
+        //this->control_signal_pub.publish(flight_controller.update_state(this->cur_state));
 
         this->control_signal_pub.publish(this->ctrl_command);
     }
 }
 
+
+void ControlCalculator::open_loop_control(const ros::TimerEvent& time_event)
+{
+    // Get the current time
+    double cur_time = (ros::Time::now() - begin_time).toSec();
+
+    // Only output to the control topic if the localization has happened and the trajectory has been built
+    if(this->cur_state_init && this->traj_init
+    && !this->x_traj.empty())
+    {
+        // Directly use the controls given by the optimizer
+        this->ctrl_command.linear.x = this->u_traj.front()(0);
+        this->ctrl_command.linear.y = this->u_traj.front()(1);
+        this->ctrl_command.linear.z = this->u_traj.front()(2);
+        this->ctrl_command.angular.z = this->u_traj.front()(3);
+
+        // Pop the front element off the deques
+        this->x_traj.pop_front();
+        this->u_traj.pop_front();
+        this->K_traj.pop_front();
+    }
+    else
+    {
+        // Hover until next command
+        this->ctrl_command.linear.x = 0;
+        this->ctrl_command.linear.y = 0;
+        this->ctrl_command.linear.z = 0;
+        this->ctrl_command.angular.x = 0;
+        this->ctrl_command.angular.y = 0;
+        this->ctrl_command.angular.z = 0;
+    }
+
+    // Log the commands
+    std::string data_str = std::to_string(cur_time) + "," + std::to_string(ctrl_command.linear.x) + "," + std::to_string(ctrl_command.linear.y) + "," + std::to_string(ctrl_command.linear.z) + "," + std::to_string(ctrl_command.angular.z) + "\n";
+    this->command_data << data_str;
+
+    // Publish the flight control
+    //this->control_signal_pub.publish(this->ctrl_command);
+
+    flight_controller.publish_control(this->ctrl_command);
+    this->control_signal_pub.publish(flight_controller.update_state(this->cur_state));
+}
 
 /**
  *
@@ -284,7 +334,18 @@ void ControlCalculator::state_estimate_callback(const nav_msgs::Odometry::ConstP
     double cur_time = (ros::Time::now() - begin_time).toSec();
 
     //Output data to the logging file
-    std::string data_str = std::to_string(cur_time) + "," + std::to_string(cur_state(0)) + "," + std::to_string(cur_state(1)) + "," + std::to_string(cur_state(2)) + "\n";
+    std::string data_str = std::to_string(cur_time) + ",";
+    for(int i = 0; i < Constants::num_states; ++i)
+    {
+        data_str += std::to_string(cur_state(i));
+
+        if(i < Constants::num_states - 1)
+        {
+            data_str += ",";
+        }
+    }
+    data_str += "\n";
+
     //std::cout << data_str << std::endl;
     this->ground_truth_data << data_str;
 
