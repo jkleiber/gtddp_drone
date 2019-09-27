@@ -244,11 +244,10 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
     // Otherwise, publish data after going through the flight controller
     else
     {
-        // FIXME: PID controller commands a really weird pitch
-        //flight_controller.publish_control(this->ctrl_command);
-        //this->control_signal_pub.publish(flight_controller.update_state(this->cur_state));
+        flight_controller.publish_control(this->ctrl_command);
+        this->control_signal_pub.publish(flight_controller.update_state(this->cur_state));
 
-        this->control_signal_pub.publish(this->ctrl_command);
+        //this->control_signal_pub.publish(this->ctrl_command);
     }
 }
 
@@ -264,7 +263,7 @@ void ControlCalculator::open_loop_control(const ros::TimerEvent& time_event)
     {
         // Directly use the controls given by the optimizer
         this->ctrl_command.linear.x = this->u_traj.front()(0);
-        this->ctrl_command.linear.y = this->u_traj.front()(1);
+        this->ctrl_command.linear.y = 0; // this->u_traj.front()(1);
         this->ctrl_command.linear.z = this->u_traj.front()(2);
         this->ctrl_command.angular.z = this->u_traj.front()(3);
 
@@ -272,6 +271,10 @@ void ControlCalculator::open_loop_control(const ros::TimerEvent& time_event)
         this->x_traj.pop_front();
         this->u_traj.pop_front();
         this->K_traj.pop_front();
+
+        // Publish the control signal
+        flight_controller.publish_control(this->ctrl_command);
+        this->control_signal_pub.publish(flight_controller.update_state(this->cur_state));
     }
     else
     {
@@ -282,17 +285,14 @@ void ControlCalculator::open_loop_control(const ros::TimerEvent& time_event)
         this->ctrl_command.angular.x = 0;
         this->ctrl_command.angular.y = 0;
         this->ctrl_command.angular.z = 0;
+
+        // Publish the flight control
+        this->control_signal_pub.publish(this->ctrl_command);
     }
 
     // Log the commands
     std::string data_str = std::to_string(cur_time) + "," + std::to_string(ctrl_command.linear.x) + "," + std::to_string(ctrl_command.linear.y) + "," + std::to_string(ctrl_command.linear.z) + "," + std::to_string(ctrl_command.angular.z) + "\n";
     this->command_data << data_str;
-
-    // Publish the flight control
-    //this->control_signal_pub.publish(this->ctrl_command);
-
-    flight_controller.publish_control(this->ctrl_command);
-    this->control_signal_pub.publish(flight_controller.update_state(this->cur_state));
 }
 
 /**

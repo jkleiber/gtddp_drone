@@ -5,19 +5,19 @@ FlightController::FlightController()
 {
     //Initialize PIDs
     //ROLL
-    controllers.roll.init(ROLL_KP, ROLL_KI, ROLL_KD, TIME_CONST, ROLL_LIMIT);
+    //controllers.roll.init(ROLL_KP, ROLL_KI, ROLL_KD, TIME_CONST, ROLL_LIMIT);
 
     //PITCH
-    controllers.pitch.init(PITCH_KP, PITCH_KI, PITCH_KD, TIME_CONST, PITCH_LIMIT);
+    //controllers.pitch.init(PITCH_KP, PITCH_KI, PITCH_KD, TIME_CONST, PITCH_LIMIT);
 
     //YAW
     //controllers.yaw.init(YAW_KP, YAW_KI, YAW_KD, TIME_CONST, YAW_LIMIT);
 
     //X VEL
-    //controllers.velocity_x.init(XVEL_KP, XVEL_KI, XVEL_KD, TIME_CONST, XVEL_LIMIT);
+    controllers.velocity_x.init(XVEL_KP, XVEL_KI, XVEL_KD, TIME_CONST, XVEL_LIMIT);
 
     //Y VEL
-    //controllers.velocity_y.init(YVEL_KP, YVEL_KI, YVEL_KD, TIME_CONST, YVEL_LIMIT);
+    controllers.velocity_y.init(YVEL_KP, YVEL_KI, YVEL_KD, TIME_CONST, YVEL_LIMIT);
 
     //Z VEL
     //controllers.velocity_z.init(ZVEL_KP, ZVEL_KI, ZVEL_KD, TIME_CONST, ZVEL_LIMIT);
@@ -74,8 +74,11 @@ geometry_msgs::Twist FlightController::update_state(Eigen::VectorXd cur_state)
     double accel_x = (cur_state(3) - this->current_state(3)) / dt;
     double accel_y = (cur_state(4) - this->current_state(4)) / dt;
 
+    double pitch_pid_ctrl = controllers.velocity_x.update(this->cur_cmd.linear.x, cur_state(3), accel_x, dt);
+    printf("Pitch PID: %f\n", pitch_pid_ctrl);
+
     //Calculate the roll and pitch commands
-    double pitch_command = this->cur_cmd.linear.x + controllers.velocity_x.update(this->cur_cmd.linear.x, cur_state(3), accel_x, dt);// / GRAVITY;
+    double pitch_command = this->cur_cmd.linear.x - pitch_pid_ctrl; // / GRAVITY;
     double roll_command  = this->cur_cmd.linear.y + controllers.velocity_y.update(this->cur_cmd.linear.y, cur_state(4), accel_y, dt);// / GRAVITY;
 
     //printf("Pitch commanded: %f\n", pitch_command);

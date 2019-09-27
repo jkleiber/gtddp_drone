@@ -2,7 +2,7 @@
 
 
 /**
- * 
+ *
  */
 Optimizer::Optimizer()
 {
@@ -39,11 +39,11 @@ Optimizer::Optimizer()
 
 
 /**
- * 
+ *
  */
-Optimizer::Optimizer(ros::Publisher& traj_publisher, 
-                    ros::Publisher& state_publisher, 
-                    ros::Publisher& init_publisher, 
+Optimizer::Optimizer(ros::Publisher& traj_publisher,
+                    ros::Publisher& state_publisher,
+                    ros::Publisher& init_publisher,
                     ros::ServiceClient& target_client,
                     bool generate_traj,
                     bool real_time)
@@ -52,7 +52,7 @@ Optimizer::Optimizer(ros::Publisher& traj_publisher,
     this->state_pub = state_publisher;
     this->init_pub = init_publisher;
     this->target_client = target_client;
-    
+
     //Flag the state data as uninitialized
     this->cur_state_init = false;
     this->last_goal_state_init = false;
@@ -108,7 +108,7 @@ Optimizer::Optimizer(ros::Publisher& traj_publisher,
 
 /**
  * @brief Destroy the Optimizer:: Optimizer object
- * 
+ *
  */
 Optimizer::~Optimizer()
 {
@@ -125,8 +125,8 @@ Optimizer::~Optimizer()
 
 
 /**
- * @brief 
- * 
+ * @brief
+ *
  */
 void Optimizer::logging_init()
 {
@@ -136,7 +136,7 @@ void Optimizer::logging_init()
     std::stringstream ss;
 
     //Find the user's home directory
-    if ((home_dir = getenv("HOME")) == NULL) 
+    if ((home_dir = getenv("HOME")) == NULL)
     {
         home_dir = getpwuid(getuid())->pw_dir;
     }
@@ -170,7 +170,7 @@ void Optimizer::logging_init()
     //Form the file name
     ss << filepath << timestamp << "_init_data" << ".csv";
     ss >> filename;
-    std::cout << "Logging initial conditions to " << filename << std::endl; 
+    std::cout << "Logging initial conditions to " << filename << std::endl;
 
     //Open the ground truth log file
     this->init_data.open(filename);
@@ -184,7 +184,7 @@ void Optimizer::open_genfiles()
     std::stringstream ss;
 
     //Find the user's home directory
-    if ((home_dir = getenv("HOME")) == NULL) 
+    if ((home_dir = getenv("HOME")) == NULL)
     {
         home_dir = getpwuid(getuid())->pw_dir;
     }
@@ -201,7 +201,7 @@ void Optimizer::open_genfiles()
         printf("OFFLINE GENERATION FAILED TO FIND FILES!!!!!!!!\n");
         return;
     }
-    
+
     //Convert the home directory into a string
     std::string filepath(home_dir);
 
@@ -242,7 +242,7 @@ void Optimizer::set_num_legs(int legs)
 
 
 /**
- * 
+ *
  */
 void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
 {
@@ -252,7 +252,7 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
     {
         //Create a service to update the current target
         gtddp_drone_msgs::target target_srv;
-        
+
         //If the service succeeds, update the target and run the DDP
         if(target_client.call(target_srv))
         {
@@ -302,7 +302,7 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
         {
             printf("ERROR!!! Target service failed!!!\n");
         }
-        
+
     }
 }
 
@@ -478,7 +478,7 @@ void Optimizer::offline_traj_callback(const ros::TimerEvent& time_event)
 
 
 /**
- * 
+ *
  */
 void Optimizer::state_estimate_callback(const nav_msgs::Odometry::ConstPtr& odom)
 {
@@ -526,7 +526,7 @@ void Optimizer::state_estimate_callback(const nav_msgs::Odometry::ConstPtr& odom
 }
 
 /**
- * 
+ *
  */
 /*
 void Optimizer::state_estimate_callback(const tum_ardrone::filter_state::ConstPtr& estimate_event)
@@ -543,7 +543,7 @@ void Optimizer::state_estimate_callback(const tum_ardrone::filter_state::ConstPt
     this->cur_state(6) = estimate_event->roll;
     this->cur_state(7) = estimate_event->pitch;
     this->cur_state(8) = estimate_event->yaw;
-    
+
     this->cur_state(9) = estimate_event->droll;
     this->cur_state(10) = estimate_event->dpitch;
     this->cur_state(11) = estimate_event->dyaw;
@@ -560,7 +560,7 @@ void Optimizer::state_estimate_callback(const tum_ardrone::filter_state::ConstPt
 
 
 /**
- * 
+ *
  */
 void Optimizer::status_callback(const gtddp_drone_msgs::Status::ConstPtr& status)
 {
@@ -569,7 +569,7 @@ void Optimizer::status_callback(const gtddp_drone_msgs::Status::ConstPtr& status
 
 
 /**
- * 
+ *
  */
 void Optimizer::target_state_decode(const gtddp_drone_msgs::state_data& target_event)
 {
@@ -631,7 +631,7 @@ void Optimizer::init_optimizer(const std_msgs::Empty::ConstPtr& init_msg)
 
 
 /**
- * 
+ *
  */
 gtddp_drone_msgs::Trajectory Optimizer::get_traj_msg(std::vector<Eigen::VectorXd> x_traj, std::vector<Eigen::VectorXd> u_traj, std::vector<Eigen::MatrixXd> K_traj)
 {
@@ -658,7 +658,7 @@ gtddp_drone_msgs::Trajectory Optimizer::get_traj_msg(std::vector<Eigen::VectorXd
 
 
 /**
- * 
+ *
  */
 gtddp_drone_msgs::state_data Optimizer::get_state_data_msg(std::vector<Eigen::VectorXd> x_traj, int idx)
 {
@@ -677,7 +677,7 @@ gtddp_drone_msgs::state_data Optimizer::get_state_data_msg(std::vector<Eigen::Ve
 
 
 /**
- * 
+ *
  */
 gtddp_drone_msgs::ctrl_data Optimizer::get_ctrl_data_msg(std::vector<Eigen::VectorXd> u_traj, int idx)
 {
@@ -696,7 +696,7 @@ gtddp_drone_msgs::ctrl_data Optimizer::get_ctrl_data_msg(std::vector<Eigen::Vect
 
 
 /**
- * 
+ *
  */
 gtddp_drone_msgs::gain_data Optimizer::get_gain_data_msg(std::vector<Eigen::MatrixXd> K_traj, int idx)
 {
@@ -801,7 +801,7 @@ void Optimizer::write_traj_to_files(std::vector<Eigen::VectorXd> x_traj, std::ve
             {
                 //Add the data
                 output += std::to_string(K_traj[i](r,c));
-                
+
                 //Add the comma after all but the last element
                 if(!(r == (Constants::num_controls_u - 1) && c == (Constants::num_states - 1)))
                 {

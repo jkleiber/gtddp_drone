@@ -12,17 +12,17 @@
 //Time constant
 #define TIME_CONST (double)(0.0)
 
-//ROLL
-#define ROLL_KP (double)(5.0)
-#define ROLL_KI (double)(0.0)
-#define ROLL_KD (double)(0.00)
-#define ROLL_LIMIT (double)(1.0)
-
-//PITCH
-#define PITCH_KP (double)(5.0)
-#define PITCH_KI (double)(0.0)
-#define PITCH_KD (double)(0.00)
-#define PITCH_LIMIT (double)(1.0)
+// //ROLL
+// #define ROLL_KP (double)(3.0) //5.0
+// #define ROLL_KI (double)(0.0)
+// #define ROLL_KD (double)(1.00)
+// #define ROLL_LIMIT (double)(1.0)
+//
+// //PITCH
+// #define PITCH_KP (double)(10.0)
+// #define PITCH_KI (double)(0.0)
+// #define PITCH_KD (double)(0.00)
+// #define PITCH_LIMIT (double)(1.0)
 
 // //YAW
 // #define YAW_KP (double)(2.0)
@@ -30,18 +30,20 @@
 // #define YAW_KD (double)(1.0)
 // #define YAW_LIMIT (double)(1.5)
 //
-// //X VEL
-// #define XVEL_KP (double)(5.0)
-// #define XVEL_KI (double)(0.0)
-// #define XVEL_KD (double)(1.0)
-// #define XVEL_LIMIT (double)(2.0)
-//
-// //Y VEL
-// #define YVEL_KP (double)(5.0)
-// #define YVEL_KI (double)(0.0)
-// #define YVEL_KD (double)(1.0)
-// #define YVEL_LIMIT (double)(2.0)
-//
+
+//X VEL
+#define XVEL_KP (double)(0.005)
+#define XVEL_KI (double)(0.0)
+#define XVEL_KD (double)(0.0)
+#define XVEL_LIMIT (double)(2.0)
+
+//Y VEL
+#define YVEL_KP (double)(0.10)
+#define YVEL_KI (double)(0.0)
+#define YVEL_KD (double)(0.0)
+#define YVEL_LIMIT (double)(2.0)
+
+
 // //Z VEL
 // #define ZVEL_KP (double)(5.0)
 // #define ZVEL_KI (double)(0.0)
