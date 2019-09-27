@@ -19,18 +19,18 @@ namespace Constants {
 //     extern const int num_states(4);
 //     extern const int num_controls_u(1);
 //	   extern const int num_controls_v(1);
-//    
+//
     //Quadrotor system
     extern const int num_states(12);
     extern const int num_controls_u(4);
     extern const int num_controls_v(4);
-//  
+//
     // DDP Hyperparameters
-    extern const int num_time_steps(1001); //used to be 501
-    extern const int num_iterations(60); 
-    extern const int num_long_legs(2);  
-    extern const int short_iterations(7); 
-    //extern const int short_iterations(15); 
+    extern const int num_time_steps(1001);
+    extern const int num_iterations(40); // Used to be 50 before lowering the mass and inertia
+    extern const int num_long_legs(2);
+    extern const int short_iterations(7);
+    //extern const int short_iterations(15);
 
     // DDP Constant doubles
     // Change as necessary, do not remove
@@ -39,12 +39,11 @@ namespace Constants {
 
     // System Constant doubles
     // Change, add, or remove as necessary
-    //extern const double m(1.52);
-    extern const double m(2.50);
+    extern const double m(0.436); // used to be 1.52, then it was 2.50
     extern const double M(10.0);
-    extern const double length(0.5);
-    extern const double Ixx(0.0347563);
-    extern const double Iyy(0.0458929);
-    extern const double Izz(0.0977);
+    extern const double length(0.19); //used to be 0.5
+    extern const double Ixx(0.045); // Ixx(0.0347563);
+    extern const double Iyy(0.051); // Iyy(0.0458929);
+    extern const double Izz(0.095); // Izz(0.0977);
 
 }
