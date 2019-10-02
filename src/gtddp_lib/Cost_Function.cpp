@@ -13,33 +13,33 @@ Cost_Function::Cost_Function(Eigen::VectorXd x_t)
 Cost_Function::~Cost_Function() {}
 
 void Cost_Function::initialize_cost_matrix(){
-    
+
     /*  BEGIN COST MATRIX INITIALIZATION
      Ru is num_controls_u x num_controls_u matrix of control cost weights for u
      Rv is num_controls_v x num_controls_v matrix of control cost weights for v
      Q_x is num_states x num_states matrix of state dependent cost weights
      Q_f is num_states x num_states matrix of final state dependent cost weights
-     
+
      Edit the values in these matrices as necessary.
      */
     /**
      * Intuition for Ru and Rv: Higher values on the diagonal result in more restrictive control. Ru < Rv to ensure convergence
-     * 
+     *
      * Intuition for Q_f: Higher values on diagonal results in more emphasis on this performance metric
      *                    Q_f is the cost matrix, so to make certain errors more costly, add value to the appropriate state variable
-     * 
+     *
      * Intuition for Q_x: Scale Q_f by a larger amount to get to the target faster, smaller Q_x is more stable though
      */
-    Ru = MatrixXd::Identity(num_controls_u, num_controls_u); //0.015 * 
-    Rv = 0.15 * MatrixXd::Identity(num_controls_v, num_controls_v);
+    Ru = MatrixXd::Identity(num_controls_u, num_controls_u); //0.015 *
+    Rv = 1.6 * MatrixXd::Identity(num_controls_v, num_controls_v);
     Q_x = MatrixXd::Identity(num_states, num_states);
     Q_f = MatrixXd::Identity(num_states, num_states);
 
     //Set Ru values individually
-    Ru(0, 0) = 0.02;  //thrust
-    Ru(1, 1) = 0.04;   //u1 moment //0.02 worked pretty well in case this breaks
-    Ru(2, 2) = 0.04;   //u2 moment
-    Ru(3, 3) = 0.04;   //u3 moment
+    Ru(0, 0) = 0.375;  //thrust
+    Ru(1, 1) = 0.5;   //u1 moment //0.04 worked pretty well in case this breaks
+    Ru(2, 2) = 0.5;   //u2 moment
+    Ru(3, 3) = 0.5;   //u3 moment
 
     //Quadrotor Cost
     Q_f(0,0) = 1000000; //x
@@ -59,7 +59,7 @@ void Cost_Function::initialize_cost_matrix(){
     Q_f(11,11) = 10000; //yaw rate
 
     Q_x = 0.0001*Q_f;
-    
+
 }
 
 double Cost_Function::calculate_cost_mm(const vector<VectorXd>& x_traj, const vector<VectorXd>& u_traj, const vector<VectorXd>& v_traj)

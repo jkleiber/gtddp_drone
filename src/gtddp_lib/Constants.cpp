@@ -27,7 +27,7 @@ namespace Constants {
 //
     // DDP Hyperparameters
     extern const int num_time_steps(1001);
-    extern const int num_iterations(40); // Used to be 50 before lowering the mass and inertia
+    extern const int num_iterations(60); // Used to be 50 before lowering the mass and inertia
     extern const int num_long_legs(2);
     extern const int short_iterations(7);
     //extern const int short_iterations(15);
@@ -35,15 +35,15 @@ namespace Constants {
     // DDP Constant doubles
     // Change as necessary, do not remove
     extern const double dt(0.001);
-    extern const double learning_rate(0.1);//(0.08);
+    extern const double learning_rate(0.05);//(0.1);
 
     // System Constant doubles
     // Change, add, or remove as necessary
     extern const double m(0.436); // used to be 1.52, then it was 2.50
     extern const double M(10.0);
     extern const double length(0.19); //used to be 0.5
-    extern const double Ixx(0.045); // Ixx(0.0347563);
-    extern const double Iyy(0.051); // Iyy(0.0458929);
-    extern const double Izz(0.095); // Izz(0.0977);
+    extern const double Ixx(0.0045); // Ixx(0.0347563);
+    extern const double Iyy(0.0051); // Iyy(0.0458929);
+    extern const double Izz(0.0095); // Izz(0.0977);
 
 }
