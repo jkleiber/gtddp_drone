@@ -11,6 +11,9 @@ FlightController::FlightController()
     //Y VEL
     controllers.velocity_y.init(YVEL_KP, YVEL_KI, YVEL_KD, TIME_CONST, YVEL_LIMIT);
 
+    // Initialize pitch and roll commands
+    this->pitch_command = 0.0;
+    this->roll_command = 0.0;
 
     //Save the last time for future integration
     last_time = ros::Time::now();
@@ -61,8 +64,8 @@ geometry_msgs::Twist FlightController::update_state(Eigen::VectorXd cur_state)
     double accel_y = (cur_state(4) - this->current_state(4)) / dt;
 
     //Calculate the roll and pitch commands
-    this->pitch_command = this->pitch_command + controllers.velocity_x.update(this->cur_cmd.linear.x, cur_state(3), accel_x, dt);; // / GRAVITY;
-    this->roll_command  = this->roll_command + controllers.velocity_y.update(this->cur_cmd.linear.y, cur_state(4), accel_y, dt);// / GRAVITY;
+    this->pitch_command = controllers.velocity_x.update(this->cur_cmd.linear.x, cur_state(3), accel_x, dt); // / GRAVITY;
+    this->roll_command  = controllers.velocity_y.update(this->cur_cmd.linear.y, cur_state(4), accel_y, dt);// / GRAVITY;
 
     //printf("Pitch commanded: %f\n", pitch_command);
 
@@ -91,6 +94,7 @@ void FlightController::PIDController::init(double p, double i, double d, double 
     this->gain_d = d;
     this->time_constant = time_cnst;
     this->limit = limit;
+    input = dinput = 0;
 }
 
 

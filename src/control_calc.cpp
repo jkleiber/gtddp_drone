@@ -263,9 +263,9 @@ void ControlCalculator::open_loop_control(const ros::TimerEvent& time_event)
     {
         // Directly use the controls given by the optimizer
         this->ctrl_command.linear.x = this->u_traj.front()(0);
-        this->ctrl_command.linear.y = 0; // this->u_traj.front()(1);
+        this->ctrl_command.linear.y = this->u_traj.front()(1);
         this->ctrl_command.linear.z = this->u_traj.front()(2);
-        this->ctrl_command.angular.z = this->u_traj.front()(3);
+        this->ctrl_command.angular.z = 0;//this->u_traj.front()(3);
 
         // Pop the front element off the deques
         this->x_traj.pop_front();
@@ -274,7 +274,13 @@ void ControlCalculator::open_loop_control(const ros::TimerEvent& time_event)
 
         // Publish the control signal
         flight_controller.publish_control(this->ctrl_command);
-        this->control_signal_pub.publish(flight_controller.update_state(this->cur_state));
+
+
+        this->ctrl_command = flight_controller.update_state(this->cur_state);
+        this->ctrl_command.linear.x = this->clamp(this->ctrl_command.linear.x, -1.0, 1.0);
+        this->ctrl_command.linear.y = this->clamp(this->ctrl_command.linear.y, -1.0, 1.0);
+
+        this->control_signal_pub.publish(this->ctrl_command);
     }
     else
     {

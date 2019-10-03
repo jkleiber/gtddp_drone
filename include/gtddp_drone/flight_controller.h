@@ -14,15 +14,15 @@
 
 
 //X VEL
-#define XVEL_KP (double)(0.005)
+#define XVEL_KP (double)(0.8)
 #define XVEL_KI (double)(0.0)
-#define XVEL_KD (double)(0.0)
+#define XVEL_KD (double)(0.05)
 #define XVEL_LIMIT (double)(2.0)
 
 //Y VEL
-#define YVEL_KP (double)(0.10)
+#define YVEL_KP (double)(0.8)
 #define YVEL_KI (double)(0.0)
-#define YVEL_KD (double)(0.0)
+#define YVEL_KD (double)(0.05)
 #define YVEL_LIMIT (double)(2.0)
 
 
