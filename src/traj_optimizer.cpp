@@ -46,7 +46,8 @@ Optimizer::Optimizer(ros::Publisher& traj_publisher,
                     ros::Publisher& init_publisher,
                     ros::ServiceClient& target_client,
                     bool generate_traj,
-                    bool real_time)
+                    bool real_time,
+                    bool open_loop)
 {
     this->traj_pub = traj_publisher;
     this->state_pub = state_publisher;
@@ -83,14 +84,14 @@ Optimizer::Optimizer(ros::Publisher& traj_publisher,
         this->init_pub.publish(current_state);
 
         //Open all of the files
-        this->open_genfiles();
+        this->open_genfiles(open_loop);
     }
     else if(!this->real_time)
     {
         std::cout << "Real-Time operation disabled! Using generated trajectory.\n";
 
         //Open all of the files
-        this->open_genfiles();
+        this->open_genfiles(open_loop);
     }
 
     //Initialize logging if we are flying a drone
@@ -177,7 +178,7 @@ void Optimizer::logging_init()
 }
 
 
-void Optimizer::open_genfiles()
+void Optimizer::open_genfiles(bool open_loop)
 {
     std::string x_file, u_file, K_file;
     const char *home_dir;
@@ -213,8 +214,17 @@ void Optimizer::open_genfiles()
 
     //Find the file on the filepath
     x_file = filepath + "x_traj.csv";
-    u_file = filepath + "u_traj.csv";
     K_file = filepath + "K_file.csv";
+
+    // In open loop flights, we want a different file than normal
+    if(open_loop)
+    {
+        u_file = filepath + "openloop_u_traj.csv";
+    }
+    else
+    {
+        u_file = filepath + "u_traj.csv";
+    }
 
     //If trajectory generation is to occur, open the output files
     if(this->generation_mode)
@@ -474,6 +484,70 @@ void Optimizer::offline_traj_callback(const ros::TimerEvent& time_event)
             this->traj_pub.publish(this->get_traj_msg(x_traj, u_traj, K_traj));
         }
     }
+}
+
+void Optimizer::open_loop_traj_callback(const ros::TimerEvent& time_event)
+{
+    std::vector<Eigen::VectorXd> u_traj;
+    Eigen::VectorXd temp_vector;
+    std::string cell;
+    std::string line;
+    int cell_idx;
+    gtddp_drone_msgs::Trajectory traj_msg;   //trajectory message result
+
+    // Only publish if the drone is ready to fly
+    if(initialized)
+    {
+        std::cout << "Reading Open Loop Leg #" << num_legs << std::endl;
+        ++num_legs;
+
+        // init the temp vector for a control vector
+        temp_vector.resize(Constants::num_controls_u);
+        temp_vector.setZero();
+
+        //Read the u_traj file
+        for(int i = 0; i < Constants::num_time_steps; ++i)
+        {
+            //Check to see if this file is OK to read
+            if(!u_traj_in.good())
+            {
+                break;
+            }
+
+            //Get the next line from the CSV file
+            getline(u_traj_in, line);
+
+            //Process the file using comma as a delimiter
+            std::stringstream ss(line);
+
+            //Reset the cell counter
+            cell_idx = 0;
+
+            //Read each column in the line
+            while(getline(ss, cell, ','))
+            {
+                temp_vector(cell_idx) = std::stod(cell, 0);
+                cell_idx++;
+            }
+
+            //Push the temporary Eigen vector to the u traj c++ vector
+            u_traj.push_back(temp_vector);
+        }
+
+        //Loop through each time step and encode the data into ROS messages
+        //Note: the ddp only initializes values from 0 to num_time_steps - 1. Thus, 100 timesteps will yield 99 values
+        for(int i = 0; i < u_traj.size(); ++i)
+        {
+            traj_msg.u_traj.push_back(this->get_ctrl_data_msg(u_traj, i));
+        }
+
+        // Publish open loop control signal
+        if(u_traj.size() > 0)
+        {
+            this->traj_pub.publish(traj_msg);
+        }
+    }
+
 }
 
 

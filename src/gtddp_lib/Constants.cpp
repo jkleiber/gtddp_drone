@@ -26,7 +26,7 @@ namespace Constants {
     extern const int num_controls_v(4);
 //
     // DDP Hyperparameters
-    extern const int num_time_steps(1001);
+    extern const int num_time_steps(501);//(1001);
     extern const int num_iterations(60); // Used to be 50 before lowering the mass and inertia
     extern const int num_long_legs(2);
     extern const int short_iterations(7);

@@ -166,6 +166,7 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
 
         /* Form the control message */
         // Simulation takes velocity
+        /*
         if(this->is_sim)
         {
             // X velocity (move forward) (x dot)
@@ -183,19 +184,16 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
             // Y velocity (move side to side) (y dot)
             this->ctrl_command.linear.y = this->clamp(this->x_traj.front()(4), -1.0, 1.0);// / MAX_SIDE_VEL;
 
-            // TODO: for some reason, 7 = pitch and 6 = roll? Pls investigate further
-            // Pitch (move forward) (phi)
-            // Ensure the pitch is in the range of allowed pitches
-            //this->ctrl_command.linear.x = this->clamp(this->x_traj.front()(7) / 0.5, -1.0, 1.0);
 
-            // -Roll (move sideways) (theta)
-            // Ensure the roll is in the range of allowed rolls
-            //this->ctrl_command.linear.y = this->clamp(-this->x_traj.front()(6) / 0.5, -1.0, 1.0);
-        }
+        }*/
+        // X velocity (move forward) (x dot)
+        this->ctrl_command.linear.x = this->x_traj.front()(3);// / MAX_FWD_VEL;
 
+        // Y velocity (move side to side) (y dot)
+        this->ctrl_command.linear.y = this->x_traj.front()(4);// / MAX_SIDE_VEL;
 
         // Yaw rate (how fast to spin) (r)
-        this->ctrl_command.angular.z = 0;
+        this->ctrl_command.angular.z = this->clamp(this->x_traj.front()(11), -0.25, 0.25);//0;
 
         // Vertical speed (how fast to move upward) (z dot)
         this->ctrl_command.linear.z = this->clamp(this->x_traj.front()(5), -0.6, 0.6);// / MAX_VERTICAL_VEL;
@@ -232,10 +230,6 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         }
     }
 
-    // Log the commands
-    std::string data_str = std::to_string(cur_time) + "," + std::to_string(ctrl_command.linear.x) + "," + std::to_string(ctrl_command.linear.y) + "," + std::to_string(ctrl_command.linear.z) + "," + std::to_string(ctrl_command.angular.z) + "\n";
-    this->command_data << data_str;
-
     // If this is a simulation, publish the control command directly
     if(this->is_sim)
     {
@@ -244,11 +238,17 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
     // Otherwise, publish data after going through the flight controller
     else
     {
+        // Publish the control signal
         flight_controller.publish_control(this->ctrl_command);
-        this->control_signal_pub.publish(flight_controller.update_state(this->cur_state));
-
-        //this->control_signal_pub.publish(this->ctrl_command);
+        this->ctrl_command = flight_controller.update_state(this->cur_state);
+        this->ctrl_command.linear.x = this->clamp(this->ctrl_command.linear.x, -1.0, 1.0);
+        this->ctrl_command.linear.y = this->clamp(this->ctrl_command.linear.y, -1.0, 1.0);
+        this->control_signal_pub.publish(this->ctrl_command);
     }
+
+    // Log the commands
+    std::string data_str = std::to_string(cur_time) + "," + std::to_string(ctrl_command.linear.x) + "," + std::to_string(ctrl_command.linear.y) + "," + std::to_string(ctrl_command.linear.z) + "," + std::to_string(ctrl_command.angular.z) + "\n";
+    this->command_data << data_str;
 }
 
 
@@ -259,7 +259,7 @@ void ControlCalculator::open_loop_control(const ros::TimerEvent& time_event)
 
     // Only output to the control topic if the localization has happened and the trajectory has been built
     if(this->cur_state_init && this->traj_init
-    && !this->x_traj.empty())
+    && !this->u_traj.empty())
     {
         // Directly use the controls given by the optimizer
         this->ctrl_command.linear.x = this->u_traj.front()(0);
@@ -267,15 +267,13 @@ void ControlCalculator::open_loop_control(const ros::TimerEvent& time_event)
         this->ctrl_command.linear.z = this->u_traj.front()(2);
         this->ctrl_command.angular.z = 0;//this->u_traj.front()(3);
 
-        // Pop the front element off the deques
-        this->x_traj.pop_front();
+        // Pop the front element off the deque
         this->u_traj.pop_front();
-        this->K_traj.pop_front();
 
         // Publish the control signal
         flight_controller.publish_control(this->ctrl_command);
 
-
+    //TODO: comment this
         this->ctrl_command = flight_controller.update_state(this->cur_state);
         this->ctrl_command.linear.x = this->clamp(this->ctrl_command.linear.x, -1.0, 1.0);
         this->ctrl_command.linear.y = this->clamp(this->ctrl_command.linear.y, -1.0, 1.0);
@@ -375,7 +373,6 @@ void ControlCalculator::trajectory_callback(const gtddp_drone_msgs::Trajectory::
 {
     //Declare local variables
     int i;          //iteration variable
-    int num_events; //number of events in the message
     int t;          //time iteration variable
     int r, c;       //rows and columns of gain matrix
 
@@ -388,8 +385,6 @@ void ControlCalculator::trajectory_callback(const gtddp_drone_msgs::Trajectory::
     const std::vector<gtddp_drone_msgs::ctrl_data> &u_data = traj_msg->u_traj;
     const std::vector<gtddp_drone_msgs::gain_data> &K_data = traj_msg->K_traj;
 
-    //Find the number of events
-    num_events = x_data.size();
 
     //Create temporary vectors for the trajectory data
     Eigen::VectorXd x_traj_dat(Constants::num_states);
@@ -397,7 +392,7 @@ void ControlCalculator::trajectory_callback(const gtddp_drone_msgs::Trajectory::
     Eigen::MatrixXd K_traj_dat(Constants::num_controls_u, Constants::num_states);
 
     //Parse the message to get the trajectory
-    for(t = 0; t < num_events; ++t)
+    for(t = 0; t < x_data.size(); ++t)
     {
         //x_traj
         for(i = 0; i < Constants::num_states; ++i)
@@ -405,12 +400,23 @@ void ControlCalculator::trajectory_callback(const gtddp_drone_msgs::Trajectory::
             x_traj_dat(i) = x_data[t].states[i];
         }
 
+        //Push the new data into storage
+        this->x_traj.push_back(x_traj_dat);
+    }
+
+    for(t = 0; t < u_data.size(); ++t)
+    {
         //u_traj
         for(i = 0; i < Constants::num_controls_u; ++i)
         {
             u_traj_dat(i) = u_data[t].ctrl[i];
         }
 
+        this->u_traj.push_back(u_traj_dat);
+    }
+
+    for(t = 0; t < K_data.size(); ++t)
+    {
         //K_traj
         //Go through rows and columns of the message
         for(r = 0; r < Constants::num_controls_u; ++r)
@@ -421,9 +427,6 @@ void ControlCalculator::trajectory_callback(const gtddp_drone_msgs::Trajectory::
             }
         }
 
-        //Push the new data into storage
-        this->x_traj.push_back(x_traj_dat);
-        this->u_traj.push_back(u_traj_dat);
         this->K_traj.push_back(K_traj_dat);
     }
 

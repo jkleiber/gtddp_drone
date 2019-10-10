@@ -1,8 +1,8 @@
 <launch>
-  <arg name="is_open_loop" value="1" />
+  <arg name="is_open_loop" value="0" />
   <arg name="is_sim" value="0" />
   <arg name="real_time" value="0"/>
-  <arg name="target_timestep" value="1.0"/>
+  <arg name="target_timestep" value="0.5"/>
 
   <!-- GT-DDP nodes -->
   <node name="gtddp_control_node" pkg="gtddp_drone" type="gtddp_control_node" output="screen">
@@ -12,6 +12,7 @@
   <node name="gtddp_optimize_node" pkg="gtddp_drone" type="gtddp_optimize_node" output="screen">
     <param name="is_simulation" value="$(arg is_sim)"/>
     <param name="is_real_time" value="$(arg real_time)"/>
+    <param name="is_open_loop" value="$(arg is_open_loop)"/>
   </node>
 
   <!-- Target node -->
@@ -27,7 +28,7 @@
 
   <!-- VICON -->
   <!-- Make sure to follow compile instructions in mocap_vicon -->
-  <node pkg="mocap_vicon" type="mocap_vicon_node" name="vicon" output="screen">
+  <node pkg="mocap_vicon" type="mocap_vicon_node" name="vicon" >
     <!-- Set the server address to the IP of the computer running the VICON Tracker program -->
     <!-- Set the port number according to the UDP port set in Tracker -->
     <!-- Format: IP:PORT like 192.168.X.ABC:PORT -->

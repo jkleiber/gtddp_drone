@@ -36,10 +36,10 @@ void Cost_Function::initialize_cost_matrix(){
     Q_f = MatrixXd::Identity(num_states, num_states);
 
     //Set Ru values individually
-    Ru(0, 0) = 0.375;  //thrust
-    Ru(1, 1) = 0.5;   //u1 moment //0.04 worked pretty well in case this breaks
-    Ru(2, 2) = 0.5;   //u2 moment
-    Ru(3, 3) = 0.5;   //u3 moment
+    Ru(0, 0) = 0.45;  //thrust
+    Ru(1, 1) = 0.55;   //u1 moment //0.04 worked pretty well in case this breaks
+    Ru(2, 2) = 0.55;   //u2 moment
+    Ru(3, 3) = 0.55;   //u3 moment
 
     //Quadrotor Cost
     Q_f(0,0) = 1000000; //x

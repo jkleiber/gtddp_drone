@@ -29,7 +29,7 @@ ros::Subscriber go_button;
 ros::Timer update_timer;
 
 /**
- * 
+ *
  */
 int main(int argc, char **argv)
 {
@@ -41,8 +41,9 @@ int main(int argc, char **argv)
 
     const int SIMULATION    = traj_node.param("/gtddp_optimize_node/is_simulation", 0);
     const int GENERATE_TRAJ = traj_node.param("/gtddp_optimize_node/is_gen", 0);
-    const int REAL_TIME     = traj_node.param("/gtddp_optimize_node/is_real_time", 1);
+    const int REAL_TIME     = traj_node.param("/gtddp_optimize_node/is_real_time", 0);
     const int NUM_GEN_LEGS  = traj_node.param("/gtddp_optimize_node/gen_legs", 0);
+    const int OPEN_LOOP     = traj_node.param("/gtddp_optimize_node/is_open_loop", 0);
 
     //Advertise trajectory data
     traj_pub = traj_node.advertise<gtddp_drone_msgs::Trajectory>(traj_node.resolveName("/gtddp_drone/trajectory"), MAX_BUFFER);
@@ -53,7 +54,7 @@ int main(int argc, char **argv)
     target_client = traj_node.serviceClient<gtddp_drone_msgs::target>(traj_node.resolveName("/gtddp_drone_target_trajectory/target_state"));
 
     //Set up the trajectory optimizer
-    Optimizer traj_optimizer(traj_pub, cur_state_pub, init_pub, target_client, GENERATE_TRAJ, REAL_TIME);
+    Optimizer traj_optimizer(traj_pub, cur_state_pub, init_pub, target_client, GENERATE_TRAJ, REAL_TIME, OPEN_LOOP);
     traj_optimizer.set_num_legs(NUM_GEN_LEGS);
 
     //If a test is occuring, set up for a flight
@@ -83,11 +84,17 @@ int main(int argc, char **argv)
         {
             update_timer = traj_node.createTimer(ros::Duration(1.0), &Optimizer::traj_update_callback, &traj_optimizer, false);
         }
-        //Otherwise read commands from the flight file
+        // If open loop, only read past control commands
+        else if (OPEN_LOOP)
+        {
+            //Send the new trajectories at a faster update rate than the DDP would normally run
+            update_timer = traj_node.createTimer(ros::Duration(0.4), &Optimizer::open_loop_traj_callback, &traj_optimizer, false);
+        }
+        //Otherwise read full state, control commands, and gains from the flight file
         else
         {
             //Send the new trajectories at a faster update rate than the DDP would normally run
-            update_timer = traj_node.createTimer(ros::Duration(0.9), &Optimizer::offline_traj_callback, &traj_optimizer, false);
+            update_timer = traj_node.createTimer(ros::Duration(0.4), &Optimizer::offline_traj_callback, &traj_optimizer, false);
         }
     }
     //If the trajectory is being generated for an offline run, optimize small trajectories but only output to a file
