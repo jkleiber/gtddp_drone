@@ -95,6 +95,7 @@ void FlightController::PIDController::init(double p, double i, double d, double 
     this->time_constant = time_cnst;
     this->limit = limit;
     input = dinput = 0;
+    this->i = 0;
 }
 
 

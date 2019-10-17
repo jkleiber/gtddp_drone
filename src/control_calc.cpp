@@ -193,7 +193,7 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         this->ctrl_command.linear.y = this->x_traj.front()(4);// / MAX_SIDE_VEL;
 
         // Yaw rate (how fast to spin) (r)
-        this->ctrl_command.angular.z = this->clamp(this->x_traj.front()(11), -0.25, 0.25);//0;
+        this->ctrl_command.angular.z = 0;//this->clamp(this->x_traj.front()(11), -0.25, 0.25);
 
         // Vertical speed (how fast to move upward) (z dot)
         this->ctrl_command.linear.z = this->clamp(this->x_traj.front()(5), -0.6, 0.6);// / MAX_VERTICAL_VEL;

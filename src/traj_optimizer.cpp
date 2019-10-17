@@ -279,11 +279,13 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
 
             //TODO: Experiment with this being the last state calculated by GTDDP
             //Update the last goal state to be the current goal state
-            this->last_goal_state = goal_state;
-            this->cur_state = this->last_goal_state;
+            //this->last_goal_state = goal_state;
             //v.s.
             //Update the last goal state to be the last state in the generated trajectory
-            //this->last_goal_state = ddpmain.get_x_traj().back();
+            this->last_goal_state = ddpmain.get_x_traj().back();
+
+            // Update the current state to be the last state
+            this->cur_state = this->last_goal_state;
 
             //When not generating a trajectory offline (i.e. if you are in real time mode) then publish trajectory data
             if(!this->generation_mode)
