@@ -8,6 +8,7 @@ import rospy
 
 # ROS Messages
 from std_msgs.msg import Empty
+from geometry_msgs.msg import Twist
 
 # Keyboard Imports
 import sys, select, termios, tty
@@ -37,6 +38,8 @@ def getKey(settings):
     return key
 
 
+vel = Twist()
+
 # Main Function
 if __name__=="__main__":
     # Enable Termios
@@ -45,7 +48,8 @@ if __name__=="__main__":
     # Set up ROS publishers
     land_pub = rospy.Publisher('/ardrone/land', Empty, queue_size=10)       # emergency land the drone
     init_pub = rospy.Publisher('/gtddp_drone/start', Empty, queue_size=10)  # GO button
-    
+    manual_ctrl_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)     # Manual control
+
     # Initialize the ROS node
     rospy.init_node('keyboard_node')
 
@@ -70,7 +74,12 @@ if __name__=="__main__":
         elif(key == 'g'):
             init_msg = Empty()
             init_pub.publish(init_msg)
+        elif(key == 'w'):
+            vel.linear.z = 0.2
+            manual_ctrl_pub.publish(vel)
         # If the key is one of the exit keys, close the program
         elif(key in exitKeys):
             break
-    
+        else:
+            vel.linear.z = 0
+            manual_ctrl_pub.publish(vel)

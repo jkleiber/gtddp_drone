@@ -53,6 +53,12 @@ int main(int argc, char **argv)
     //Set up a service client for getting the next target point
     target_client = traj_node.serviceClient<gtddp_drone_msgs::target>(traj_node.resolveName("/gtddp_drone_target_trajectory/target_state"));
 
+    //Wait for there to be a subscriber to init before optimizing
+    while(init_pub.getNumSubscribers() == 0 && GENERATE_TRAJ)
+    {
+        sleep(1);
+    }
+
     //Set up the trajectory optimizer
     Optimizer traj_optimizer(traj_pub, cur_state_pub, init_pub, target_client, GENERATE_TRAJ, REAL_TIME, OPEN_LOOP);
     traj_optimizer.set_num_legs(NUM_GEN_LEGS);
