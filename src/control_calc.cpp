@@ -165,35 +165,30 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         // printf("}}\n");
 
         /* Form the control message */
-        // Simulation takes velocity
-        /*
+        // Simulation does PID for us, so clamp the output
         if(this->is_sim)
         {
             // X velocity (move forward) (x dot)
-            this->ctrl_command.linear.x = this->x_traj.front()(3);// / MAX_FWD_VEL;
+            this->ctrl_command.linear.x = this->clamp(this->x_traj.front()(3), -1.0, 1.0);
 
             // Y velocity (move side to side) (y dot)
-            this->ctrl_command.linear.y = this->x_traj.front()(4);// / MAX_SIDE_VEL;
+            this->ctrl_command.linear.y = this->clamp(this->x_traj.front()(4), -1.0, 1.0);
         }
-        // Real drones take pitch and negative roll
+        // For real life, we implement our own PID controller
+        // which clamps the output, so pass in raw values
         else
         {
             // X velocity (move forward) (x dot)
-            this->ctrl_command.linear.x = this->clamp(this->x_traj.front()(3), -1.0, 1.0);// / MAX_FWD_VEL;
+            this->ctrl_command.linear.x = this->x_traj.front()(3);
 
             // Y velocity (move side to side) (y dot)
-            this->ctrl_command.linear.y = this->clamp(this->x_traj.front()(4), -1.0, 1.0);// / MAX_SIDE_VEL;
+            this->ctrl_command.linear.y = this->x_traj.front()(4);
+        }
 
-
-        }*/
-        // X velocity (move forward) (x dot)
-        this->ctrl_command.linear.x = this->x_traj.front()(3);// / MAX_FWD_VEL;
-
-        // Y velocity (move side to side) (y dot)
-        this->ctrl_command.linear.y = this->x_traj.front()(4);// / MAX_SIDE_VEL;
 
         // Yaw rate (how fast to spin) (r)
-        this->ctrl_command.angular.z = 0;//this->clamp(this->x_traj.front()(11), -0.25, 0.25);
+        // HACK: set this to 0 for now because it causes flight instability
+        this->ctrl_command.angular.z = 0;
 
         // Vertical speed (how fast to move upward) (z dot)
         this->ctrl_command.linear.z = this->clamp(this->x_traj.front()(5), -0.6, 0.6);// / MAX_VERTICAL_VEL;
@@ -227,6 +222,10 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         if(is_sim)
         {
             ctrl_timer.setPeriod(ros::Duration(1.0));
+        }
+        else
+        {
+            ctrl_timer.setPeriod(ros::Duration(0.1));
         }
     }
 
