@@ -7,6 +7,12 @@
 #include "Constants.h"
 #include "Cost_Function.h"
 
+#include <CGAL/QP_models.h>
+#include <CGAL/QP_functions.h>
+
+typedef CGAL::Quadratic_program<double> Program;
+typedef CGAL::Quadratic_program_solution<double> Solution;
+
 
 class GT_DDP_optimizer
 {
@@ -64,6 +70,24 @@ private:
     std::vector<Eigen::MatrixXd> L_ux_;
     std::vector<Eigen::MatrixXd> L_vx_;
     std::vector<Eigen::MatrixXd> L_uv_;
+
+
+    Eigen::VectorXd Qx;
+    Eigen::VectorXd Qu;
+    Eigen::VectorXd Qv;
+    Eigen::MatrixXd Qxx;
+    Eigen::MatrixXd Quu;
+    Eigen::MatrixXd Qvv;
+    Eigen::MatrixXd Qux;
+    Eigen::MatrixXd Qvx;
+    Eigen::MatrixXd Quv;
+    Eigen::MatrixXd Qvu;
+    Eigen::MatrixXd Quu_inv;
+    Eigen::MatrixXd Qvv_inv;
+    Eigen::MatrixXd G;
+    Eigen::MatrixXd H;
+    Eigen::MatrixXd G_inv;
+    Eigen::MatrixXd H_inv;
 
     
 public:

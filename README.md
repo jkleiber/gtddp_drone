@@ -8,7 +8,12 @@ This ROS package implements Game-Theoretic Differential Dynamic Programming (GT-
 * AR.Drone controller
 * Keyboard node for starts and landings
 
-### Dependencies
+### Library Dependencies
+* Boost - Used for numeric methods and solving
+* CGAL - Used as a quadratic programming solver 
+* Eigen - C++ matrix library
+
+### ROS Package Dependencies
 * ardrone_autonomy - Used in real-life flights, and a dependency of the simulator
 * mocap_vicon - Used in real-life flights
 * [gtddp_drone_target_trajectory](https://github.com/jkleiber/gtddp_drone_target_trajectory/tree/master) - Package that manages equations for the different flight trajectories. Uses an abstract class to make adding new trajectories easy. Contains some trajectories implemented using differential flatness. Links to gtddp_drone using a ROS service.
@@ -21,6 +26,12 @@ However, you can install this package like any other ROS package by cloning it i
 git clone https://github.com/jkleiber/gtddp_drone.git
 ```
 Make sure to install the above dependencies, otherwise gtddp_drone will not work.
+
+#### CGAL Installation
+```
+sudo apt-get install libcgal-dev
+sudo apt-get install libcgal-demo
+```
 
 ### Launch Instructions
 Currently there are 3 different launch modes for this package: offline trajectory generation, drone simulation, and real-life flight. Each of these is detailed below.

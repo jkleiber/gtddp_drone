@@ -90,23 +90,23 @@ void GT_DDP_optimizer::value_dynamics_mm(const std::vector<double>& V_std , std:
         V_xx.col(j)=V_pkg.segment(num_states*(j+1)+1,num_states);
     }
     //
-    VectorXd Qx= Ai_.transpose() * V_x+ L_xi_;              //(num_states);
-    VectorXd Qu= Bi_.transpose() * V_x + L_ui_;             //(num_controls_u);
-    VectorXd Qv= Ci_.transpose() * V_x + L_vi_;             //(num_controls_v);
-    MatrixXd Qxx= L_xxi_ + 2 * V_xx * Ai_;                  //(num_states, num_states);
-    MatrixXd Quu= L_uui_;                                   //(num_controls_u, num_controls_u);
-    MatrixXd Qvv= L_vvi_;                                   //(num_controls_v, num_controls_v);
-    MatrixXd Qux= L_uxi_ + Bi_.transpose() * V_xx;          //(num_controls_u, num_states);
-    MatrixXd Qvx = L_vxi_ + Ci_.transpose() * V_xx;         //(num_controls_v, num_states);
-    MatrixXd Quv= L_uvi_;                                   //(num_controls_u, num_controls_v);
-    MatrixXd Qvu= Quv.transpose();                          //(num_controls_v, num_controls_u);
-    
-    MatrixXd Quu_inv= Quu.inverse();                        //(num_controls_u, num_controls_u);
-    MatrixXd Qvv_inv= Qvv.inverse();                        //(num_controls_v, num_controls_v);
-    MatrixXd G= Quu - Quv * Qvv_inv * Qvu;                  //(num_controls_u, num_controls_u);
-    MatrixXd H= Qvv - Qvu * Quu_inv * Quv;                  //(num_controls_v, num_controls_v);
-    MatrixXd G_inv= G.inverse();                            //(num_controls_u, num_controls_u);
-    MatrixXd H_inv= H.inverse();                            //(num_controls_v, num_controls_v);
+    Qx= Ai_.transpose() * V_x+ L_xi_;              //(num_states);
+    Qu= Bi_.transpose() * V_x + L_ui_;             //(num_controls_u);
+    Qv= Ci_.transpose() * V_x + L_vi_;             //(num_controls_v);
+    Qxx= L_xxi_ + 2 * V_xx * Ai_;                  //(num_states, num_states);
+    Quu= L_uui_;                                   //(num_controls_u, num_controls_u);
+    Qvv= L_vvi_;                                   //(num_controls_v, num_controls_v);
+    Qux= L_uxi_ + Bi_.transpose() * V_xx;          //(num_controls_u, num_states);
+    Qvx = L_vxi_ + Ci_.transpose() * V_xx;         //(num_controls_v, num_states);
+    Quv= L_uvi_;                                   //(num_controls_u, num_controls_v);
+    Qvu= Quv.transpose();                          //(num_controls_v, num_controls_u);
+
+    Quu_inv= Quu.inverse();                        //(num_controls_u, num_controls_u);
+    Qvv_inv= Qvv.inverse();                        //(num_controls_v, num_controls_v);
+    G= Quu - Quv * Qvv_inv * Qvu;                  //(num_controls_u, num_controls_u);
+    H= Qvv - Qvu * Quu_inv * Quv;                  //(num_controls_v, num_controls_v);
+    G_inv= G.inverse();                            //(num_controls_u, num_controls_u);
+    H_inv= H.inverse();                            //(num_controls_v, num_controls_v);
     
     lui_ = -G_inv * (Qu - Quv * Qvv_inv * Qv);
     Kui_ = -G_inv * (Qux - Quv * Qvv_inv * Qvx);
@@ -175,7 +175,7 @@ void GT_DDP_optimizer::backpropagate_mm_rk(const vector<VectorXd>& x_traj,
         
         //numerically solve the value ode
         using namespace std::placeholders;
-        integrate_adaptive(controlled_stepper, std::bind(&::GT_DDP_optimizer::value_dynamics_mm, this, _1, _2, _3), V_std , t , t-dt , -dt );
+        integrate_adaptive(controlled_stepper, std::bind(&::GT_DDP_optimizer::value_dynamics_mm, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), V_std , t , t-dt , -dt );
         t+=-dt;
         
         //save the obtained gains to the private members
@@ -252,6 +252,12 @@ void GT_DDP_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
     for (int i = 0; i < num_time_steps-1; i++) {
         du = lu_[i] + Ku_[i] * dx_traj[i];
         dv = lv_[i] + Kv_[i] * dx_traj[i];
+
+        /**
+         * Control constraint DDP logic
+         */
+        // solve quadratic program for du
+        //Program
 
         u_traj[i] = u_traj[i] + learning_rate * du;
         v_traj[i] = v_traj[i] + learning_rate * dv;

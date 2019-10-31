@@ -32,10 +32,15 @@ namespace Constants {
     extern const int short_iterations(20);//(7);
     //extern const int short_iterations(15);
 
+    // Control Constraint DDP Hyperparameters
+    
+
     // DDP Constant doubles
     // Change as necessary, do not remove
     extern const double dt(0.001);
     extern const double learning_rate(0.05);//(0.1);
+
+    
 
     // System Constant doubles
     // Change, add, or remove as necessary
