@@ -33,6 +33,16 @@ sudo apt-get install libcgal-dev
 sudo apt-get install libcgal-demo
 ```
 
+CGAL depends on a library called [MPFR](https://www.mpfr.org/) which can be downloaded at [https://www.mpfr.org/mpfr-current/#download](https://www.mpfr.org/mpfr-current/#download). Once downloaded, extract the contents and navigate to the directory you extracted. Then, run the following commands:
+```
+./configure
+make
+make check
+sudo make install
+```
+
+This will install MPFR in /usr/local and will be accessible by CGAL during compilation.
+
 ### Launch Instructions
 Currently there are 3 different launch modes for this package: offline trajectory generation, drone simulation, and real-life flight. Each of these is detailed below.
 

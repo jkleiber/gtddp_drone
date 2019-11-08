@@ -257,10 +257,46 @@ void GT_DDP_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
          * Control constraint DDP logic
          */
         // solve quadratic program for du
-        //Program
+        
 
         u_traj[i] = u_traj[i] + learning_rate * du;
         v_traj[i] = v_traj[i] + learning_rate * dv;
+    }
+
+    // Control Constraint DDP
+    Program upper_qp(CGAL::SMALLER);
+    Program lower_qp(CGAL::LARGER);
+
+    for (int i = 0; i < Constants::num_controls_u; ++i)
+    {
+        upper_qp.set_c(i, Qu(i));
+        for (int j = 0; j < Constants::num_controls_u; ++j)
+        {
+            upper_qp.set_d(i, j, Quu(i, j));
+            std::cout << Quu(i, j) << " ";
+        }
+        std::cout << std::endl;
+    }
+    upper_qp.set_b(0, 5);
+    upper_qp.set_b(1, 5);
+    upper_qp.set_b(2, 5);
+    upper_qp.set_b(3, 5);
+
+    upper_qp.set_a(0, 0, 1);
+    upper_qp.set_a(1, 0, 1);
+    upper_qp.set_a(0, 1, 1);
+    upper_qp.set_a(1, 1, 1);
+    upper_qp.set_a(0, 2, 1);
+    upper_qp.set_a(1, 2, 1);
+    upper_qp.set_a(0, 3, 1);
+    upper_qp.set_a(1, 3, 1);
+
+    upper_qp.set_c0(0);
+    
+    Solution upper_sol = CGAL::solve_quadratic_program(upper_qp, ET());
+    if(upper_sol.solves_quadratic_program(upper_qp))
+    {
+        std::cout << "SOLVED\n: " << upper_sol << std::endl;
     }
 }
 

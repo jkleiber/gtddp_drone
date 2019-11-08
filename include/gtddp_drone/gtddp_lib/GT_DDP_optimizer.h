@@ -9,10 +9,11 @@
 
 #include <CGAL/QP_models.h>
 #include <CGAL/QP_functions.h>
+#include <CGAL/MP_Float.h>
+typedef CGAL::MP_Float ET;
 
 typedef CGAL::Quadratic_program<double> Program;
-typedef CGAL::Quadratic_program_solution<double> Solution;
-
+typedef CGAL::Quadratic_program_solution<ET> Solution;
 
 class GT_DDP_optimizer
 {

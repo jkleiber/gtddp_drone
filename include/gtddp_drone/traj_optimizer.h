@@ -25,7 +25,6 @@
 
 //ROS msgs
 #include <std_msgs/Empty.h>
-#include <tum_ardrone/filter_state.h>
 
 //User defined ROS msgs
 #include <gtddp_drone_msgs/Trajectory.h>
