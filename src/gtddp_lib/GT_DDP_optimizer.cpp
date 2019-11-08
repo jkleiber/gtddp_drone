@@ -248,35 +248,12 @@ void GT_DDP_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
 {
     VectorXd du(num_controls_u);
     VectorXd dv(num_controls_v);
-    
-    for (int i = 0; i < num_time_steps-1; i++) {
-        du = lu_[i] + Ku_[i] * dx_traj[i];
-        dv = lv_[i] + Kv_[i] * dx_traj[i];
-
-        /**
-         * Control constraint DDP logic
-         */
-        // solve quadratic program for du
-        
-
-        u_traj[i] = u_traj[i] + learning_rate * du;
-        v_traj[i] = v_traj[i] + learning_rate * dv;
-    }
 
     // Control Constraint DDP
     Program upper_qp(CGAL::SMALLER);
     Program lower_qp(CGAL::LARGER);
 
-    for (int i = 0; i < Constants::num_controls_u; ++i)
-    {
-        upper_qp.set_c(i, Qu(i));
-        for (int j = 0; j < Constants::num_controls_u; ++j)
-        {
-            upper_qp.set_d(i, j, Quu(i, j));
-            std::cout << Quu(i, j) << " ";
-        }
-        std::cout << std::endl;
-    }
+    
     upper_qp.set_b(0, 5);
     upper_qp.set_b(1, 5);
     upper_qp.set_b(2, 5);
@@ -293,11 +270,44 @@ void GT_DDP_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
 
     upper_qp.set_c0(0);
     
-    Solution upper_sol = CGAL::solve_quadratic_program(upper_qp, ET());
-    if(upper_sol.solves_quadratic_program(upper_qp))
-    {
-        std::cout << "SOLVED\n: " << upper_sol << std::endl;
+    Eigen::VectorXd c; 
+
+    
+    for (int i = 0; i < num_time_steps-1; i++) {
+        // Find dv
+        dv = lv_[i] + Kv_[i] * dx_traj[i];
+
+        /**
+         * Control constraint DDP logic
+         */
+        // Calculate linear objective function for du
+        c = Qux*dx_traj[i] + Quv*dv + Qu;
+
+        // Add quadratic and linear objective functions to the program solver
+        for (int i = 0; i < Constants::num_controls_u; ++i)
+        {
+            upper_qp.set_c(i, c(i));
+            for (int j = 0; j < Constants::num_controls_u; ++j)
+            {
+                upper_qp.set_d(i, j, Quu(i, j));
+            }
+        }
+
+        // solve quadratic program to find lu
+        Solution upper_sol = CGAL::solve_quadratic_program(upper_qp, ET());
+        if(upper_sol.solves_quadratic_program(upper_qp))
+        {
+            std::cout << "SOLVED\n: " << upper_sol << std::endl << lu_[i] << std::endl;
+        }
+
+        // Find du after performing the quadratic programming step
+        du = lu_[i] + Ku_[i] * dx_traj[i];
+        
+        // Update controls
+        u_traj[i] = u_traj[i] + learning_rate * du;
+        v_traj[i] = v_traj[i] + learning_rate * dv;
     }
+
 }
 
 
