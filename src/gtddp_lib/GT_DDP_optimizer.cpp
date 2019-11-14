@@ -246,33 +246,52 @@ void GT_DDP_optimizer::forward_propagate_mm_rk(vector<VectorXd>& dx_traj,
 void GT_DDP_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
                                           vector<VectorXd>& u_traj, vector<VectorXd>& v_traj)
 {
+    // Vectors for delta u and delta v
     VectorXd du(num_controls_u);
     VectorXd dv(num_controls_v);
 
     // Control Constraint DDP
-    Program upper_qp(CGAL::SMALLER);
-    Program lower_qp(CGAL::LARGER);
+    Program qp(CGAL::SMALLER);
+    Solution sol;
 
     
-    upper_qp.set_b(0, 5);
-    upper_qp.set_b(1, 5);
-    upper_qp.set_b(2, 5);
-    upper_qp.set_b(3, 5);
 
-    upper_qp.set_a(0, 0, 1);
-    upper_qp.set_a(1, 0, 1);
-    upper_qp.set_a(0, 1, 1);
-    upper_qp.set_a(1, 1, 1);
-    upper_qp.set_a(0, 2, 1);
-    upper_qp.set_a(1, 2, 1);
-    upper_qp.set_a(0, 3, 1);
-    upper_qp.set_a(1, 3, 1);
+    // Quadratic program parameters
+    Eigen::MatrixXd A(2*num_controls_u,num_controls_u);                                     // A matrix
+    Eigen::MatrixXd a1(num_controls_u,num_controls_u), a2(num_controls_u, num_controls_u);   // intermediate A matrices
+    Eigen::VectorXd b(2*num_controls_u), c;                                                                   // b and c vectors
+    Eigen::VectorXd b1(num_controls_u), b2(num_controls_u);                                 // intermediate b vectors
+    Eigen::VectorXd lower(num_controls_u), upper(num_controls_u);                           // upper and lower bounds
 
-    upper_qp.set_c0(0);
+    // Set up A matrix using two identity matrices
+    a1.setIdentity();
+    a2.setIdentity();
+    A << -a1, a2;
+
+    // Load the A matrix in
+    for (int i = 0; i < 2 * Constants::num_controls_u; ++i)
+    {
+        for (int j = 0; j < Constants::num_controls_u; ++j)
+        {
+            qp.set_a(j, i, A(i, j));
+        }
+    }
+
+    // Set c0 to 0
+    qp.set_c0(0);
     
-    Eigen::VectorXd c; 
+    // Establish boundaries
+    upper << 6, 4, 4, 4;
+    lower << -3, -2, -2, -2;
 
-    
+    // Set control boundaries
+    for(int i = 0; i < num_controls_u; ++i)
+    {
+        qp.set_l(i, true, lower(i));
+        qp.set_u(i, true, upper(i));
+    }
+
+    // Update the controls using a QP solver
     for (int i = 0; i < num_time_steps-1; i++) {
         // Find dv
         dv = lv_[i] + Kv_[i] * dx_traj[i];
@@ -280,28 +299,52 @@ void GT_DDP_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
         /**
          * Control constraint DDP logic
          */
+        // Calculate boundaries for du
+        b1 = u_traj[i] - lower;
+        b2 = upper - u_traj[i];
+        b.setZero(2*num_controls_u);
+        b << b1, b2;
+
         // Calculate linear objective function for du
         c = Qux*dx_traj[i] + Quv*dv + Qu;
 
         // Add quadratic and linear objective functions to the program solver
+        // Also add boundaries to the solver
         for (int i = 0; i < Constants::num_controls_u; ++i)
         {
-            upper_qp.set_c(i, c(i));
+            qp.set_c(i, c(i));
+            qp.set_b(i, b(i));
             for (int j = 0; j < Constants::num_controls_u; ++j)
             {
-                upper_qp.set_d(i, j, Quu(i, j));
+                qp.set_d(i, j, Quu(i, j));
             }
         }
 
         // solve quadratic program to find lu
-        Solution upper_sol = CGAL::solve_quadratic_program(upper_qp, ET());
-        if(upper_sol.solves_quadratic_program(upper_qp))
-        {
-            std::cout << "SOLVED\n: " << upper_sol << std::endl << lu_[i] << std::endl;
-        }
+        sol = CGAL::solve_quadratic_program(qp, ET());
 
-        // Find du after performing the quadratic programming step
-        du = lu_[i] + Ku_[i] * dx_traj[i];
+        // Find du after performing the quadratic programming step if the solution is feasible
+        if(sol.solves_quadratic_program(qp) && !sol.is_infeasible())
+        {
+            //std::cout << "SOLVED\n: " << sol << std::endl << lu_[i] << std::endl;
+            //std::cout << "SOLVED\n";
+            Solution::Variable_value_iterator it = sol.variable_values_begin();
+            Solution::Variable_value_iterator end = sol.variable_values_end();
+            
+            du.setZero(num_controls_u);
+            for (; it != end; ++it) {
+                std::cout << CGAL::to_double(*it) << " ";
+                du << CGAL::to_double(*it);
+            }
+            std::cout << std::endl;
+        }
+        // QP failed, so use normal du
+        else
+        {
+            //std::cout << "NON-OPTIMAL\n";
+            du = lu_[i] + Ku_[i] * dx_traj[i];
+            //std::cout << du << std::endl << std::endl;
+        }
         
         // Update controls
         u_traj[i] = u_traj[i] + learning_rate * du;
