@@ -16,7 +16,7 @@ GT_DDP_optimizer::GT_DDP_optimizer(Cost_Function c)
     Q_x = c.get_state_cost();
     Q_f = c.get_final_cost();
     x_target = c.get_target_state();
-    
+
 //  ***** DO NOT EDIT *****
 //  Initialize running cost and derivatives
     L_0_.resize(num_time_steps);
@@ -29,14 +29,18 @@ GT_DDP_optimizer::GT_DDP_optimizer(Cost_Function c)
     L_ux_.resize(num_time_steps);
     L_vx_.resize(num_time_steps);
     L_uv_.resize(num_time_steps);
-    
+
 //  ***** DO NOT EDIT *****
 //  Initialize feedforward and feedback matrices of u and v
     lu_.resize(num_time_steps);
     lv_.resize(num_time_steps);
     Ku_.resize(num_time_steps);
     Kv_.resize(num_time_steps);
-    
+
+    Qu_.resize(num_time_steps);
+    Qux_.resize(num_time_steps);
+    Quv_.resize(num_time_steps);
+
 } // construct a GT_DDP_optimizer for the system passed as a parameter
 
 GT_DDP_optimizer::~GT_DDP_optimizer() {}
@@ -58,7 +62,7 @@ void GT_DDP_optimizer::quadratize_cost_mm(const vector<VectorXd>& x_traj, const 
         L_0_[i]= (0.5 * u_traj[i].transpose() * Ru * u_traj[i]
                 - 0.5 * v_traj[i].transpose() * Rv * v_traj[i]
                 + 0.5 * (x_traj[i] - x_target).transpose() * Q_x * (x_traj[i] - x_target))(0,0);
-        L_x_[i]= Q_x * (x_traj[i] - x_target); //VectorXd::Zero(num_states);//  
+        L_x_[i]= Q_x * (x_traj[i] - x_target); //VectorXd::Zero(num_states);//
 		L_u_[i]= Ru * u_traj[i];
 		L_v_[i]=-Rv * v_traj[i];
 		L_xx_[i]= Q_x; // MatrixXd::Zero(num_states, num_states);//
@@ -81,7 +85,7 @@ void GT_DDP_optimizer::value_dynamics_mm(const std::vector<double>& V_std , std:
     std::vector<double> sV_std = V_std;
     double* ptr = &sV_std[0];
     Eigen::Map<Eigen::VectorXd> V_pkg(ptr, sV_std.size());
-    
+
     // double   V =V_pkg(0); not used
     VectorXd V_x=V_pkg.segment(1,num_states);
     MatrixXd V_xx(num_states, num_states);
@@ -107,17 +111,17 @@ void GT_DDP_optimizer::value_dynamics_mm(const std::vector<double>& V_std , std:
     H= Qvv - Qvu * Quu_inv * Quv;                  //(num_controls_v, num_controls_v);
     G_inv= G.inverse();                            //(num_controls_u, num_controls_u);
     H_inv= H.inverse();                            //(num_controls_v, num_controls_v);
-    
+
     lui_ = -G_inv * (Qu - Quv * Qvv_inv * Qv);
     Kui_ = -G_inv * (Qux - Quv * Qvv_inv * Qvx);
     lvi_ = -H_inv * (Qv - Qvu * Quu_inv * Qu);
     Kvi_ = -H_inv * (Qvx - Qvu * Quu_inv * Qux);
-    
+
     MatrixXd dVxxdt =-(Qxx + Kui_.transpose()*Quu*Kui_ + Kvi_.transpose()*Qvv*Kvi_ + 2 * Kui_.transpose()*Qux + 2 * Kvi_.transpose()*Qvx + 2 * Kui_.transpose()*Quv*Kvi_);
     VectorXd dVxdt = -(Qx + Kui_.transpose()*Qu + Kvi_.transpose()*Qv + Qux.transpose()*lui_ + Qvx.transpose()*lvi_ + Kui_.transpose() *Quu*lui_ + Kvi_.transpose() *Qvv*lvi_ + Kui_.transpose() *Quv*lvi_ + Kvi_.transpose() *Qvu*lui_);
     double dVdt =-(L_0i_ + lui_.transpose()*Qu + lvi_.transpose()*Qv + 0.5*lui_.transpose()*Quu*lui_ + lui_.transpose()*Quv*lvi_+ 0.5*lvi_.transpose()*Qvv*lvi_);
     MatrixXd sdVxxdt = 0.5*(dVxxdt + dVxxdt.transpose()); //imposing symmetry of dVxxdt
-    
+
     //packaging into Eigen::vec dV_pkg
     VectorXd dV_pkg;
     dV_pkg.setZero(1+num_states+num_states*num_states);
@@ -125,11 +129,11 @@ void GT_DDP_optimizer::value_dynamics_mm(const std::vector<double>& V_std , std:
     dV_pkg.segment(1,num_states)= dVxdt;
     Map<RowVectorXd> dv_xx_vec(sdVxxdt.data(), sdVxxdt.size());
     dV_pkg.tail(num_states*num_states)= dv_xx_vec;
-    
+
     // type casting back to std::vec (Eigen -> std::vec)
     dV_std.resize(dV_pkg.size());
     VectorXd::Map(&dV_std[0], dV_pkg.size()) = dV_pkg;
-    
+
 };
 
 /** This function takes in x_traj and Linearized dynamics A,B,C to back propagate the value ode "value_dynamics_mm" */
@@ -141,19 +145,19 @@ void GT_DDP_optimizer::backpropagate_mm_rk(const vector<VectorXd>& x_traj,
     MatrixXd V_xx_end = Q_f;
     VectorXd V_x_end = Q_f * (x_traj[end] - x_target);
     double V_end   = 0.5 * ((x_traj[end] - x_target).transpose() * Q_f * (x_traj[end] - x_target))(0,0);
-    
+
     //packaging into V_pkg, with final condition V[end]
     VectorXd V_pkg(1+num_states+num_states*num_states);
     V_pkg(0)=V_end;
     V_pkg.segment(1,num_states) =V_x_end;
     Map<RowVectorXd> v_xx_vec(V_xx_end.data(), V_xx_end.size());//flatening
     V_pkg.tail(num_states*num_states) = v_xx_vec; // column-wise stacking
-    
+
     //Eigen::VectorXd dV_pkg to std::vector<double> dV_std
     std::vector<double> V_std;
     V_std.resize(V_pkg.size());
     VectorXd::Map(&V_std[0], V_pkg.size()) = V_pkg;
-    
+
     double t=(num_time_steps-1)*dt;
     //main integration loop
     for (int i = end-1; i>-1 ; i=i-1) {
@@ -168,23 +172,27 @@ void GT_DDP_optimizer::backpropagate_mm_rk(const vector<VectorXd>& x_traj,
         L_uxi_=L_ux_[i];
         L_vxi_=L_vx_[i];
         L_uvi_=L_uv_[i];
-        
+
         Ai_=A[i];
         Bi_=B[i];
         Ci_=C[i];
-        
+
         //numerically solve the value ode
         using namespace std::placeholders;
         integrate_adaptive(controlled_stepper, std::bind(&::GT_DDP_optimizer::value_dynamics_mm, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), V_std , t , t-dt , -dt );
         t+=-dt;
-        
+
         //save the obtained gains to the private members
         //caveat! these are backward propagated ques (i: num_time_steps -> 0)
         lu_[i]=lui_;
         lv_[i]=lvi_;
         Ku_[i]=Kui_;
         Kv_[i]=Kvi_;
-        
+
+        Qux_[i] = Qux;
+        Qu_[i] = Qu;
+        Quv_[i] = Quv;
+
     } //back propagating loop
 }//back_propagate();
 
@@ -199,14 +207,14 @@ struct dx_update_mm
     MatrixXd A;
     MatrixXd B;
     MatrixXd C;
-    
+
     VectorXd lu;
     VectorXd lv;
     MatrixXd Ku;
     MatrixXd Kv;
     dx_update_mm(MatrixXd Ai,MatrixXd Bi,MatrixXd Ci, VectorXd lui, VectorXd lvi, MatrixXd Kui, MatrixXd Kvi):
                 A(Ai),B(Bi),C(Ci),lu(lui),lv(lvi),Ku(Kui),Kv(Kvi){}
-    
+
     void operator()(const Eigen::VectorXd& dx , Eigen::VectorXd& dx_updated,  double t)
     {
         dx_updated =A*dx+B*(lu+Ku*dx)+C*(lv+Kv*dx);
@@ -221,7 +229,7 @@ void GT_DDP_optimizer::forward_propagate_mm_rk(vector<VectorXd>& dx_traj,
     VectorXd dx=dx_traj[0];
     double t=0;
     //main integration loop
-    for (int i = 0; i < (num_time_steps - 1); i++) 
+    for (int i = 0; i < (num_time_steps - 1); i++)
     {
         //update dx
         dx_update_mm dum(A[i], B[i] ,C[i], lu_[i],lv_[i], Ku_[i], Kv_[i]);
@@ -229,7 +237,7 @@ void GT_DDP_optimizer::forward_propagate_mm_rk(vector<VectorXd>& dx_traj,
         dx_traj[i+1]=dx;
         t+=-dt;
     } //stepper loop
-    
+
 } //forward_propagate_mm_rk
 
 
@@ -254,7 +262,7 @@ void GT_DDP_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
     Program qp(CGAL::SMALLER);
     Solution sol;
 
-    
+
 
     // Quadratic program parameters
     Eigen::MatrixXd A(2*num_controls_u,num_controls_u);                                     // A matrix
@@ -273,16 +281,19 @@ void GT_DDP_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
     {
         for (int j = 0; j < Constants::num_controls_u; ++j)
         {
-            qp.set_a(j, i, A(i, j));
+            //qp.set_a(j, i, A(i, j));
         }
     }
 
     // Set c0 to 0
     qp.set_c0(0);
-    
+
     // Establish boundaries
     upper << 6, 4, 4, 4;
     lower << -3, -2, -2, -2;
+
+    upper *= 1000;
+    lower *= 1000;
 
     // Set control boundaries
     for(int i = 0; i < num_controls_u; ++i)
@@ -306,14 +317,17 @@ void GT_DDP_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
         b << b1, b2;
 
         // Calculate linear objective function for du
-        c = Qux*dx_traj[i] + Quv*dv + Qu;
+        c = Qux_[i]*dx_traj[i] + Quv_[i]*dv + Qu_[i];
+
+
+        //std::cout << "dx: " << dx_traj[i] << "\n\ndv: " << dv << "\n\nQu: " << Qu << "\n\nc: " << c << "\n\n";
 
         // Add quadratic and linear objective functions to the program solver
         // Also add boundaries to the solver
         for (int i = 0; i < Constants::num_controls_u; ++i)
         {
             qp.set_c(i, c(i));
-            qp.set_b(i, b(i));
+            //qp.set_b(i, b(i));
             for (int j = 0; j < Constants::num_controls_u; ++j)
             {
                 qp.set_d(i, j, Quu(i, j));
@@ -330,24 +344,26 @@ void GT_DDP_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
             //std::cout << "SOLVED\n";
             Solution::Variable_value_iterator it = sol.variable_values_begin();
             Solution::Variable_value_iterator end = sol.variable_values_end();
-            
+
+            //std::cout << "du QP: \n";
+
             du.setZero(num_controls_u);
             for (; it != end; ++it) {
-                std::cout << CGAL::to_double(*it) << " ";
+                //std::cout << CGAL::to_double(*it) << " ";
                 du << CGAL::to_double(*it);
             }
 
             //du += Quu_inv * dx_traj[i];
-            std::cout << std::endl;
+            //std::cout << std::endl;
         }
         // QP failed, so use normal du
         else
         {
             //std::cout << "NON-OPTIMAL\n";
             du = lu_[i] + Ku_[i] * dx_traj[i];
-            //std::cout << du << std::endl << std::endl;
+            std::cout << du << std::endl << std::endl;
         }
-        
+
         // Update controls
         u_traj[i] = u_traj[i] + learning_rate * du;
         v_traj[i] = v_traj[i] + learning_rate * dv;
@@ -373,11 +389,11 @@ void GT_DDP_optimizer::initialize_trajectories_to_zero_mm(vector<VectorXd>& x_tr
     for (int i = 0; i < num_time_steps-1; i++) {
         u_traj[i] = VectorXd::Zero(num_controls_u);
     }
-    
+
 	for (int i = 0; i < num_time_steps - 1; i++) {
 		v_traj[i] = VectorXd::Zero(num_controls_v);
 	}
-    
+
     for (int i = 0; i < num_time_steps-1; i++) {
         dx_traj[i] = VectorXd::Zero(num_states);
     }

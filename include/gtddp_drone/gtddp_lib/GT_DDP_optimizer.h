@@ -46,20 +46,20 @@ private:
     Eigen::MatrixXd Ai_;
     Eigen::MatrixXd Bi_;
     Eigen::MatrixXd Ci_;
-    
+
     //    ****** Feedback and Feedforward gains  ******
     //    lu(num_time_steps-1), lv(num_time_steps - 1);
     //    Ku(num_time_steps-1), Kv(num_time_steps - 1);
-    
+
     Eigen::VectorXd lui_;
     Eigen::VectorXd lvi_;
     Eigen::MatrixXd Kui_;
     Eigen::MatrixXd Kvi_;
-    
+
     //ode solver for value back propagation
     void value_dynamics_mm(const std::vector<double>& V_pkg , std::vector<double>& dV_pkg,  double );
- 
-    
+
+
     //vectors of num_time_steps to keep quadratized costs over horizon
     std::vector<double> L_0_;
     std::vector<Eigen::VectorXd> L_x_;
@@ -90,7 +90,11 @@ private:
     Eigen::MatrixXd G_inv;
     Eigen::MatrixXd H_inv;
 
-    
+    std::vector<Eigen::MatrixXd> Qux_;
+    std::vector<Eigen::MatrixXd> Quv_;
+    std::vector<Eigen::MatrixXd> Qu_;
+
+
 public:
     /**
         constructs a GT_DDP_optimizer for the given system
@@ -99,13 +103,13 @@ public:
     GT_DDP_optimizer();
     GT_DDP_optimizer(Cost_Function c);
     ~GT_DDP_optimizer();
-    
+
     //vectors to keep DDP gains over horizon
     std::vector<Eigen::VectorXd> lu_;
     std::vector<Eigen::VectorXd> lv_;
     std::vector<Eigen::MatrixXd> Ku_;
     std::vector<Eigen::MatrixXd> Kv_;
-    
+
     void quadratize_cost_mm(const std::vector<Eigen::VectorXd>&, const std::vector<Eigen::VectorXd>&, const std::vector<Eigen::VectorXd>&);
     void backpropagate_mm_rk(const std::vector<Eigen::VectorXd>&,
                              const std::vector<Eigen::MatrixXd>&, const std::vector<Eigen::MatrixXd>&, const std::vector<Eigen::MatrixXd>&);
@@ -113,7 +117,7 @@ public:
     void forward_propagate_mm_rk(std::vector<Eigen::VectorXd>&,
                              const std::vector<Eigen::MatrixXd>&, const std::vector<Eigen::MatrixXd>&, const std::vector<Eigen::MatrixXd>&);
     void update_controls_mm(const std::vector<Eigen::VectorXd>&,std::vector<Eigen::VectorXd>&, std::vector<Eigen::VectorXd>&);
-    
+
     void initialize_trajectories_to_zero_mm(std::vector<Eigen::VectorXd>&, std::vector<Eigen::VectorXd>&, std::vector<Eigen::VectorXd>&,std::vector<Eigen::VectorXd>&);
 
 };
