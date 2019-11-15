@@ -336,6 +336,8 @@ void GT_DDP_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
                 std::cout << CGAL::to_double(*it) << " ";
                 du << CGAL::to_double(*it);
             }
+
+            //du += Quu_inv * dx_traj[i];
             std::cout << std::endl;
         }
         // QP failed, so use normal du
