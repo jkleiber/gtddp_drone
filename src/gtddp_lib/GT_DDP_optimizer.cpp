@@ -262,15 +262,14 @@ void GT_DDP_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
     Program qp(CGAL::SMALLER);
     Solution sol;
 
-
-
     // Quadratic program parameters
-    Eigen::MatrixXd A(2*num_controls_u,num_controls_u);                                     // A matrix
-    Eigen::MatrixXd a1(num_controls_u,num_controls_u), a2(num_controls_u, num_controls_u);   // intermediate A matrices
+    //Eigen::MatrixXd A(2*num_controls_u,num_controls_u);                                     // A matrix
+    //Eigen::MatrixXd a1(num_controls_u,num_controls_u), a2(num_controls_u, num_controls_u);   // intermediate A matrices
     Eigen::VectorXd b(2*num_controls_u), c;                                                                   // b and c vectors
     Eigen::VectorXd b1(num_controls_u), b2(num_controls_u);                                 // intermediate b vectors
     Eigen::VectorXd lower(num_controls_u), upper(num_controls_u);                           // upper and lower bounds
 
+    /*
     // Set up A matrix using two identity matrices
     a1.setIdentity();
     a2.setIdentity();
@@ -283,17 +282,14 @@ void GT_DDP_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
         {
             //qp.set_a(j, i, A(i, j));
         }
-    }
+    }*/
 
     // Set c0 to 0
     qp.set_c0(0);
 
     // Establish boundaries
-    upper << 6, 4, 4, 4;
-    lower << -3, -2, -2, -2;
-
-    upper *= 1000;
-    lower *= 1000;
+    upper << 20, 20, 20, 20;
+    lower << -20, -20, -20, -20;
 
     // Set control boundaries
     for(int i = 0; i < num_controls_u; ++i)
@@ -310,17 +306,14 @@ void GT_DDP_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
         /**
          * Control constraint DDP logic
          */
-        // Calculate boundaries for du
-        b1 = u_traj[i] - lower;
+        // Calculate boundaries for A*du
+        /*b1 = u_traj[i] - lower;
         b2 = upper - u_traj[i];
         b.setZero(2*num_controls_u);
-        b << b1, b2;
+        b << b1, b2;*/
 
         // Calculate linear objective function for du
         c = Qux_[i]*dx_traj[i] + Quv_[i]*dv + Qu_[i];
-
-
-        //std::cout << "dx: " << dx_traj[i] << "\n\ndv: " << dv << "\n\nQu: " << Qu << "\n\nc: " << c << "\n\n";
 
         // Add quadratic and linear objective functions to the program solver
         // Also add boundaries to the solver
@@ -340,26 +333,16 @@ void GT_DDP_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
         // Find du after performing the quadratic programming step if the solution is feasible
         if(sol.solves_quadratic_program(qp) && !sol.is_infeasible())
         {
-            //std::cout << "SOLVED\n: " << sol << std::endl << lu_[i] << std::endl;
-            //std::cout << "SOLVED\n";
             Solution::Variable_value_iterator it = sol.variable_values_begin();
             Solution::Variable_value_iterator end = sol.variable_values_end();
 
-            //std::cout << "du QP: \n";
-
-            du.setZero(num_controls_u);
-            for (; it != end; ++it) {
-                //std::cout << CGAL::to_double(*it) << " ";
-                du << CGAL::to_double(*it);
+            for (int u = 0; it != end; ++it, ++u) {
+                du(u) = CGAL::to_double(*it);
             }
-
-            //du += Quu_inv * dx_traj[i];
-            //std::cout << std::endl;
         }
         // QP failed, so use normal du
         else
         {
-            //std::cout << "NON-OPTIMAL\n";
             du = lu_[i] + Ku_[i] * dx_traj[i];
             std::cout << du << std::endl << std::endl;
         }

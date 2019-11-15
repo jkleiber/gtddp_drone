@@ -2,7 +2,7 @@
   <arg name="is_sim" value="1"/>
   <arg name="traj_gen" value="1"/>
   <arg name="target_timestep" value="0.5"/>
-  <arg name="num_legs" value="1"/>
+  <arg name="num_legs" value="2"/>
 
   <!-- GT-DDP nodes -->
   <node name="gtddp_optimize_node" pkg="gtddp_drone" type="gtddp_optimize_node" output="screen">
