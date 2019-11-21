@@ -288,15 +288,10 @@ void GT_DDP_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
     qp.set_c0(0);
 
     // Establish boundaries
-    upper << 20, 20, 20, 20;
-    lower << -20, -20, -20, -20;
+    upper << 10, 6, 2, 2;
+    lower << -10, -6, -2, -2;
 
-    // Set control boundaries
-    for(int i = 0; i < num_controls_u; ++i)
-    {
-        qp.set_l(i, true, lower(i));
-        qp.set_u(i, true, upper(i));
-    }
+    
 
     // Update the controls using a QP solver
     for (int i = 0; i < num_time_steps-1; i++) {
@@ -307,10 +302,15 @@ void GT_DDP_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
          * Control constraint DDP logic
          */
         // Calculate boundaries for A*du
-        /*b1 = u_traj[i] - lower;
+        b1 = lower - u_traj[i];
         b2 = upper - u_traj[i];
-        b.setZero(2*num_controls_u);
-        b << b1, b2;*/
+
+        // Set control boundaries
+        for(int i = 0; i < num_controls_u; ++i)
+        {
+            qp.set_l(i, true, b1(i));
+            qp.set_u(i, true, b2(i));
+        }
 
         // Calculate linear objective function for du
         c = Qux_[i]*dx_traj[i] + Quv_[i]*dv + Qu_[i];

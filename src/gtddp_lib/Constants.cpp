@@ -27,9 +27,9 @@ namespace Constants {
 //
     // DDP Hyperparameters
     extern const int num_time_steps(501);//(1001);
-    extern const int num_iterations(80);//(60);
-    extern const int num_long_legs(80);//(2);
-    extern const int short_iterations(20);//(7);
+    extern const int num_iterations(150);//(60);
+    extern const int num_long_legs(5);//(2);
+    extern const int short_iterations(100);//(7);
     //extern const int short_iterations(15);
 
     // Control Constraint DDP Hyperparameters
