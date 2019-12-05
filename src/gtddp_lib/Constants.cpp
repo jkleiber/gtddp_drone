@@ -33,12 +33,13 @@ namespace Constants {
     //extern const int short_iterations(15);
 
     // Control Constraint DDP Hyperparameters
-
+    extern const double du_converge_dist(2.0);
+    extern const double dv_converge_dist(2.0);
 
     // DDP Constant doubles
     // Change as necessary, do not remove
     extern const double dt(0.001);
-    extern const double learning_rate(0.04);//(0.1);
+    extern const double learning_rate(0.02);//(0.1);
 
 
 

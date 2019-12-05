@@ -90,10 +90,14 @@ private:
     Eigen::MatrixXd G_inv;
     Eigen::MatrixXd H_inv;
 
+    // du
     std::vector<Eigen::MatrixXd> Qux_;
     std::vector<Eigen::MatrixXd> Quv_;
     std::vector<Eigen::MatrixXd> Qu_;
 
+    // dv
+    std::vector<Eigen::MatrixXd> Qvx_;
+    std::vector<Eigen::MatrixXd> Qv_;
 
 public:
     /**

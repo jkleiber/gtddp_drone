@@ -16,6 +16,9 @@ namespace Constants {
     extern const int num_long_legs;
     extern const int short_iterations;
 
+    extern const double du_converge_dist;
+    extern const double dv_converge_dist;
+
     extern const double dt;
     extern const double learning_rate;
 
