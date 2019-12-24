@@ -601,38 +601,6 @@ void Optimizer::state_estimate_callback(const nav_msgs::Odometry::ConstPtr& odom
     this->state_pub.publish(this->current_state);
 }
 
-/**
- *
- */
-/*
-void Optimizer::state_estimate_callback(const tum_ardrone::filter_state::ConstPtr& estimate_event)
-{
-    //Update the current state from the tum_ardrone
-    this->cur_state(0) = estimate_event->x;
-    this->cur_state(1) = estimate_event->y;
-    this->cur_state(2) = estimate_event->z;
-
-    this->cur_state(3) = estimate_event->dx;
-    this->cur_state(4) = estimate_event->dy;
-    this->cur_state(5) = estimate_event->dz;
-
-    this->cur_state(6) = estimate_event->roll;
-    this->cur_state(7) = estimate_event->pitch;
-    this->cur_state(8) = estimate_event->yaw;
-
-    this->cur_state(9) = estimate_event->droll;
-    this->cur_state(10) = estimate_event->dpitch;
-    this->cur_state(11) = estimate_event->dyaw;
-
-    //Set the last goal to the current state if this is the first leg
-    if(!last_goal_state_init)
-    {
-        this->last_goal_state = this->cur_state;
-    }
-
-    //Set the current state as initialized
-    this->cur_state_init = true;
-}*/
 
 
 /**
