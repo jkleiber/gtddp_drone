@@ -1,0 +1,87 @@
+<launch>
+
+    <!-- Namespace Selector -->
+    <arg name="ddp_select" default="gtddp"/>
+
+    <!-- Quadrotor State Information -->
+    <arg name="num_states" default="12"/>
+    <arg name="num_controls_u" default="4"/>
+    <arg name="num_controls_v" default="4"/>
+
+    <!-- DDP Hyperparameters -->
+    <arg name="num_time_steps" default="501"/>
+    <arg name="num_iterations" default="150"/>
+    <arg name="num_long_legs" default="5"/>
+    <arg name="short_iterations" default="100"/>
+    <arg name="dt" default="0.001"/>
+    <arg name="learning_rate" default="0.04"/>
+
+    <!-- Quadrotor System Parameters -->
+    <arg name="mass" default="0.436"/>
+    <arg name="length" default="0.19"/>
+    <arg name="Ixx" default="0.0045"/>
+    <arg name="Iyy" default="0.0051"/>
+    <arg name="Izz" default="0.0095"/>
+
+
+
+
+
+    <!-- ROS Parameters -->
+    <param name="ddp_select" value="$(arg ddp_select)"/>
+
+    <!-- GT-DDP -->
+    <group ns="gtddp" if="$(eval ddp_select == 'gtddp')">
+        <param name="num_states" value="$(arg num_states)"/>
+        <param name="num_controls_u" value="$(arg num_controls_u)"/>
+        <param name="num_controls_v" value="$(arg num_controls_v)"/>
+        <param name="num_time_steps" value="$(arg num_time_steps)"/>
+        <param name="num_iterations" value="$(arg num_iterations)"/>
+        <param name="num_long_legs" value="$(arg num_long_legs)"/>
+        <param name="short_iterations" value="$(arg short_iterations)"/>
+        <param name="dt" value="$(arg dt)"/>
+        <param name="learning_rate" value="$(arg learning_rate)"/>
+        <param name="mass" value="$(arg mass)"/>
+        <param name="length" value="$(arg length)"/>
+        <param name="Ixx" value="$(arg Ixx)"/>
+        <param name="Iyy" value="$(arg Iyy)"/>
+        <param name="Izz" value="$(arg Izz)"/>
+    </group>
+
+    <!-- Control Constrained GT-DDP -->
+    <group ns="ccddp" if="$(eval ddp_select == 'ccddp')">
+        <param name="num_states" value="$(arg num_states)"/>
+        <param name="num_controls_u" value="$(arg num_controls_u)"/>
+        <param name="num_controls_v" value="$(arg num_controls_v)"/>
+        <param name="num_time_steps" value="$(arg num_time_steps)"/>
+        <param name="num_iterations" value="$(arg num_iterations)"/>
+        <param name="num_long_legs" value="$(arg num_long_legs)"/>
+        <param name="short_iterations" value="$(arg short_iterations)"/>
+        <param name="dt" value="$(arg dt)"/>
+        <param name="learning_rate" value="$(arg learning_rate)"/>
+        <param name="mass" value="$(arg mass)"/>
+        <param name="length" value="$(arg length)"/>
+        <param name="Ixx" value="$(arg Ixx)"/>
+        <param name="Iyy" value="$(arg Iyy)"/>
+        <param name="Izz" value="$(arg Izz)"/>
+    </group>
+
+    <!-- Pursuit GT-DDP -->
+    <group ns="pursuit" if="$(eval ddp_select == 'pursuit')">
+        <param name="num_states" value="$(arg num_states)"/>
+        <param name="num_controls_u" value="$(arg num_controls_u)"/>
+        <param name="num_controls_v" value="$(arg num_controls_v)"/>
+        <param name="num_time_steps" value="$(arg num_time_steps)"/>
+        <param name="num_iterations" value="$(arg num_iterations)"/>
+        <param name="num_long_legs" value="$(arg num_long_legs)"/>
+        <param name="short_iterations" value="$(arg short_iterations)"/>
+        <param name="dt" value="$(arg dt)"/>
+        <param name="learning_rate" value="$(arg learning_rate)"/>
+        <param name="mass" value="$(arg mass)"/>
+        <param name="length" value="$(arg length)"/>
+        <param name="Ixx" value="$(arg Ixx)"/>
+        <param name="Iyy" value="$(arg Iyy)"/>
+        <param name="Izz" value="$(arg Izz)"/>
+    </group>
+
+</launch>

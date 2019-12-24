@@ -24,6 +24,9 @@ int main(int argc, char **argv)
     //Initialize this node
     ros::NodeHandle control_node;
 
+    // Update Constants from launch file
+    ConstantLoader loader(control_node);
+
     const int SIMULATION = control_node.param("/gtddp_control_node/is_simulation", 0);
     const int OPEN_LOOP = control_node.param("gtddp_control_node/is_open_loop", 0);
 

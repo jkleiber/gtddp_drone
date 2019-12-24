@@ -13,43 +13,83 @@ namespace Constants {
     extern const double pi(std::atan(1)*4);
     extern const double grav(9.81);
 
-    // DDP Constant ints
-    // Change as necessary, do not remove
-////   cart-pole system
-//     extern const int num_states(4);
-//     extern const int num_controls_u(1);
-//	   extern const int num_controls_v(1);
-//
+
     //Quadrotor system
-    extern const int num_states(12);
-    extern const int num_controls_u(4);
-    extern const int num_controls_v(4);
-//
+    int num_states(12);
+    int num_controls_u(4);
+    int num_controls_v(4);
+
     // DDP Hyperparameters
-    extern const int num_time_steps(501);//(1001);
-    extern const int num_iterations(150);//(60);
-    extern const int num_long_legs(5);//(2);
-    extern const int short_iterations(100);//(7);
-    //extern const int short_iterations(15);
+    int num_time_steps(501);
+    int num_iterations(60);
+    int num_long_legs(80);
+    int short_iterations(20);
 
     // Control Constraint DDP Hyperparameters
-    extern const double du_converge_dist(2.0);
-    extern const double dv_converge_dist(2.0);
+    double du_converge_dist(2.0);
+    double dv_converge_dist(2.0);
+    double u0_upper(20), u0_lower(-20);
+    double u1_upper(20), u1_lower(-20);
+    double u2_upper(20), u2_lower(-20);
+    double u3_upper(20), u3_lower(-20);
+    double v0_upper(20), v0_lower(-20);
+    double v1_upper(20), v1_lower(-20);
+    double v2_upper(20), v2_lower(-20);
+    double v3_upper(20), v3_lower(-20);
 
     // DDP Constant doubles
     // Change as necessary, do not remove
-    extern const double dt(0.001);
-    extern const double learning_rate(0.02);//(0.1);
-
-
+    double dt(0.001);
+    double learning_rate(0.05);
 
     // System Constant doubles
-    // Change, add, or remove as necessary
-    extern const double m(0.436); // used to be 1.52, then it was 2.50
-    extern const double M(10.0);
-    extern const double length(0.19); //used to be 0.5
-    extern const double Ixx(0.0045); // Ixx(0.0347563);
-    extern const double Iyy(0.0051); // Iyy(0.0458929);
-    extern const double Izz(0.0095); // Izz(0.0977);
+    double m(0.436);
+    double length(0.19);
+    double Ixx(0.0045);
+    double Iyy(0.0051);
+    double Izz(0.0095);
+
+    std::string ddp_selector("gtddp");
+}
+
+
+ConstantLoader::ConstantLoader(){}
+
+/**
+ * @brief Update all the constants in the Constants namespace
+ *
+ * @param nh NodeHandle for accessing the ROS parameter server
+ */
+ConstantLoader::ConstantLoader(ros::NodeHandle nh)
+{
+    // Choose which constants to use based on the type of motion planning selected
+    std::string selector = "gtddp";
+    selector = nh.param("/ddp_select", selector);
+    Constants::ddp_selector = selector;
+    selector = "/" + selector;
+
+    // Update the Quadrotor State information
+    Constants::num_states = nh.param(selector + "/num_states", 0);
+    Constants::num_controls_u = nh.param(selector + "/num_controls_u", 0);
+    Constants::num_controls_v = nh.param(selector + "/num_controls_v", 0);
+
+    // Update the DDP learning parameters
+    Constants::dt = nh.param(selector + "/dt", 0.001);
+    Constants::learning_rate = nh.param(selector + "/learning_rate", 0.0);
+
+    // Update other DDP Hyperparameters
+    Constants::num_time_steps = nh.param(selector + "/num_time_steps", 0);
+    Constants::num_iterations = nh.param(selector + "/num_iterations", 0);
+    Constants::num_long_legs = nh.param(selector + "/num_long_legs", 0);
+    Constants::short_iterations = nh.param(selector + "/short_iterations", 0);
+
+    // Update the system dynamics constants
+    Constants::m = nh.param(selector + "/mass", 0.436);
+    Constants::length = nh.param(selector + "/length", 0.19);
+    Constants::Ixx = nh.param(selector + "/Ixx", 0.0045);
+    Constants::Iyy = nh.param(selector + "/Iyy", 0.0051);
+    Constants::Izz = nh.param(selector + "/Izz", 0.0095);
+
+    // Update the control constraint hyperparameters
 
 }

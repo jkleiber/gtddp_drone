@@ -37,109 +37,12 @@ GT_DDP_optimizer::GT_DDP_optimizer(Cost_Function c)
     Ku_.resize(num_time_steps);
     Kv_.resize(num_time_steps);
 
-    // du
-    Qu_.resize(num_time_steps);
-    Qux_.resize(num_time_steps);
-    Quv_.resize(num_time_steps);
-
-    // dv
-    Qv_.resize(num_time_steps);
-    Qvx_.resize(num_time_steps);
-
 } // construct a GT_DDP_optimizer for the system passed as a parameter
 
 GT_DDP_optimizer::~GT_DDP_optimizer() {}
 
 
-/**
-    This function quadratizes the cost along the given state and control trajectories: x_traj,u_traj,v_traj.
-    It assigns the cost and its derivatives at time step i (t = dt * i) to the values passed in parameters 4-13
-    in index i.
 
-    @param x_traj - a vector of Eigen::VectorXd's corresponding to the state trajectory
-    @param u_traj - a vector of Eigen::VectorXd's corresponding to the control_u trajectory
-    @param v_traj - a vector of Eigen::VectorXd's corresponding to the control_v trajectory
-
-*/
-void GT_DDP_optimizer::quadratize_cost_mm(const vector<VectorXd>& x_traj, const vector<VectorXd>& u_traj, const vector<VectorXd>& v_traj)
-{
-    for (int i = 0; i < num_time_steps-1; i++) {
-        L_0_[i]= (0.5 * u_traj[i].transpose() * Ru * u_traj[i]
-                - 0.5 * v_traj[i].transpose() * Rv * v_traj[i]
-                + 0.5 * (x_traj[i] - x_target).transpose() * Q_x * (x_traj[i] - x_target))(0,0);
-        L_x_[i]= Q_x * (x_traj[i] - x_target); //VectorXd::Zero(num_states);//
-		L_u_[i]= Ru * u_traj[i];
-		L_v_[i]=-Rv * v_traj[i];
-		L_xx_[i]= Q_x; // MatrixXd::Zero(num_states, num_states);//
-		L_uu_[i]= Ru;
-		L_vv_[i]= - Rv;
-		L_ux_[i]= MatrixXd::Zero(num_controls_u, num_states);
-		L_vx_[i]= MatrixXd::Zero(num_controls_v, num_states);
-		L_uv_[i]= MatrixXd::Zero(num_controls_u, num_controls_v);
-    }
-}
-
-
-
-
-
-/** This function is the backward ode function of Values paramatized with the running cost over horizon */
-void GT_DDP_optimizer::value_dynamics_mm(const std::vector<double>& V_std , std::vector<double>& dV_std,  double t)
-{
-    //std::vector<double> V_std to Eigen::VectorXd V_pkg
-    std::vector<double> sV_std = V_std;
-    double* ptr = &sV_std[0];
-    Eigen::Map<Eigen::VectorXd> V_pkg(ptr, sV_std.size());
-
-    // double   V =V_pkg(0); not used
-    VectorXd V_x=V_pkg.segment(1,num_states);
-    MatrixXd V_xx(num_states, num_states);
-    //column-wise unpackaging
-    for(int j=0;j<num_states;j++) {
-        V_xx.col(j)=V_pkg.segment(num_states*(j+1)+1,num_states);
-    }
-    //
-    Qx= Ai_.transpose() * V_x+ L_xi_;              //(num_states);
-    Qu= Bi_.transpose() * V_x + L_ui_;             //(num_controls_u);
-    Qv= Ci_.transpose() * V_x + L_vi_;             //(num_controls_v);
-    Qxx= L_xxi_ + 2 * V_xx * Ai_;                  //(num_states, num_states);
-    Quu= L_uui_;                                   //(num_controls_u, num_controls_u);
-    Qvv= L_vvi_;                                   //(num_controls_v, num_controls_v);
-    Qux= L_uxi_ + Bi_.transpose() * V_xx;          //(num_controls_u, num_states);
-    Qvx = L_vxi_ + Ci_.transpose() * V_xx;         //(num_controls_v, num_states);
-    Quv= L_uvi_;                                   //(num_controls_u, num_controls_v);
-    Qvu= Quv.transpose();                          //(num_controls_v, num_controls_u);
-
-    Quu_inv= Quu.inverse();                        //(num_controls_u, num_controls_u);
-    Qvv_inv= Qvv.inverse();                        //(num_controls_v, num_controls_v);
-    G= Quu - Quv * Qvv_inv * Qvu;                  //(num_controls_u, num_controls_u);
-    H= Qvv - Qvu * Quu_inv * Quv;                  //(num_controls_v, num_controls_v);
-    G_inv= G.inverse();                            //(num_controls_u, num_controls_u);
-    H_inv= H.inverse();                            //(num_controls_v, num_controls_v);
-
-    lui_ = -G_inv * (Qu - Quv * Qvv_inv * Qv);
-    Kui_ = -G_inv * (Qux - Quv * Qvv_inv * Qvx);
-    lvi_ = -H_inv * (Qv - Qvu * Quu_inv * Qu);
-    Kvi_ = -H_inv * (Qvx - Qvu * Quu_inv * Qux);
-
-    MatrixXd dVxxdt =-(Qxx + Kui_.transpose()*Quu*Kui_ + Kvi_.transpose()*Qvv*Kvi_ + 2 * Kui_.transpose()*Qux + 2 * Kvi_.transpose()*Qvx + 2 * Kui_.transpose()*Quv*Kvi_);
-    VectorXd dVxdt = -(Qx + Kui_.transpose()*Qu + Kvi_.transpose()*Qv + Qux.transpose()*lui_ + Qvx.transpose()*lvi_ + Kui_.transpose() *Quu*lui_ + Kvi_.transpose() *Qvv*lvi_ + Kui_.transpose() *Quv*lvi_ + Kvi_.transpose() *Qvu*lui_);
-    double dVdt =-(L_0i_ + lui_.transpose()*Qu + lvi_.transpose()*Qv + 0.5*lui_.transpose()*Quu*lui_ + lui_.transpose()*Quv*lvi_+ 0.5*lvi_.transpose()*Qvv*lvi_);
-    MatrixXd sdVxxdt = 0.5*(dVxxdt + dVxxdt.transpose()); //imposing symmetry of dVxxdt
-
-    //packaging into Eigen::vec dV_pkg
-    VectorXd dV_pkg;
-    dV_pkg.setZero(1+num_states+num_states*num_states);
-    dV_pkg(0)= dVdt;
-    dV_pkg.segment(1,num_states)= dVxdt;
-    Map<RowVectorXd> dv_xx_vec(sdVxxdt.data(), sdVxxdt.size());
-    dV_pkg.tail(num_states*num_states)= dv_xx_vec;
-
-    // type casting back to std::vec (Eigen -> std::vec)
-    dV_std.resize(dV_pkg.size());
-    VectorXd::Map(&dV_std[0], dV_pkg.size()) = dV_pkg;
-
-};
 
 /** This function takes in x_traj and Linearized dynamics A,B,C to back propagate the value ode "value_dynamics_mm" */
 void GT_DDP_optimizer::backpropagate_mm_rk(const vector<VectorXd>& x_traj,
@@ -183,7 +86,6 @@ void GT_DDP_optimizer::backpropagate_mm_rk(const vector<VectorXd>& x_traj,
         Ci_=C[i];
 
         //numerically solve the value ode
-        using namespace std::placeholders;
         integrate_adaptive(controlled_stepper, std::bind(&::GT_DDP_optimizer::value_dynamics_mm, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), V_std , t , t-dt , -dt );
         t+=-dt;
 
@@ -194,61 +96,8 @@ void GT_DDP_optimizer::backpropagate_mm_rk(const vector<VectorXd>& x_traj,
         Ku_[i]=Kui_;
         Kv_[i]=Kvi_;
 
-        // du
-        Qux_[i] = Qux;
-        Qu_[i] = Qu;
-        Quv_[i] = Quv;
-
-        // dv
-        Qv_[i] = Qv;
-        Qvx_[i] = Qvx;
-
     } //back propagating loop
 }//back_propagate();
-
-
-
-
-
-
-/** This function is the ode function for updating dx with given control gains lu, lv, Ku, Kv*/
-struct dx_update_mm
-{
-    MatrixXd A;
-    MatrixXd B;
-    MatrixXd C;
-
-    VectorXd lu;
-    VectorXd lv;
-    MatrixXd Ku;
-    MatrixXd Kv;
-    dx_update_mm(MatrixXd Ai,MatrixXd Bi,MatrixXd Ci, VectorXd lui, VectorXd lvi, MatrixXd Kui, MatrixXd Kvi):
-                A(Ai),B(Bi),C(Ci),lu(lui),lv(lvi),Ku(Kui),Kv(Kvi){}
-
-    void operator()(const Eigen::VectorXd& dx , Eigen::VectorXd& dx_updated,  double t)
-    {
-        dx_updated =A*dx+B*(lu+Ku*dx)+C*(lv+Kv*dx);
-    }
-};
-
-/** forward propagating in order to update dx with given A, B, C, lu, lv, Ku, Kv */
-void GT_DDP_optimizer::forward_propagate_mm_rk(vector<VectorXd>& dx_traj,
-                                           const vector<MatrixXd>& A, const vector<MatrixXd>& B, const vector<MatrixXd>& C)
-{
-    //initial condition
-    VectorXd dx=dx_traj[0];
-    double t=0;
-    //main integration loop
-    for (int i = 0; i < (num_time_steps - 1); i++)
-    {
-        //update dx
-        dx_update_mm dum(A[i], B[i] ,C[i], lu_[i],lv_[i], Ku_[i], Kv_[i]);
-        stepper.do_step(dum, dx, t, dt);
-        dx_traj[i+1]=dx;
-        t+=-dt;
-    } //stepper loop
-
-} //forward_propagate_mm_rk
 
 
 
@@ -268,195 +117,15 @@ void GT_DDP_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
     VectorXd du(num_controls_u);
     VectorXd dv(num_controls_v);
 
-    // Control Constraint DDP
-    Program qp(CGAL::SMALLER);
-    Solution sol;
-
-    // Quadratic program parameters
-    Eigen::VectorXd b(2*num_controls_u), c;                                                                   // b and c vectors
-    Eigen::VectorXd b1(num_controls_u), b2(num_controls_u);                                 // intermediate b vectors
-    Eigen::VectorXd lower(num_controls_u), upper(num_controls_u);                           // upper and lower bounds
-    Eigen::VectorXd lower_v(num_controls_v), upper_v(num_controls_v);  
-
-    // Solver convergence
-    bool first_run;
-    Eigen::VectorXd last_du(num_controls_u), last_dv(num_controls_v);
-    double dist_u = 0.0, dist_v = 0.0;
-
-    // Set c0 to 0
-    qp.set_c0(0);
-
-    // Establish boundaries
-    // du
-    upper << 10, 6, 2, 2;
-    lower << -10, -6, -2, -2;
-    // dv
-    upper_v << 0.0001, 0.01, 0.01, 0.01;
-    lower_v << -0.0001, -0.01, -0.01, -0.01;
-
-    
     // Update the controls using a QP solver
-    for (int i = 0; i < num_time_steps-1; i++) {
-        // Find dv
+    for (int i = 0; i < num_time_steps-1; i++)
+    {
+        du = lu_[i] + Ku_[i] * dx_traj[i];
         dv = lv_[i] + Kv_[i] * dx_traj[i];
-        first_run = true;
 
-        /**
-         * Double Control constraint DDP logic
-         */
-        while(first_run || (dist_u >= du_converge_dist && dist_v >= dv_converge_dist))
-        {
-            //////////////////
-            // du
-            /////////////////
-            // Calculate boundaries for A*du
-            b1 = lower - u_traj[i];
-            b2 = upper - u_traj[i];
-
-            // Set control boundaries
-            for(int i = 0; i < num_controls_u; ++i)
-            {
-                qp.set_l(i, true, b1(i));
-                qp.set_u(i, true, b2(i));
-            }
-
-            // Calculate linear objective function for du
-            c = Qux_[i]*dx_traj[i] + Quv_[i]*dv + Qu_[i];
-
-            // Add quadratic and linear objective functions to the program solver
-            // Also add boundaries to the solver
-            for (int i = 0; i < Constants::num_controls_u; ++i)
-            {
-                qp.set_c(i, c(i));
-                for (int j = 0; j < Constants::num_controls_u; ++j)
-                {
-                    qp.set_d(i, j, Quu(i, j));
-                }
-            }
-
-            // solve quadratic program to find du
-            sol = CGAL::solve_quadratic_program(qp, ET());
-
-            // Find du after performing the quadratic programming step if the solution is feasible
-            if(sol.solves_quadratic_program(qp) && !sol.is_infeasible())
-            {
-                Solution::Variable_value_iterator it = sol.variable_values_begin();
-                Solution::Variable_value_iterator end = sol.variable_values_end();
-
-                for (int u = 0; it != end; ++it, ++u) {
-                    du(u) = CGAL::to_double(*it);
-                }
-            }
-            // QP failed, so use normal du
-            else
-            {
-                du = lu_[i] + Ku_[i] * dx_traj[i];
-                std::cout << du << std::endl << std::endl;
-            }
-
-
-
-            //////////////////
-            // dv
-            /////////////////
-            // Calculate boundaries for A*du
-            b1 = lower_v - v_traj[i];
-            b2 = upper_v - v_traj[i];
-    
-            // Set control boundaries
-            for(int i = 0; i < num_controls_u; ++i)
-            {
-                qp.set_l(i, true, b1(i));
-                qp.set_u(i, true, b2(i));
-            }
-    
-            // Calculate linear objective function for dv
-            c = Qvx_[i]*dx_traj[i] + Quv_[i].transpose()*du + Qv_[i];
-    
-            // Add quadratic and linear objective functions to the program solver
-            // Also add boundaries to the solver
-            for (int i = 0; i < Constants::num_controls_u; ++i)
-            {
-                qp.set_c(i, c(i));
-                for (int j = 0; j < Constants::num_controls_u; ++j)
-                {
-                    qp.set_d(i, j, Qvv(i, j));
-                }
-            }
-    
-            // solve quadratic program to find dv
-            sol = CGAL::solve_quadratic_program(qp, ET());
-    
-            // Find du after performing the quadratic programming step if the solution is feasible
-            if(sol.solves_quadratic_program(qp) && !sol.is_infeasible())
-            {
-                Solution::Variable_value_iterator it = sol.variable_values_begin();
-                Solution::Variable_value_iterator end = sol.variable_values_end();
-    
-                for (int v = 0; it != end; ++it, ++v) {
-                    dv(v) = CGAL::to_double(*it);
-                }
-            }
-            // QP failed, so use normal du
-            else
-            {
-                dv = lv_[i] + Kv_[i] * dx_traj[i];
-                std::cout << dv << std::endl << std::endl;
-            }
-            
-            // Calculate if the quadratic program needs to continue
-            // If it is the first run, continue by setting the distances above the thresholds
-            if (first_run)
-            {
-                first_run = false;
-                dist_u = du_converge_dist + 1.0;
-                dist_v = dv_converge_dist + 1.0;
-                last_du = du;
-                last_dv = dv;
-            }
-            // If this is not the first run, calculate the distances between solutions
-            // If these distances are both small enough, then the answer will be accepted
-            else
-            {
-                dist_u = (du - last_du).dot(du - last_du);
-                dist_v = (dv - last_dv).dot(dv - last_dv);
-                last_du = du;
-                last_dv = dv;
-            }
-            
-            //std::cout << du << "\t" << dv << std::endl;
-        }
         // Update controls
         u_traj[i] = u_traj[i] + learning_rate * du;
         v_traj[i] = v_traj[i] + learning_rate * dv;
     }
 
-}
-
-
-
-
-
-
-/**
-    This function initializes the state and control trajectories (the parameters) to
-    vectors of zero VectorXd's
-*/
-void GT_DDP_optimizer::initialize_trajectories_to_zero_mm(vector<VectorXd>& x_traj, vector<VectorXd>& u_traj, vector<VectorXd>& v_traj, vector<VectorXd>& dx_traj)
-{
-    for (int i = 0; i < num_time_steps; i++) {
-        x_traj[i] = VectorXd::Zero(num_states);
-    }
-
-    for (int i = 0; i < num_time_steps-1; i++) {
-        u_traj[i] = VectorXd::Zero(num_controls_u);
-    }
-
-	for (int i = 0; i < num_time_steps - 1; i++) {
-		v_traj[i] = VectorXd::Zero(num_controls_v);
-	}
-
-    for (int i = 0; i < num_time_steps-1; i++) {
-        dx_traj[i] = VectorXd::Zero(num_states);
-    }
 }
