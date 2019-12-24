@@ -2,6 +2,7 @@
 #include "ros/ros.h"
 
 //Package defined headers
+#include "gtddp_drone/gtddp_lib/Constants.h"
 #include "gtddp_drone_msgs/Trajectory.h"
 #include "gtddp_drone_msgs/target.h"
 #include "gtddp_drone/traj_optimizer.h"
@@ -38,6 +39,9 @@ int main(int argc, char **argv)
 
     //Initialize this node
     ros::NodeHandle traj_node;
+
+    // Update Constants from launch file
+    ConstantLoader loader(traj_node);
 
     const int SIMULATION    = traj_node.param("/gtddp_optimize_node/is_simulation", 0);
     const int GENERATE_TRAJ = traj_node.param("/gtddp_optimize_node/is_gen", 0);
