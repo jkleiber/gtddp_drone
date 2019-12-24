@@ -3,6 +3,9 @@
   <arg name="real_time" value="0"/>
   <arg name="target_timestep" value="1.0"/>
 
+  <include file="constants.launch">
+  </include>
+
   <!-- GT-DDP nodes -->
   <node name="gtddp_control_node" pkg="gtddp_drone" type="gtddp_control_node" output="screen">
     <param name="is_simulation" value="$(arg is_sim)"/>

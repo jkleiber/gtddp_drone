@@ -3,30 +3,40 @@
 
 #include <cmath>
 
+#include <ros/ros.h>
+#include <string.h>
+
 namespace Constants {
 
     extern const double pi;
     extern const double grav;
 
-    extern const int num_states;
-    extern const int num_controls_u;
-	extern const int num_controls_v;
-    extern const int num_time_steps;
-    extern const int num_iterations;
-    extern const int num_long_legs;
-    extern const int short_iterations;
+    extern int num_states;
+    extern int num_controls_u;
+	extern int num_controls_v;
+    extern int num_time_steps;
+    extern int num_iterations;
+    extern int num_long_legs;
+    extern int short_iterations;
 
-    extern const double dt;
-    extern const double learning_rate;
+    extern double dt;
+    extern double learning_rate;
 
-    extern const double m;
-    extern const double M;
-    extern const double length;
-    
-    extern const double Ixx;
-    extern const double Iyy;
-    extern const double Izz;
+    extern double m;
+    extern double M;
+    extern double length;
+
+    extern double Ixx;
+    extern double Iyy;
+    extern double Izz;
 
 }
+
+class ConstantLoader {
+    public:
+        ConstantLoader();
+        ConstantLoader(ros::NodeHandle nh);
+
+};
 
 #endif // CONSTANTS_H

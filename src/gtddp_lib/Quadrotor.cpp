@@ -89,7 +89,7 @@ void Quadrotor::forward_propagate_mm(vector<VectorXd>& x_traj, const vector<Vect
         vi_=v_traj[i];
 
         using namespace std::placeholders;
-        stepper.do_step(std::bind(&::Quadrotor::dynamics_mm, this, _1, _2, _3), x, t, dt);
+        stepper.do_step(std::bind(&::Quadrotor::dynamics_mm, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), x, t, dt);
         t += dt;
         x_traj[i+1] = x; //save x trajectory
         t += dt;
@@ -115,8 +115,7 @@ void Quadrotor::feedforward_controls(VectorXd current_state, const deque<VectorX
         ui_ = u_traj[i] + K_traj[i] * (x - x_traj[i]);
         vi_ = v_zero;
 
-        using namespace std::placeholders;
-        stepper.do_step(std::bind(&::Quadrotor::dynamics_mm, this, _1, _2, _3), x, t, dt);
+        stepper.do_step(std::bind(&::Quadrotor::dynamics_mm, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), x, t, dt);
         t += dt;
         result[i] = x; //save x trajectory
         t += dt;

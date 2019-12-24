@@ -178,7 +178,6 @@ void GT_DDP_optimizer::backpropagate_mm_rk(const vector<VectorXd>& x_traj,
         Ci_=C[i];
 
         //numerically solve the value ode
-        using namespace std::placeholders;
         integrate_adaptive(controlled_stepper, std::bind(&::GT_DDP_optimizer::value_dynamics_mm, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), V_std , t , t-dt , -dt );
         t+=-dt;
 
@@ -291,7 +290,7 @@ void GT_DDP_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
     upper << 10, 6, 2, 2;
     lower << -10, -6, -2, -2;
 
-    
+
 
     // Update the controls using a QP solver
     for (int i = 0; i < num_time_steps-1; i++) {
