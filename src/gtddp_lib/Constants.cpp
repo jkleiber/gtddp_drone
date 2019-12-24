@@ -40,6 +40,8 @@ namespace Constants {
     double Iyy(0.0051);
     double Izz(0.0095);
 
+    std::string ddp_selector("gtddp");
+
 }
 
 
@@ -55,6 +57,7 @@ ConstantLoader::ConstantLoader(ros::NodeHandle nh)
     // Choose which constants to use based on the type of motion planning selected
     std::string selector = "gtddp";
     selector = nh.param("/ddp_select", selector);
+    Constants::ddp_selector = selector;
     selector = "/" + selector;
 
     // Update the Quadrotor State information

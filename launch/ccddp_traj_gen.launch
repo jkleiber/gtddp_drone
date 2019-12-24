@@ -6,7 +6,21 @@
 
   <include file="$(find gtddp_drone)/launch/constants.launch">
     <arg name="ddp_select" value="ccddp"/>
+
+    <!-- DDP Hyperparameters -->
+    <arg name="num_time_steps" value="501"/>
+    <arg name="num_iterations" value="150"/>
     <arg name="num_long_legs" value="5"/>
+    <arg name="short_iterations" value="100"/>
+    <arg name="dt" value="0.001"/>
+    <arg name="learning_rate" value="0.04"/>
+
+    <!-- AR.Drone System Parameters -->
+    <arg name="mass" default="0.436"/>
+    <arg name="length" default="0.19"/>
+    <arg name="Ixx" default="0.0045"/>
+    <arg name="Iyy" default="0.0051"/>
+    <arg name="Izz" default="0.0095"/>
   </include>
 
   <!-- GT-DDP nodes -->

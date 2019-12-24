@@ -3,7 +3,7 @@
   <arg name="real_time" value="0"/>
   <arg name="target_timestep" value="1.0"/>
 
-  <include file="constants.launch">
+  <include file="$(find gtddp_drone)/launch/constants.launch">
   </include>
 
   <!-- GT-DDP nodes -->

@@ -14,6 +14,8 @@
 #include <vector>
 
 #include "Constants.h"
+#include "DDP_Optimizer.h"
+#include "CC_DDP_optimizer.h"
 #include "GT_DDP_optimizer.h"
 #include "Cost_Function.h"
 #include "Quadrotor.h"      // include the system's header file (Quadrotor.h, Pendulum.h, etc.)
@@ -24,32 +26,32 @@ public:
     DDP_main_mm ();
     DDP_main_mm (Eigen::VectorXd x, Eigen::VectorXd x_t);
     ~DDP_main_mm();
-    
+
     void update(Eigen::VectorXd x, Eigen::VectorXd x_t);
     void ddp_loop();
-    
+
     std::vector<Eigen::VectorXd> get_x_traj();
     std::vector<Eigen::VectorXd> get_u_traj();
     std::vector<Eigen::VectorXd> get_lu();
     std::vector<Eigen::MatrixXd> get_Ku();
 
     void print_trajectory(std::vector<Eigen::VectorXd> traj);
-    
+
 private:
 
     Quadrotor quad;
     Cost_Function cost;
-    GT_DDP_optimizer ddp;
-    
+    DDP_Optimizer *ddp;
+
     Eigen::VectorXd x_target;
-    
+
     std::vector<Eigen::VectorXd> x_traj, u_traj, v_traj, dx_traj;
     std::vector<Eigen::MatrixXd> A, B, C;
     std::vector<double> trajectory_cost_mm;
 
     int num_legs;
     int max_iterations;
-    
+
 };
 
 
