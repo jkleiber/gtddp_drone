@@ -1,14 +1,13 @@
-#include "gtddp_drone/gtddp_lib/GT_DDP_optimizer.h"
-#include <iostream>
+#include "gtddp_drone/gtddp_lib/CC_DDP_optimizer.h"
 
 using namespace std;
 using namespace Eigen;
 using namespace boost::numeric::odeint;
 using namespace Constants;
 
-GT_DDP_optimizer::GT_DDP_optimizer() {}
+CC_DDP_optimizer::CC_DDP_optimizer() {}
 
-GT_DDP_optimizer::GT_DDP_optimizer(Cost_Function c)
+CC_DDP_optimizer::CC_DDP_optimizer(Cost_Function c)
 {
     cost = c;
     Ru = c.get_control_cost_u();
@@ -37,15 +36,24 @@ GT_DDP_optimizer::GT_DDP_optimizer(Cost_Function c)
     Ku_.resize(num_time_steps);
     Kv_.resize(num_time_steps);
 
-} // construct a GT_DDP_optimizer for the system passed as a parameter
+    Qu_.resize(num_time_steps);
+    Qux_.resize(num_time_steps);
+    Quv_.resize(num_time_steps);
 
-GT_DDP_optimizer::~GT_DDP_optimizer() {}
+} // construct a CC_DDP_optimizer for the system passed as a parameter
+
+CC_DDP_optimizer::~CC_DDP_optimizer() {}
+
+
+
+
+
 
 
 
 
 /** This function takes in x_traj and Linearized dynamics A,B,C to back propagate the value ode "value_dynamics_mm" */
-void GT_DDP_optimizer::backpropagate_mm_rk(const vector<VectorXd>& x_traj,
+void CC_DDP_optimizer::backpropagate_mm_rk(const vector<VectorXd>& x_traj,
                                                 const vector<MatrixXd>& A, const vector<MatrixXd>& B, const vector<MatrixXd>& C)
 {
     // initial values for ode
@@ -86,7 +94,7 @@ void GT_DDP_optimizer::backpropagate_mm_rk(const vector<VectorXd>& x_traj,
         Ci_=C[i];
 
         //numerically solve the value ode
-        integrate_adaptive(controlled_stepper, std::bind(&::GT_DDP_optimizer::value_dynamics_mm, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), V_std , t , t-dt , -dt );
+        integrate_adaptive(controlled_stepper, std::bind(&::CC_DDP_optimizer::value_dynamics_mm, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), V_std , t , t-dt , -dt );
         t+=-dt;
 
         //save the obtained gains to the private members
@@ -96,10 +104,12 @@ void GT_DDP_optimizer::backpropagate_mm_rk(const vector<VectorXd>& x_traj,
         Ku_[i]=Kui_;
         Kv_[i]=Kvi_;
 
+        Qux_[i] = Qux;
+        Qu_[i] = Qu;
+        Quv_[i] = Quv;
+
     } //back propagating loop
 }//back_propagate();
-
-
 
 
 
@@ -110,19 +120,85 @@ void GT_DDP_optimizer::backpropagate_mm_rk(const vector<VectorXd>& x_traj,
  according to u_new = u_old + learning_rate * du_star. The updated control trajectory is written
  into the parameter 5, u_traj.
  */
-void GT_DDP_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
+void CC_DDP_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
                                           vector<VectorXd>& u_traj, vector<VectorXd>& v_traj)
 {
     // Vectors for delta u and delta v
     VectorXd du(num_controls_u);
     VectorXd dv(num_controls_v);
 
+    // Control Constraint DDP
+    Program qp(CGAL::SMALLER);
+    Solution sol;
+
+    // Quadratic program parameters
+    Eigen::VectorXd b(2*num_controls_u), c;                                                                   // b and c vectors
+    Eigen::VectorXd b1(num_controls_u), b2(num_controls_u);                                 // intermediate b vectors
+    Eigen::VectorXd lower(num_controls_u), upper(num_controls_u);                           // upper and lower bounds
+
+
+    // Set c0 to 0
+    qp.set_c0(0);
+
+    // Establish boundaries
+    upper << 10, 6, 2, 2;
+    lower << -10, -6, -2, -2;
+
+
 
     // Update the controls using a QP solver
     for (int i = 0; i < num_time_steps-1; i++) {
         // Find dv
         dv = lv_[i] + Kv_[i] * dx_traj[i];
-        du = lu_[i] + Ku_[i] * dx_traj[i];
+
+        /**
+         * Control constraint DDP logic
+         */
+        // Calculate boundaries for A*du
+        b1 = lower - u_traj[i];
+        b2 = upper - u_traj[i];
+
+        // Set control boundaries
+        for(int i = 0; i < num_controls_u; ++i)
+        {
+            qp.set_l(i, true, b1(i));
+            qp.set_u(i, true, b2(i));
+        }
+
+        // Calculate linear objective function for du
+        c = Qux_[i]*dx_traj[i] + Quv_[i]*dv + Qu_[i];
+
+        // Add quadratic and linear objective functions to the program solver
+        // Also add boundaries to the solver
+        for (int i = 0; i < Constants::num_controls_u; ++i)
+        {
+            qp.set_c(i, c(i));
+            //qp.set_b(i, b(i));
+            for (int j = 0; j < Constants::num_controls_u; ++j)
+            {
+                qp.set_d(i, j, Quu(i, j));
+            }
+        }
+
+        // solve quadratic program to find lu
+        sol = CGAL::solve_quadratic_program(qp, ET());
+
+        // Find du after performing the quadratic programming step if the solution is feasible
+        if(sol.solves_quadratic_program(qp) && !sol.is_infeasible())
+        {
+            Solution::Variable_value_iterator it = sol.variable_values_begin();
+            Solution::Variable_value_iterator end = sol.variable_values_end();
+
+            for (int u = 0; it != end; ++it, ++u) {
+                du(u) = CGAL::to_double(*it);
+            }
+        }
+        // QP failed, so use normal du
+        else
+        {
+            du = lu_[i] + Ku_[i] * dx_traj[i];
+            std::cout << du << std::endl << std::endl;
+        }
 
         // Update controls
         u_traj[i] = u_traj[i] + learning_rate * du;

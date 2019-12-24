@@ -98,13 +98,13 @@ int main(int argc, char **argv)
         else if (OPEN_LOOP)
         {
             //Send the new trajectories at a faster update rate than the DDP would normally run
-            update_timer = traj_node.createTimer(ros::Duration(0.4), &Optimizer::open_loop_traj_callback, &traj_optimizer, false);
+            update_timer = traj_node.createTimer(ros::Duration(0.3), &Optimizer::open_loop_traj_callback, &traj_optimizer, false);
         }
         //Otherwise read full state, control commands, and gains from the flight file
         else
         {
             //Send the new trajectories at a faster update rate than the DDP would normally run
-            update_timer = traj_node.createTimer(ros::Duration(0.4), &Optimizer::offline_traj_callback, &traj_optimizer, false);
+            update_timer = traj_node.createTimer(ros::Duration(0.3), &Optimizer::offline_traj_callback, &traj_optimizer, false);
         }
     }
     //If the trajectory is being generated for an offline run, optimize small trajectories but only output to a file

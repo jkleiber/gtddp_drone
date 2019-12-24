@@ -30,6 +30,8 @@ namespace Constants {
     extern double Iyy;
     extern double Izz;
 
+    extern std::string ddp_selector;
+
 }
 
 class ConstantLoader {

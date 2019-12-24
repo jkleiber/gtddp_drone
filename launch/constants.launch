@@ -10,11 +10,11 @@
 
     <!-- DDP Hyperparameters -->
     <arg name="num_time_steps" default="501"/>
-    <arg name="num_iterations" default="60"/>
-    <arg name="num_long_legs" default="80"/>
-    <arg name="short_iterations" default="20"/>
+    <arg name="num_iterations" default="150"/>
+    <arg name="num_long_legs" default="5"/>
+    <arg name="short_iterations" default="100"/>
     <arg name="dt" default="0.001"/>
-    <arg name="learning_rate" default="0.05"/>
+    <arg name="learning_rate" default="0.04"/>
 
     <!-- Quadrotor System Parameters -->
     <arg name="mass" default="0.436"/>

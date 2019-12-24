@@ -31,12 +31,12 @@ void Cost_Function::initialize_cost_matrix(){
      * Intuition for Q_x: Scale Q_f by a larger amount to get to the target faster, smaller Q_x is more stable though
      */
     Ru = MatrixXd::Identity(num_controls_u, num_controls_u); //0.015 *
-    Rv = 1.6 * MatrixXd::Identity(num_controls_v, num_controls_v);
+    Rv = 2.0 * MatrixXd::Identity(num_controls_v, num_controls_v);
     Q_x = MatrixXd::Identity(num_states, num_states);
     Q_f = MatrixXd::Identity(num_states, num_states);
 
     //Set Ru values individually
-    Ru(0, 0) = 0.4;  //thrust
+    Ru(0, 0) = 0.7;  //thrust
     Ru(1, 1) = 0.5;   //u1 moment //0.04 worked pretty well in case this breaks
     Ru(2, 2) = 0.5;   //u2 moment
     Ru(3, 3) = 0.5;   //u3 moment

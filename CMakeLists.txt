@@ -20,7 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+find_package(CGAL REQUIRED COMPONENTS Core)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -117,8 +117,10 @@ catkin_package(
   INCLUDE_DIRS include
 # LIBRARIES gtddp_drone
   CATKIN_DEPENDS roscpp rospy std_msgs message_runtime mocap_vicon gtddp_drone_msgs
-# DEPENDS system_lib
+  DEPENDS cgal
 )
+
+
 
 ###########
 ## Build ##
@@ -129,16 +131,22 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${CGAL_INCLUDE_DIRS}
 )
+
+include(${CGAL_USE_FILE})
 
 ## Declare a C++ library
 add_library(GTDDP_LIB
   src/gtddp_lib/Constants.cpp
   src/gtddp_lib/Cost_Function.cpp
   src/gtddp_lib/DDP_main_mm.cpp
+  src/gtddp_lib/DDP_Optimizer.cpp
+  src/gtddp_lib/CC_DDP_optimizer.cpp
   src/gtddp_lib/GT_DDP_optimizer.cpp
   src/gtddp_lib/Quadrotor.cpp
 )
+
 
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
@@ -146,20 +154,14 @@ add_library(GTDDP_LIB
 add_executable(gtddp_control_node src/gtddp_control_node.cpp src/control_calc.cpp src/flight_controller.cpp)
 add_executable(gtddp_optimize_node src/gtddp_optimize_node.cpp src/traj_optimizer.cpp)
 
-## Rename C++ executable without prefix
-## The above recommended prefix causes long target names, the following renames the
-## target back to the shorter version for ease of user use
-## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
-# set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
-
-## Add cmake target dependencies of the executable
-## same as for the library above
-# (gtddp_control_node gtddp_drone_generate_messages_cpp)
-# add_dependencies(gtddp_optimize_node gtddp_drone_generate_messages_cpp)
-
 ## Specify libraries to link a library or executable target against
-target_link_libraries(gtddp_control_node ${catkin_LIBRARIES} GTDDP_LIB)
-target_link_libraries(gtddp_optimize_node ${catkin_LIBRARIES} GTDDP_LIB)
+target_link_libraries(gtddp_control_node ${catkin_LIBRARIES} GTDDP_LIB ${CGAL_LIBRARIES})
+target_link_libraries(gtddp_optimize_node ${catkin_LIBRARIES} GTDDP_LIB ${CGAL_LIBRARIES})
+
+
+
+
+
 
 #############
 ## Install ##
