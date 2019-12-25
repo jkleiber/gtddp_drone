@@ -91,5 +91,26 @@ ConstantLoader::ConstantLoader(ros::NodeHandle nh)
     Constants::Izz = nh.param(selector + "/Izz", 0.0095);
 
     // Update the control constraint hyperparameters
+    Constants::du_converge_dist = nh.param(selector + "/du_converge_dist", 2.0);
+    Constants::dv_converge_dist = nh.param(selector + "/dv_converge_dist", 2.0);
 
+    // Update control constraint limits
+    // du
+    Constants::u0_upper = nh.param(selector + "/u0_upper", 20);
+    Constants::u1_upper = nh.param(selector + "/u1_upper", 20);
+    Constants::u2_upper = nh.param(selector + "/u2_upper", 20);
+    Constants::u3_upper = nh.param(selector + "/u3_upper", 20);
+    Constants::u0_lower = nh.param(selector + "/u0_lower", -20);
+    Constants::u1_lower = nh.param(selector + "/u1_lower", -20);
+    Constants::u2_lower = nh.param(selector + "/u2_lower", -20);
+    Constants::u3_lower = nh.param(selector + "/u3_lower", -20);
+    // dv
+    Constants::v0_upper = nh.param(selector + "/u0_upper", 20);
+    Constants::v1_upper = nh.param(selector + "/u1_upper", 20);
+    Constants::v2_upper = nh.param(selector + "/u2_upper", 20);
+    Constants::v3_upper = nh.param(selector + "/u3_upper", 20);
+    Constants::v0_lower = nh.param(selector + "/u0_lower", -20);
+    Constants::v1_lower = nh.param(selector + "/u1_lower", -20);
+    Constants::v2_lower = nh.param(selector + "/u2_lower", -20);
+    Constants::v3_lower = nh.param(selector + "/u3_lower", -20);
 }
