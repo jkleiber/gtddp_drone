@@ -24,7 +24,9 @@
 
 //User libs
 #include "gtddp_drone/gtddp_lib/Constants.h"
-#include "gtddp_drone/gtddp_lib/Quadrotor.h"
+#include "gtddp_drone/gtddp_lib/Drone.h"
+#include "gtddp_drone/gtddp_lib/systems/Quadrotor.h"
+#include "gtddp_drone/gtddp_lib/systems/PursuitDrones.h"
 #include "gtddp_drone/flight_controller.h"
 
 //User msgs
@@ -84,6 +86,7 @@ class ControlCalculator
         Eigen::VectorXd cur_state;
 
         //Use quadrotor dynamics
+        //TODO: change to System class
         Quadrotor quadrotor;
 
         //Change execution rate for the control callback

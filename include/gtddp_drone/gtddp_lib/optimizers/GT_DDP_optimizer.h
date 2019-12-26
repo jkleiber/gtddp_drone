@@ -1,7 +1,7 @@
 #ifndef GT_DDP_OPTIMIZER_H
 #define GT_DDP_OPTIMIZER_H
 
-#include "DDP_Optimizer.h"
+#include "../DDP_Optimizer.h"
 
 class GT_DDP_optimizer : public DDP_Optimizer
 {

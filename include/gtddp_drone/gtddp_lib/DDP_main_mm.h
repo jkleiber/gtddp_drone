@@ -14,11 +14,17 @@
 #include <vector>
 
 #include "Constants.h"
-#include "DDP_Optimizer.h"
-#include "CC_DDP_optimizer.h"
-#include "GT_DDP_optimizer.h"
 #include "Cost_Function.h"
-#include "Quadrotor.h"      // include the system's header file (Quadrotor.h, Pendulum.h, etc.)
+
+// Optimizers
+#include "DDP_Optimizer.h"
+#include "optimizers/CC_DDP_optimizer.h"
+#include "optimizers/GT_DDP_optimizer.h"
+
+// Systems
+#include "Drone.h"
+#include "systems/Quadrotor.h"
+#include "systems/PursuitDrones.h"
 
 class DDP_main_mm
 {
@@ -39,7 +45,7 @@ public:
 
 private:
 
-    Quadrotor quad;
+    Drone *drone;
     Cost_Function cost;
     DDP_Optimizer *ddp;
 

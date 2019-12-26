@@ -23,8 +23,8 @@
     <arg name="Izz" value="0.0095"/>
 
     <!-- Convergence Hyperparameters -->
-    <arg name="dist_converge_u" value="200"/>
-    <arg name="dist_converge_v" value="200"/>
+    <arg name="dist_converge_u" value="2"/>
+    <arg name="dist_converge_v" value="2"/>
 
     <!-- Constraints for du -->
     <arg name="u0_upper" value="10"/>
