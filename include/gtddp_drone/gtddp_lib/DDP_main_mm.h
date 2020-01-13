@@ -38,8 +38,10 @@ public:
 
     std::vector<Eigen::VectorXd> get_x_traj();
     std::vector<Eigen::VectorXd> get_u_traj();
+    std::vector<Eigen::VectorXd> get_v_traj();
     std::vector<Eigen::VectorXd> get_lu();
     std::vector<Eigen::MatrixXd> get_Ku();
+    std::vector<Eigen::MatrixXd> get_Kv();
 
     void print_trajectory(std::vector<Eigen::VectorXd> traj);
 

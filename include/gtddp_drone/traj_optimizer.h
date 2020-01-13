@@ -102,21 +102,33 @@ class Optimizer
         DDP_main_mm ddpmain;
 
         //Data parsing for sending messages
-        gtddp_drone_msgs::Trajectory get_traj_msg(std::vector<Eigen::VectorXd> x_traj, std::vector<Eigen::VectorXd> u_traj, std::vector<Eigen::MatrixXd> K_traj);
+        gtddp_drone_msgs::Trajectory get_traj_msg(std::vector<Eigen::VectorXd> x_traj,
+                                                  std::vector<Eigen::VectorXd> u_traj,
+                                                  std::vector<Eigen::VectorXd> v_traj,
+                                                  std::vector<Eigen::MatrixXd> Ku_traj,
+                                                  std::vector<Eigen::MatrixXd> Kv_traj);
         gtddp_drone_msgs::state_data get_state_data_msg(std::vector<Eigen::VectorXd> x_traj, int idx);
         gtddp_drone_msgs::ctrl_data get_ctrl_data_msg(std::vector<Eigen::VectorXd> u_traj, int idx);
         gtddp_drone_msgs::gain_data get_gain_data_msg(std::vector<Eigen::MatrixXd> K_traj, int idx);
 
         //Data parsing for saving messages
-        void write_traj_to_files(std::vector<Eigen::VectorXd> x_traj, std::vector<Eigen::VectorXd> u_traj, std::vector<Eigen::MatrixXd> K_traj);
+        void write_traj_to_files(std::vector<Eigen::VectorXd> x_traj,
+                                 std::vector<Eigen::VectorXd> u_traj,
+                                 std::vector<Eigen::VectorXd> v_traj,
+                                 std::vector<Eigen::MatrixXd> Ku_traj,
+                                 std::vector<Eigen::MatrixXd> Kv_traj);
         std::ofstream x_traj_out;
         std::ofstream u_traj_out;
-        std::ofstream K_traj_out;
+        std::ofstream v_traj_out;
+        std::ofstream Ku_traj_out;
+        std::ofstream Kv_traj_out;
 
         //Data parsing for reading messages
         std::ifstream x_traj_in;
         std::ifstream u_traj_in;
-        std::ifstream K_traj_in;
+        std::ifstream v_traj_in;
+        std::ifstream Ku_traj_in;
+        std::ifstream Kv_traj_in;
 
         //Logging
         std::ofstream init_data;

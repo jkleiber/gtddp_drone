@@ -116,12 +116,16 @@ Optimizer::~Optimizer()
     //Close traj generation files
     this->x_traj_out.close();
     this->u_traj_out.close();
-    this->K_traj_out.close();
+    this->v_traj_out.close();
+    this->Ku_traj_out.close();
+    this->Kv_traj_out.close();
 
     //Close the offline files
     this->x_traj_in.close();
     this->u_traj_in.close();
-    this->K_traj_in.close();
+    this->v_traj_in.close();
+    this->Ku_traj_in.close();
+    this->Kv_traj_in.close();
 }
 
 
@@ -180,7 +184,7 @@ void Optimizer::logging_init()
 
 void Optimizer::open_genfiles(bool open_loop)
 {
-    std::string x_file, u_file, K_file;
+    std::string x_file, u_file, v_file, Ku_file, Kv_file;
     const char *home_dir;
     std::stringstream ss;
 
@@ -214,7 +218,9 @@ void Optimizer::open_genfiles(bool open_loop)
 
     //Find the file on the filepath
     x_file = filepath + "x_traj.csv";
-    K_file = filepath + "K_file.csv";
+    v_file = filepath + "v_traj.csv";
+    Ku_file = filepath + "Ku_traj.csv";
+    Kv_file = filepath + "Kv_traj.csv";
 
     // In open loop flights, we want a different file than normal
     if(open_loop)
@@ -231,14 +237,18 @@ void Optimizer::open_genfiles(bool open_loop)
     {
         this->x_traj_out.open(x_file);
         this->u_traj_out.open(u_file);
-        this->K_traj_out.open(K_file);
+        this->v_traj_out.open(v_file);
+        this->Ku_traj_out.open(Ku_file);
+        this->Kv_traj_out.open(Kv_file);
     }
     //If an offline trajectory is expected, open the input files
     else if(!this->real_time)
     {
         this->x_traj_in.open(x_file);
         this->u_traj_in.open(u_file);
-        this->K_traj_in.open(K_file);
+        this->v_traj_in.open(v_file);
+        this->Ku_traj_in.open(Ku_file);
+        this->Kv_traj_in.open(Kv_file);
     }
 
     std::cout << "Offline trajectory files opened!\n";
@@ -291,12 +301,12 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
             if(!this->generation_mode)
             {
                 //Publish the newly optimized trajectory data to the trajectory topic
-                traj_pub.publish(this->get_traj_msg(ddpmain.get_x_traj(), ddpmain.get_u_traj(), ddpmain.get_Ku()));
+                traj_pub.publish(this->get_traj_msg(ddpmain.get_x_traj(), ddpmain.get_u_traj(), ddpmain.get_v_traj(), ddpmain.get_Ku(), ddpmain.get_Kv()));
             }
             //Otherwise save the offline trajectory to a file
             else
             {
-                this->write_traj_to_files(ddpmain.get_x_traj(), ddpmain.get_u_traj(), ddpmain.get_Ku());
+                this->write_traj_to_files(ddpmain.get_x_traj(), ddpmain.get_u_traj(), ddpmain.get_v_traj(), ddpmain.get_Ku(), ddpmain.get_Kv());
             }
 
             //Set ctrl status to unknown so the controller can start flying
@@ -325,7 +335,9 @@ void Optimizer::offline_traj_callback(const ros::TimerEvent& time_event)
     //Declare local variables
     std::vector<Eigen::VectorXd> x_traj;
     std::vector<Eigen::VectorXd> u_traj;
-    std::vector<Eigen::MatrixXd> K_traj;
+    std::vector<Eigen::VectorXd> v_traj;
+    std::vector<Eigen::MatrixXd> Ku_traj;
+    std::vector<Eigen::MatrixXd> Kv_traj;
     Eigen::VectorXd temp_vector;
     Eigen::MatrixXd temp_matrix;
     std::string cell;
@@ -434,21 +446,54 @@ void Optimizer::offline_traj_callback(const ros::TimerEvent& time_event)
 
         //std::cout <<"u_traj ready!\n";
 
-        //Init the temp matrix for a gain matrix
-        temp_matrix.resize(Constants::num_controls_u, Constants::num_states);
-        temp_matrix.setZero();
+        //init the temp vector for a control vector
+        temp_vector.resize(Constants::num_controls_v);
+        temp_vector.setZero();
 
-        //Read the K_traj file
+        //Read the u_traj file
         for(int i = 0; i < Constants::num_time_steps; ++i)
         {
             //Check to see if this file is OK to read
-            if(!K_traj_in.good())
+            if(!v_traj_in.good())
             {
                 break;
             }
 
             //Get the next line from the CSV file
-            getline(K_traj_in, line);
+            getline(v_traj_in, line);
+
+            //Process the file using comma as a delimiter
+            std::stringstream ss(line);
+
+            //Reset the cell counter
+            cell_idx = 0;
+
+            //Read each column in the line
+            while(getline(ss, cell, ','))
+            {
+                temp_vector(cell_idx) = std::stod(cell, 0);
+                cell_idx++;
+            }
+
+            //Push the temporary Eigen vector to the u traj c++ vector
+            v_traj.push_back(temp_vector);
+        }
+
+        //Init the temp matrix for a gain matrix
+        temp_matrix.resize(Constants::num_controls_u, Constants::num_states);
+        temp_matrix.setZero();
+
+        //Read the Ku_traj file
+        for(int i = 0; i < Constants::num_time_steps; ++i)
+        {
+            //Check to see if this file is OK to read
+            if(!Ku_traj_in.good())
+            {
+                break;
+            }
+
+            //Get the next line from the CSV file
+            getline(Ku_traj_in, line);
 
             //Process the file using comma as a delimiter
             std::stringstream ss(line);
@@ -475,15 +520,59 @@ void Optimizer::offline_traj_callback(const ros::TimerEvent& time_event)
             }
 
             //Push the temporary Eigen matrix to the K traj c++ vector
-            K_traj.push_back(temp_matrix);
+            Ku_traj.push_back(temp_matrix);
         }
 
         //std::cout <<"K_traj ready!\n";
 
+        //Init the temp matrix for a gain matrix
+        temp_matrix.resize(Constants::num_controls_u, Constants::num_states);
+        temp_matrix.setZero();
+
+        //Read the Ku_traj file
+        for(int i = 0; i < Constants::num_time_steps; ++i)
+        {
+            //Check to see if this file is OK to read
+            if(!Kv_traj_in.good())
+            {
+                break;
+            }
+
+            //Get the next line from the CSV file
+            getline(Kv_traj_in, line);
+
+            //Process the file using comma as a delimiter
+            std::stringstream ss(line);
+
+            //Reset the cell counter
+            tmp_row = 0;
+            tmp_col = 0;
+
+            //Read each column in the line
+            while(getline(ss, cell, ','))
+            {
+                temp_matrix(tmp_row, tmp_col) = std::stod(cell, 0);
+
+                //Increment the row or column appropriately
+                if(tmp_col == (Constants::num_states - 1))
+                {
+                    tmp_col = 0;
+                    tmp_row++;
+                }
+                else
+                {
+                    tmp_col++;
+                }
+            }
+
+            //Push the temporary Eigen matrix to the K traj c++ vector
+            Kv_traj.push_back(temp_matrix);
+        }
+
         //Publish this data
         if(x_traj.size() > 0)
         {
-            this->traj_pub.publish(this->get_traj_msg(x_traj, u_traj, K_traj));
+            this->traj_pub.publish(this->get_traj_msg(x_traj, u_traj, v_traj, Ku_traj, Kv_traj));
         }
     }
 }
@@ -677,7 +766,11 @@ void Optimizer::init_optimizer(const std_msgs::Empty::ConstPtr& init_msg)
 /**
  *
  */
-gtddp_drone_msgs::Trajectory Optimizer::get_traj_msg(std::vector<Eigen::VectorXd> x_traj, std::vector<Eigen::VectorXd> u_traj, std::vector<Eigen::MatrixXd> K_traj)
+gtddp_drone_msgs::Trajectory Optimizer::get_traj_msg(std::vector<Eigen::VectorXd> x_traj,
+                                                     std::vector<Eigen::VectorXd> u_traj,
+                                                     std::vector<Eigen::VectorXd> v_traj,
+                                                     std::vector<Eigen::MatrixXd> Ku_traj,
+                                                     std::vector<Eigen::MatrixXd> Kv_traj)
 {
     //Declare local variables
     int i;                              //iteration variable
@@ -689,7 +782,9 @@ gtddp_drone_msgs::Trajectory Optimizer::get_traj_msg(std::vector<Eigen::VectorXd
     {
         traj_msg.x_traj.push_back(this->get_state_data_msg(x_traj, i));
         traj_msg.u_traj.push_back(this->get_ctrl_data_msg(u_traj, i));
-        traj_msg.K_traj.push_back(this->get_gain_data_msg(K_traj, i));
+        traj_msg.v_traj.push_back(this->get_ctrl_data_msg(v_traj, i));
+        traj_msg.Ku_traj.push_back(this->get_gain_data_msg(Ku_traj, i));
+        traj_msg.Kv_traj.push_back(this->get_gain_data_msg(Kv_traj, i));
     }
 
     //Set up the Header of this message (for time tracking)
@@ -773,7 +868,11 @@ gtddp_drone_msgs::gain_data Optimizer::get_gain_data_msg(std::vector<Eigen::Matr
 
 
 
-void Optimizer::write_traj_to_files(std::vector<Eigen::VectorXd> x_traj, std::vector<Eigen::VectorXd> u_traj, std::vector<Eigen::MatrixXd> K_traj)
+void Optimizer::write_traj_to_files(std::vector<Eigen::VectorXd> x_traj,
+                                    std::vector<Eigen::VectorXd> u_traj,
+                                    std::vector<Eigen::VectorXd> v_traj,
+                                    std::vector<Eigen::MatrixXd> Ku_traj,
+                                    std::vector<Eigen::MatrixXd> Kv_traj)
 {
     //CSV output string
     std::string output;
@@ -832,7 +931,34 @@ void Optimizer::write_traj_to_files(std::vector<Eigen::VectorXd> x_traj, std::ve
         u_traj_out << output;
     }
 
-    //Append the most recent K traj to the K trajectory file
+    //Append the most recent v_traj to the v trajectory file
+    for(int i = 0; i < v_traj.size(); ++i)
+    {
+        //Reset output
+        output = "";
+
+        //Go state by state
+        for(int s = 0; s < Constants::num_controls_u; ++s)
+        {
+            //Add the data
+            output += std::to_string(v_traj[i](s));
+
+            //Add the comma after all but the last element
+            if(s != (Constants::num_controls_v - 1))
+            {
+                output += ",";
+            }
+            else
+            {
+                output += "\n";
+            }
+        }
+
+        //Append trajectory
+        v_traj_out << output;
+    }
+
+    //Append the most recent Ku traj to the Ku trajectory file
     for(int i = 0; i < u_traj.size(); ++i)
     {
         //Reset output
@@ -844,7 +970,7 @@ void Optimizer::write_traj_to_files(std::vector<Eigen::VectorXd> x_traj, std::ve
             for(int c = 0; c < Constants::num_states; ++c)
             {
                 //Add the data
-                output += std::to_string(K_traj[i](r,c));
+                output += std::to_string(Ku_traj[i](r,c));
 
                 //Add the comma after all but the last element
                 if(!(r == (Constants::num_controls_u - 1) && c == (Constants::num_states - 1)))
@@ -859,6 +985,36 @@ void Optimizer::write_traj_to_files(std::vector<Eigen::VectorXd> x_traj, std::ve
         }
 
         //Append trajectory
-        K_traj_out << output;
+        Ku_traj_out << output;
+    }
+
+    //Append the most recent K traj to the K trajectory file
+    for(int i = 0; i < u_traj.size(); ++i)
+    {
+        //Reset output
+        output = "";
+
+        //Add data in row major order
+        for(int r = 0; r < Constants::num_controls_u; ++r)
+        {
+            for(int c = 0; c < Constants::num_states; ++c)
+            {
+                //Add the data
+                output += std::to_string(Kv_traj[i](r,c));
+
+                //Add the comma after all but the last element
+                if(!(r == (Constants::num_controls_u - 1) && c == (Constants::num_states - 1)))
+                {
+                    output += ",";
+                }
+                else
+                {
+                    output += "\n";
+                }
+            }
+        }
+
+        //Append trajectory
+        Kv_traj_out << output;
     }
 }

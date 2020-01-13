@@ -157,6 +157,10 @@ std::vector<Eigen::VectorXd> DDP_main_mm::get_u_traj(){
 
     return u_traj;
 }
+std::vector<Eigen::VectorXd> DDP_main_mm::get_v_traj(){
+
+    return v_traj;
+}
 std::vector<Eigen::VectorXd> DDP_main_mm::get_lu(){
 
     return ddp->lu_;
@@ -164,6 +168,9 @@ std::vector<Eigen::VectorXd> DDP_main_mm::get_lu(){
 std::vector<Eigen::MatrixXd> DDP_main_mm::get_Ku(){
 
     return ddp->Ku_;
+}
+std::vector<Eigen::MatrixXd> DDP_main_mm::get_Kv(){
+    return ddp->Kv_;
 }
 
 void DDP_main_mm::print_trajectory(std::vector<Eigen::VectorXd> traj)

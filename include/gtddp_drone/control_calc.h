@@ -80,7 +80,8 @@ class ControlCalculator
         //Store the current trajectory information
         std::deque<Eigen::VectorXd> x_traj;
         std::deque<Eigen::VectorXd> u_traj;
-        std::deque<Eigen::MatrixXd> K_traj;
+        std::deque<Eigen::MatrixXd> Ku_traj;
+        std::deque<Eigen::MatrixXd> Kv_traj;
 
         //Store current state data
         Eigen::VectorXd cur_state;
