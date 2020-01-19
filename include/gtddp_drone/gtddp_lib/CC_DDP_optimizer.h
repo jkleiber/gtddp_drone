@@ -14,10 +14,14 @@ typedef CGAL::Quadratic_program_solution<ET> Solution;
 class CC_DDP_optimizer : public DDP_Optimizer
 {
     private:
+        // du constraint
         std::vector<Eigen::MatrixXd> Qux_;
         std::vector<Eigen::MatrixXd> Quv_;
         std::vector<Eigen::MatrixXd> Qu_;
 
+        // dv constraint
+        std::vector<Eigen::MatrixXd> Qvx_;
+        std::vector<Eigen::MatrixXd> Qv_;
 
     public:
         /**

@@ -36,9 +36,14 @@ CC_DDP_optimizer::CC_DDP_optimizer(Cost_Function c)
     Ku_.resize(num_time_steps);
     Kv_.resize(num_time_steps);
 
+    // du
     Qu_.resize(num_time_steps);
     Qux_.resize(num_time_steps);
     Quv_.resize(num_time_steps);
+
+    // dv
+    Qv_.resize(num_time_steps);
+    Qvx_.resize(num_time_steps);
 
 } // construct a CC_DDP_optimizer for the system passed as a parameter
 
@@ -104,9 +109,14 @@ void CC_DDP_optimizer::backpropagate_mm_rk(const vector<VectorXd>& x_traj,
         Ku_[i]=Kui_;
         Kv_[i]=Kvi_;
 
+        // du
         Qux_[i] = Qux;
         Qu_[i] = Qu;
         Quv_[i] = Quv;
+
+        // dv
+        Qv_[i] = Qv;
+        Qvx_[i] = Qvx;
 
     } //back propagating loop
 }//back_propagate();
@@ -132,77 +142,160 @@ void CC_DDP_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
     Solution sol;
 
     // Quadratic program parameters
-    Eigen::VectorXd b(2*num_controls_u), c;                                                                   // b and c vectors
-    Eigen::VectorXd b1(num_controls_u), b2(num_controls_u);                                 // intermediate b vectors
-    Eigen::VectorXd lower(num_controls_u), upper(num_controls_u);                           // upper and lower bounds
+    Eigen::VectorXd b(2*num_controls_u), c;                           // b and c vectors
+    Eigen::VectorXd b1(num_controls_u), b2(num_controls_u);           // intermediate b vectors
+    Eigen::VectorXd lower_u(num_controls_u), upper_u(num_controls_u); // upper and lower bounds for u
+    Eigen::VectorXd lower_v(num_controls_v), upper_v(num_controls_v); // upper and lower bounds for v
 
+    // Solver convergence
+    bool first_run;
+    Eigen::VectorXd last_du(num_controls_u), last_dv(num_controls_v);
+    double dist_u = 0.0, dist_v = 0.0;
 
     // Set c0 to 0
     qp.set_c0(0);
 
     // Establish boundaries
-    upper << 10, 6, 2, 2;
-    lower << -10, -6, -2, -2;
+    // du
+    upper_u << u0_upper, u1_upper, u2_upper, u3_upper;
+    lower_u << u0_lower, u1_lower, u2_lower, u3_lower;
 
+    // dv
+    upper_v << v0_upper, v1_upper, v2_upper, v3_upper;
+    lower_v << v0_lower, v1_lower, v2_lower, v3_lower;
 
 
     // Update the controls using a QP solver
     for (int i = 0; i < num_time_steps-1; i++) {
         // Find dv
         dv = lv_[i] + Kv_[i] * dx_traj[i];
+        first_run = true;
 
         /**
-         * Control constraint DDP logic
+         * Double Control constraint DDP logic
          */
-        // Calculate boundaries for A*du
-        b1 = lower - u_traj[i];
-        b2 = upper - u_traj[i];
-
-        // Set control boundaries
-        for(int i = 0; i < num_controls_u; ++i)
+        while(first_run || (dist_u >= Constants::du_converge_dist && dist_v >= Constants::dv_converge_dist))
         {
-            qp.set_l(i, true, b1(i));
-            qp.set_u(i, true, b2(i));
-        }
+            //////////////////
+            // du
+            /////////////////
+            // Calculate boundaries for A*du
+            b1 = lower_u - u_traj[i];
+            b2 = upper_u - u_traj[i];
 
-        // Calculate linear objective function for du
-        c = Qux_[i]*dx_traj[i] + Quv_[i]*dv + Qu_[i];
-
-        // Add quadratic and linear objective functions to the program solver
-        // Also add boundaries to the solver
-        for (int i = 0; i < Constants::num_controls_u; ++i)
-        {
-            qp.set_c(i, c(i));
-            //qp.set_b(i, b(i));
-            for (int j = 0; j < Constants::num_controls_u; ++j)
+            // Set control boundaries
+            for(int i = 0; i < num_controls_u; ++i)
             {
-                qp.set_d(i, j, Quu(i, j));
+                qp.set_l(i, true, b1(i));
+                qp.set_u(i, true, b2(i));
             }
-        }
 
-        // solve quadratic program to find lu
-        sol = CGAL::solve_quadratic_program(qp, ET());
+            // Calculate linear objective function for du
+            c = Qux_[i]*dx_traj[i] + Quv_[i]*dv + Qu_[i];
 
-        // Find du after performing the quadratic programming step if the solution is feasible
-        if(sol.solves_quadratic_program(qp) && !sol.is_infeasible())
-        {
-            Solution::Variable_value_iterator it = sol.variable_values_begin();
-            Solution::Variable_value_iterator end = sol.variable_values_end();
-
-            for (int u = 0; it != end; ++it, ++u) {
-                du(u) = CGAL::to_double(*it);
+            // Add quadratic and linear objective functions to the program solver
+            // Also add boundaries to the solver
+            for (int i = 0; i < Constants::num_controls_u; ++i)
+            {
+                qp.set_c(i, c(i));
+                for (int j = 0; j < Constants::num_controls_u; ++j)
+                {
+                    qp.set_d(i, j, Quu(i, j));
+                }
             }
-        }
-        // QP failed, so use normal du
-        else
-        {
-            du = lu_[i] + Ku_[i] * dx_traj[i];
-            std::cout << du << std::endl << std::endl;
+
+            // solve quadratic program to find du
+            sol = CGAL::solve_quadratic_program(qp, ET());
+
+            // Find du after performing the quadratic programming step if the solution is feasible
+            if(sol.solves_quadratic_program(qp) && !sol.is_infeasible())
+            {
+                Solution::Variable_value_iterator it = sol.variable_values_begin();
+                Solution::Variable_value_iterator end = sol.variable_values_end();
+
+                for (int u = 0; it != end; ++it, ++u) {
+                    du(u) = CGAL::to_double(*it);
+                }
+            }
+            // QP failed, so use normal du
+            else
+            {
+                du = lu_[i] + Ku_[i] * dx_traj[i];
+            }
+
+
+            //////////////////
+            // dv
+            /////////////////
+            // Calculate boundaries for A*du
+            b1 = lower_v - v_traj[i];
+            b2 = upper_v - v_traj[i];
+
+            // Set control boundaries
+            for(int i = 0; i < num_controls_u; ++i)
+            {
+                qp.set_l(i, true, b1(i));
+                qp.set_u(i, true, b2(i));
+            }
+
+            // Calculate linear objective function for dv
+            c = -(Qvx_[i]*dx_traj[i] + Quv_[i].transpose()*du + Qv_[i]);
+
+            // Add quadratic and linear objective functions to the program solver
+            // Also add boundaries to the solver
+            for (int i = 0; i < Constants::num_controls_u; ++i)
+            {
+                qp.set_c(i, c(i));
+                for (int j = 0; j < Constants::num_controls_u; ++j)
+                {
+                    qp.set_d(i, j, -Qvv(i, j));
+                }
+            }
+
+            // solve quadratic program to find dv
+            sol = CGAL::solve_quadratic_program(qp, ET());
+
+            // Find du after performing the quadratic programming step if the solution is feasible
+            if(sol.solves_quadratic_program(qp) && !sol.is_infeasible())
+            {
+                Solution::Variable_value_iterator it = sol.variable_values_begin();
+                Solution::Variable_value_iterator end = sol.variable_values_end();
+
+                for (int v = 0; it != end; ++it, ++v) {
+                    dv(v) = CGAL::to_double(*it);
+                }
+            }
+            // QP failed, so use normal du
+            else
+            {
+                dv = lv_[i] + Kv_[i] * dx_traj[i];
+            }
+
+            // Calculate if the quadratic program needs to continue
+            // If it is the first run, continue by setting the distances above the thresholds
+            if (first_run)
+            {
+                first_run = false;
+                dist_u = du_converge_dist + 1.0;
+                dist_v = dv_converge_dist + 1.0;
+                last_du = du;
+                last_dv = dv;
+            }
+            // If this is not the first run, calculate the distances between solutions
+            // If these distances are both small enough, then the answer will be accepted
+            else
+            {
+                dist_u = (du - last_du).dot(du - last_du);
+                dist_v = (dv - last_dv).dot(dv - last_dv);
+                last_du = du;
+                last_dv = dv;
+            }
+
+            //std::cout << du << "\t" << dv << std::endl;
         }
 
         // Update controls
         u_traj[i] = u_traj[i] + learning_rate * du;
         v_traj[i] = v_traj[i] + learning_rate * dv;
     }
-
 }

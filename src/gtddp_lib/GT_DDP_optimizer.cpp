@@ -117,12 +117,11 @@ void GT_DDP_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
     VectorXd du(num_controls_u);
     VectorXd dv(num_controls_v);
 
-
     // Update the controls using a QP solver
-    for (int i = 0; i < num_time_steps-1; i++) {
-        // Find dv
-        dv = lv_[i] + Kv_[i] * dx_traj[i];
+    for (int i = 0; i < num_time_steps-1; i++)
+    {
         du = lu_[i] + Ku_[i] * dx_traj[i];
+        dv = lv_[i] + Kv_[i] * dx_traj[i];
 
         // Update controls
         u_traj[i] = u_traj[i] + learning_rate * du;

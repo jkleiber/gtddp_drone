@@ -26,7 +26,16 @@ namespace Constants {
     int short_iterations(20);
 
     // Control Constraint DDP Hyperparameters
-
+    double du_converge_dist(2.0);
+    double dv_converge_dist(2.0);
+    double u0_upper(20), u0_lower(-20);
+    double u1_upper(20), u1_lower(-20);
+    double u2_upper(20), u2_lower(-20);
+    double u3_upper(20), u3_lower(-20);
+    double v0_upper(20), v0_lower(-20);
+    double v1_upper(20), v1_lower(-20);
+    double v2_upper(20), v2_lower(-20);
+    double v3_upper(20), v3_lower(-20);
 
     // DDP Constant doubles
     // Change as necessary, do not remove
@@ -41,7 +50,6 @@ namespace Constants {
     double Izz(0.0095);
 
     std::string ddp_selector("gtddp");
-
 }
 
 
@@ -81,4 +89,28 @@ ConstantLoader::ConstantLoader(ros::NodeHandle nh)
     Constants::Ixx = nh.param(selector + "/Ixx", 0.0045);
     Constants::Iyy = nh.param(selector + "/Iyy", 0.0051);
     Constants::Izz = nh.param(selector + "/Izz", 0.0095);
+
+    // Update the control constraint hyperparameters
+    Constants::du_converge_dist = nh.param(selector + "/du_converge_dist", 2.0);
+    Constants::dv_converge_dist = nh.param(selector + "/dv_converge_dist", 2.0);
+
+    // Update control constraint limits
+    // du
+    Constants::u0_upper = nh.param(selector + "/u0_upper", 20);
+    Constants::u1_upper = nh.param(selector + "/u1_upper", 20);
+    Constants::u2_upper = nh.param(selector + "/u2_upper", 20);
+    Constants::u3_upper = nh.param(selector + "/u3_upper", 20);
+    Constants::u0_lower = nh.param(selector + "/u0_lower", -20);
+    Constants::u1_lower = nh.param(selector + "/u1_lower", -20);
+    Constants::u2_lower = nh.param(selector + "/u2_lower", -20);
+    Constants::u3_lower = nh.param(selector + "/u3_lower", -20);
+    // dv
+    Constants::v0_upper = nh.param(selector + "/u0_upper", 20);
+    Constants::v1_upper = nh.param(selector + "/u1_upper", 20);
+    Constants::v2_upper = nh.param(selector + "/u2_upper", 20);
+    Constants::v3_upper = nh.param(selector + "/u3_upper", 20);
+    Constants::v0_lower = nh.param(selector + "/u0_lower", -20);
+    Constants::v1_lower = nh.param(selector + "/u1_lower", -20);
+    Constants::v2_lower = nh.param(selector + "/u2_lower", -20);
+    Constants::v3_lower = nh.param(selector + "/u3_lower", -20);
 }
