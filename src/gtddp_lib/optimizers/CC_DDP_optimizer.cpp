@@ -265,9 +265,10 @@ void CC_DDP_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
                     dv(v) = CGAL::to_double(*it);
                 }
             }
-            // QP failed, so use normal du
+            // QP failed, so use normal dv
             else
             {
+                std::cout << "dv ERROR\n";
                 dv = lv_[i] + Kv_[i] * dx_traj[i];
             }
 

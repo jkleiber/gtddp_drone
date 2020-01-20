@@ -105,12 +105,12 @@ ConstantLoader::ConstantLoader(ros::NodeHandle nh)
     Constants::u2_lower = nh.param(selector + "/u2_lower", -20);
     Constants::u3_lower = nh.param(selector + "/u3_lower", -20);
     // dv
-    Constants::v0_upper = nh.param(selector + "/u0_upper", 20);
-    Constants::v1_upper = nh.param(selector + "/u1_upper", 20);
-    Constants::v2_upper = nh.param(selector + "/u2_upper", 20);
-    Constants::v3_upper = nh.param(selector + "/u3_upper", 20);
-    Constants::v0_lower = nh.param(selector + "/u0_lower", -20);
-    Constants::v1_lower = nh.param(selector + "/u1_lower", -20);
-    Constants::v2_lower = nh.param(selector + "/u2_lower", -20);
-    Constants::v3_lower = nh.param(selector + "/u3_lower", -20);
+    Constants::v0_upper = nh.param(selector + "/v0_upper", 20);
+    Constants::v1_upper = nh.param(selector + "/v1_upper", 20);
+    Constants::v2_upper = nh.param(selector + "/v2_upper", 20);
+    Constants::v3_upper = nh.param(selector + "/v3_upper", 20);
+    Constants::v0_lower = nh.param(selector + "/v0_lower", -20);
+    Constants::v1_lower = nh.param(selector + "/v1_lower", -20);
+    Constants::v2_lower = nh.param(selector + "/v2_lower", -20);
+    Constants::v3_lower = nh.param(selector + "/v3_lower", -20);
 }
