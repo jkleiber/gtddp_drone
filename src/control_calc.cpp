@@ -3,7 +3,7 @@
 /**
  *
  */
-ControlCalculator::ControlCalculator() : x_traj(0), u_traj(0), K_traj(0)
+ControlCalculator::ControlCalculator() : x_traj(0), u_traj(0), Ku_traj(0), Kv_traj(0)
 {
     //Initialize current state size
     this->cur_state.resize(Constants::num_states);
@@ -29,7 +29,7 @@ ControlCalculator::ControlCalculator() : x_traj(0), u_traj(0), K_traj(0)
 /**
  *
  */
-ControlCalculator::ControlCalculator(ros::Publisher ctrl_sig_pub, ros::Publisher status_pub, int sim_status) : x_traj(0), u_traj(0), K_traj(0)
+ControlCalculator::ControlCalculator(ros::Publisher ctrl_sig_pub, ros::Publisher status_pub, int sim_status) : x_traj(0), u_traj(0), Ku_traj(0), Kv_traj(0)
 {
     //Control signal to publish to AR Drone
     this->control_signal_pub = ctrl_sig_pub;
@@ -139,7 +139,7 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         {
             //Forward propagate controls to find the correct output based on the starting position
             //This serves to get the drone back on track when it strays due to hover, wind, etc.
-            quadrotor.feedforward_controls(this->cur_state, this->u_traj, this->K_traj, this->x_traj);
+            quadrotor.feedforward_controls(this->cur_state, this->u_traj, this->Ku_traj, this->x_traj);
             ++this->timestep;
         }
         // Increment the timestep and reset if needed
@@ -196,7 +196,8 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         // Pop the front element off the deques
         this->x_traj.pop_front();
         this->u_traj.pop_front();
-        this->K_traj.pop_front();
+        this->Ku_traj.pop_front();
+        this->Kv_traj.pop_front();
 
         ctrl_timer.setPeriod(ros::Duration(0.001));
     }
@@ -382,13 +383,15 @@ void ControlCalculator::trajectory_callback(const gtddp_drone_msgs::Trajectory::
     //Get the components of the message
     const std::vector<gtddp_drone_msgs::state_data> &x_data = traj_msg->x_traj;
     const std::vector<gtddp_drone_msgs::ctrl_data> &u_data = traj_msg->u_traj;
-    const std::vector<gtddp_drone_msgs::gain_data> &K_data = traj_msg->K_traj;
+    const std::vector<gtddp_drone_msgs::gain_data> &Ku_data = traj_msg->Ku_traj;
+    const std::vector<gtddp_drone_msgs::gain_data> &Kv_data = traj_msg->Kv_traj;
 
 
     //Create temporary vectors for the trajectory data
     Eigen::VectorXd x_traj_dat(Constants::num_states);
     Eigen::VectorXd u_traj_dat(Constants::num_controls_u);
-    Eigen::MatrixXd K_traj_dat(Constants::num_controls_u, Constants::num_states);
+    Eigen::MatrixXd Ku_traj_dat(Constants::num_controls_u, Constants::num_states);
+    Eigen::MatrixXd Kv_traj_dat(Constants::num_controls_v, Constants::num_states);
 
     //Parse the message to get the trajectory
     for(t = 0; t < x_data.size(); ++t)
@@ -414,19 +417,34 @@ void ControlCalculator::trajectory_callback(const gtddp_drone_msgs::Trajectory::
         this->u_traj.push_back(u_traj_dat);
     }
 
-    for(t = 0; t < K_data.size(); ++t)
+    for(t = 0; t < Ku_data.size(); ++t)
     {
-        //K_traj
+        //Ku_traj
         //Go through rows and columns of the message
         for(r = 0; r < Constants::num_controls_u; ++r)
         {
             for(c = 0; c < Constants::num_states; ++c)
             {
-                K_traj_dat(r,c) = K_data[t].gain_mat[r].gain_list[c];
+                Ku_traj_dat(r,c) = Ku_data[t].gain_mat[r].gain_list[c];
             }
         }
 
-        this->K_traj.push_back(K_traj_dat);
+        this->Ku_traj.push_back(Ku_traj_dat);
+    }
+
+    for(t = 0; t < Kv_data.size(); ++t)
+    {
+        //Kv_traj
+        //Go through rows and columns of the message
+        for(r = 0; r < Constants::num_controls_v; ++r)
+        {
+            for(c = 0; c < Constants::num_states; ++c)
+            {
+                Kv_traj_dat(r,c) = Kv_data[t].gain_mat[r].gain_list[c];
+            }
+        }
+
+        this->Kv_traj.push_back(Kv_traj_dat);
     }
 
     //The trajectory is now initialized!

@@ -142,9 +142,10 @@ add_library(GTDDP_LIB
   src/gtddp_lib/Cost_Function.cpp
   src/gtddp_lib/DDP_main_mm.cpp
   src/gtddp_lib/DDP_Optimizer.cpp
-  src/gtddp_lib/CC_DDP_optimizer.cpp
-  src/gtddp_lib/GT_DDP_optimizer.cpp
-  src/gtddp_lib/Quadrotor.cpp
+  src/gtddp_lib/optimizers/CC_DDP_optimizer.cpp
+  src/gtddp_lib/optimizers/GT_DDP_optimizer.cpp
+  src/gtddp_lib/systems/PursuitDrones.cpp
+  src/gtddp_lib/systems/Quadrotor.cpp
 )
 
 

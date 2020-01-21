@@ -14,7 +14,7 @@
 using namespace Constants;
 DDP_main_mm::DDP_main_mm()
 {
-    quad = Quadrotor();
+    drone = new Quadrotor();
 
     //  ***** DO NOT EDIT *****
 //  Initialize state and control trajectories, dF_dx, dF_du, dF_dv
@@ -39,7 +39,7 @@ DDP_main_mm::DDP_main_mm()
 DDP_main_mm::DDP_main_mm(Eigen::VectorXd x, Eigen::VectorXd x_t)
 {
 
-    quad = Quadrotor();
+    drone = new Quadrotor();
     cost = Cost_Function(x_t);
 
     // If the DDP is constrained, use the CC_DDP_optimizer
@@ -120,7 +120,7 @@ void DDP_main_mm::ddp_loop()
     for (int i = 0; i < max_iterations; i++)
     {
         // Play the controls on the real dynamics to generate new x_traj, u_traj, v_traj //
-        quad.forward_propagate_mm(x_traj, u_traj, v_traj);
+        drone->forward_propagate_mm(x_traj, u_traj, v_traj);
         //this->print_trajectory(this->get_x_traj());
 
         // Output the cost
@@ -128,7 +128,7 @@ void DDP_main_mm::ddp_loop()
         printf("Quadrotor DDP 0\tIteration %i\tCost = %10.4f\n", i + 1, trajectory_cost_mm[i]);
 
         // Linearize dynamics along x_traj, u_traj, v_traj
-        quad.linearize_dynamics_mm(x_traj, u_traj, v_traj, A, B, C);
+        drone->linearize_dynamics_mm(x_traj, u_traj, v_traj, A, B, C);
 
         // Linearize cost along x_traj, u_traj, v_traj
         ddp->quadratize_cost_mm(x_traj, u_traj, v_traj);
@@ -157,6 +157,10 @@ std::vector<Eigen::VectorXd> DDP_main_mm::get_u_traj(){
 
     return u_traj;
 }
+std::vector<Eigen::VectorXd> DDP_main_mm::get_v_traj(){
+
+    return v_traj;
+}
 std::vector<Eigen::VectorXd> DDP_main_mm::get_lu(){
 
     return ddp->lu_;
@@ -164,6 +168,9 @@ std::vector<Eigen::VectorXd> DDP_main_mm::get_lu(){
 std::vector<Eigen::MatrixXd> DDP_main_mm::get_Ku(){
 
     return ddp->Ku_;
+}
+std::vector<Eigen::MatrixXd> DDP_main_mm::get_Kv(){
+    return ddp->Kv_;
 }
 
 void DDP_main_mm::print_trajectory(std::vector<Eigen::VectorXd> traj)

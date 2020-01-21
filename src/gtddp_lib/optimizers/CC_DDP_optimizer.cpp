@@ -1,4 +1,4 @@
-#include "gtddp_drone/gtddp_lib/CC_DDP_optimizer.h"
+#include "gtddp_drone/gtddp_lib/optimizers/CC_DDP_optimizer.h"
 
 using namespace std;
 using namespace Eigen;
@@ -174,12 +174,12 @@ void CC_DDP_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
         /**
          * Double Control constraint DDP logic
          */
-        while(first_run || (dist_u >= Constants::du_converge_dist && dist_v >= Constants::dv_converge_dist))
+        while(first_run || dist_u >= Constants::du_converge_dist || dist_v >= Constants::dv_converge_dist)
         {
             //////////////////
             // du
             /////////////////
-            // Calculate boundaries for A*du
+            // Calculate boundaries for du
             b1 = lower_u - u_traj[i];
             b2 = upper_u - u_traj[i];
 
@@ -227,12 +227,12 @@ void CC_DDP_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
             //////////////////
             // dv
             /////////////////
-            // Calculate boundaries for A*du
+            // Calculate boundaries for dv
             b1 = lower_v - v_traj[i];
             b2 = upper_v - v_traj[i];
 
             // Set control boundaries
-            for(int i = 0; i < num_controls_u; ++i)
+            for(int i = 0; i < num_controls_v; ++i)
             {
                 qp.set_l(i, true, b1(i));
                 qp.set_u(i, true, b2(i));
@@ -243,10 +243,10 @@ void CC_DDP_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
 
             // Add quadratic and linear objective functions to the program solver
             // Also add boundaries to the solver
-            for (int i = 0; i < Constants::num_controls_u; ++i)
+            for (int i = 0; i < Constants::num_controls_v; ++i)
             {
                 qp.set_c(i, c(i));
-                for (int j = 0; j < Constants::num_controls_u; ++j)
+                for (int j = 0; j < Constants::num_controls_v; ++j)
                 {
                     qp.set_d(i, j, -Qvv(i, j));
                 }
@@ -265,9 +265,10 @@ void CC_DDP_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
                     dv(v) = CGAL::to_double(*it);
                 }
             }
-            // QP failed, so use normal du
+            // QP failed, so use normal dv
             else
             {
+                std::cout << "dv ERROR\n";
                 dv = lv_[i] + Kv_[i] * dx_traj[i];
             }
 

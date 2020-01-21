@@ -1,7 +1,7 @@
 #ifndef CC_DDP_OPTIMIZER_H
 #define CC_DDP_OPTIMIZER_H
 
-#include "DDP_Optimizer.h"
+#include "../DDP_Optimizer.h"
 
 #include <CGAL/QP_models.h>
 #include <CGAL/QP_functions.h>

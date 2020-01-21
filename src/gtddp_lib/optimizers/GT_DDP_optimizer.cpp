@@ -1,4 +1,4 @@
-#include "gtddp_drone/gtddp_lib/GT_DDP_optimizer.h"
+#include "gtddp_drone/gtddp_lib/optimizers/GT_DDP_optimizer.h"
 #include <iostream>
 
 using namespace std;
