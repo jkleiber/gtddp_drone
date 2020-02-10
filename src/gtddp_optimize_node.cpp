@@ -8,7 +8,7 @@
 #include "gtddp_drone/traj_optimizer.h"
 
 //Define program constants
-#define MAX_BUFFER 100
+#define MAX_BUFFER 10
 //#define SIMULATION 1
 
 

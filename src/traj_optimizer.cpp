@@ -730,6 +730,7 @@ void Optimizer::init_optimizer(const std_msgs::Empty::ConstPtr& init_msg)
         double cur_time = (ros::Time::now() - begin_time).toSec();
 
         //Log the initial conditions
+        std::cout << "REAL TIME OPERATION ENABLED\n";
         std::string data_str = std::to_string(cur_time) + "," + std::to_string(cur_state(0)) + "," + std::to_string(cur_state(1)) + "," + std::to_string(cur_state(2)) + "\n";
         this->init_data << data_str;
 

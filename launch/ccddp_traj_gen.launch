@@ -27,14 +27,25 @@
     <arg name="dist_converge_v" value="2"/>
 
     <!-- Constraints for du -->
-    <arg name="u0_upper" value="7"/>
-    <arg name="u1_upper" value="7"/>
-    <arg name="u2_upper" value="2"/>
-    <arg name="u3_upper" value="2"/>
-    <arg name="u0_lower" value="-7"/>
-    <arg name="u1_lower" value="-7"/>
-    <arg name="u2_lower" value="-2"/>
-    <arg name="u3_lower" value="-2"/>
+    <!-- Figure 8 -->
+    <arg name="u0_upper" value="7.5"/>
+    <arg name="u1_upper" value="5"/>
+    <arg name="u2_upper" value="1"/>
+    <arg name="u3_upper" value="1"/>
+    <arg name="u0_lower" value="0"/>
+    <arg name="u1_lower" value="-5"/>
+    <arg name="u2_lower" value="-1"/>
+    <arg name="u3_lower" value="-1"/>
+
+    <!-- Inclined Circle
+    <arg name="u0_upper" value="7.25"/>
+    <arg name="u1_upper" value="4"/>
+    <arg name="u2_upper" value="1"/>
+    <arg name="u3_upper" value="1"/>
+    <arg name="u0_lower" value="0"/>
+    <arg name="u1_lower" value="-4"/>
+    <arg name="u2_lower" value="-1"/>
+    <arg name="u3_lower" value="-1"/> -->
   </include>
 
   <!-- GT-DDP nodes -->

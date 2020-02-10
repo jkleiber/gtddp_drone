@@ -63,8 +63,6 @@ class Optimizer
         void offline_traj_callback(const ros::TimerEvent& time_event);
         void open_loop_traj_callback(const ros::TimerEvent& time_event);
         void state_estimate_callback(const nav_msgs::Odometry::ConstPtr& odom);
-        //TODO: rename the state_estimate_callback below to something else
-        //void state_estimate_callback(const tum_ardrone::filter_state::ConstPtr& estimate_event);
         void status_callback(const gtddp_drone_msgs::Status::ConstPtr& status);
         void init_optimizer(const std_msgs::Empty::ConstPtr& init_msg);
 
