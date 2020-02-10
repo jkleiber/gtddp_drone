@@ -40,9 +40,6 @@ int main(int argc, char **argv)
     //Initialize this node
     ros::NodeHandle traj_node;
 
-    // Update Constants from launch file
-    ConstantLoader loader(traj_node);
-
     const int SIMULATION    = traj_node.param("/gtddp_optimize_node/is_simulation", 0);
     const int GENERATE_TRAJ = traj_node.param("/gtddp_optimize_node/is_gen", 0);
     const int REAL_TIME     = traj_node.param("/gtddp_optimize_node/is_real_time", 0);
@@ -62,6 +59,9 @@ int main(int argc, char **argv)
     {
         sleep(1);
     }
+
+    // Update Constants from launch file
+    ConstantLoader loader(traj_node);
 
     //Set up the trajectory optimizer
     Optimizer traj_optimizer(traj_pub, cur_state_pub, init_pub, target_client, GENERATE_TRAJ, REAL_TIME, OPEN_LOOP);
