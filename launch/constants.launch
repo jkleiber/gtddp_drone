@@ -129,6 +129,30 @@
         <param name="Ixx" value="$(arg Ixx)"/>
         <param name="Iyy" value="$(arg Iyy)"/>
         <param name="Izz" value="$(arg Izz)"/>
+
+        <!-- Convergence Hyperparameters -->
+        <param name="dist_converge_u" value="$(arg dist_converge_u)"/>
+        <param name="dist_converge_v" value="$(arg dist_converge_v)"/>
+
+        <!-- Constraints for du -->
+        <param name="u0_upper" value="$(arg u0_upper)"/>
+        <param name="u1_upper" value="$(arg u1_upper)"/>
+        <param name="u2_upper" value="$(arg u2_upper)"/>
+        <param name="u3_upper" value="$(arg u3_upper)"/>
+        <param name="u0_lower" value="$(arg u0_lower)"/>
+        <param name="u1_lower" value="$(arg u1_lower)"/>
+        <param name="u2_lower" value="$(arg u2_lower)"/>
+        <param name="u3_lower" value="$(arg u3_lower)"/>
+
+        <!-- Constraints for dv -->
+        <param name="v0_upper" value="$(arg v0_upper)"/>
+        <param name="v1_upper" value="$(arg v1_upper)"/>
+        <param name="v2_upper" value="$(arg v2_upper)"/>
+        <param name="v3_upper" value="$(arg v3_upper)"/>
+        <param name="v0_lower" value="$(arg v0_lower)"/>
+        <param name="v1_lower" value="$(arg v1_lower)"/>
+        <param name="v2_lower" value="$(arg v2_lower)"/>
+        <param name="v3_lower" value="$(arg v3_lower)"/>
     </group>
 
 </launch>

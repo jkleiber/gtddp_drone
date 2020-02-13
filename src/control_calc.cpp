@@ -3,7 +3,7 @@
 /**
  *
  */
-ControlCalculator::ControlCalculator() : x_traj(0), u_traj(0), Ku_traj(0), Kv_traj(0)
+ControlCalculator::ControlCalculator() : drone_traj()
 {
     //Initialize current state size
     this->cur_state.resize(Constants::num_states);
@@ -29,7 +29,7 @@ ControlCalculator::ControlCalculator() : x_traj(0), u_traj(0), Ku_traj(0), Kv_tr
 /**
  *
  */
-ControlCalculator::ControlCalculator(ros::Publisher ctrl_sig_pub, ros::Publisher status_pub, int sim_status) : x_traj(0), u_traj(0), Ku_traj(0), Kv_traj(0)
+ControlCalculator::ControlCalculator(ros::Publisher ctrl_sig_pub, ros::Publisher status_pub, int sim_status) : drone_traj()
 {
     //Control signal to publish to AR Drone
     this->control_signal_pub = ctrl_sig_pub;
@@ -132,14 +132,14 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
 
     // Only output to the control topic if the localization has happened and the trajectory has been built
     if(this->cur_state_init && this->traj_init
-    && !this->x_traj.empty())
+    && !this->drone_traj.x_traj.empty())
     {
         // Only predict the next set of timesteps once per interval
-        if(this->timestep == 0 && this->x_traj.size() >= Constants::num_time_steps)
+        if(this->timestep == 0 && this->drone_traj.x_traj.size() >= Constants::num_time_steps)
         {
             //Forward propagate controls to find the correct output based on the starting position
             //This serves to get the drone back on track when it strays due to hover, wind, etc.
-            quadrotor.feedforward_controls(this->cur_state, this->u_traj, this->Ku_traj, this->x_traj);
+            quadrotor.feedforward_controls(this->cur_state, this->drone_traj);
             ++this->timestep;
         }
         // Increment the timestep and reset if needed
@@ -160,7 +160,7 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         // printf("x: {{");
         // for(int i = 0; i < Constants::num_states; ++i)
         // {
-        //     printf("%f ", this->x_traj.front()(i));
+        //     printf("%f ", this->drone_traj.x_traj.front()(i));
         // }
         // printf("}}\n");
 
@@ -169,20 +169,20 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         if(this->is_sim)
         {
             // X velocity (move forward) (x dot)
-            this->ctrl_command.linear.x = this->clamp(this->x_traj.front()(3), -1.0, 1.0);
+            this->ctrl_command.linear.x = this->clamp(this->drone_traj.x_traj.front()(3), -1.0, 1.0);
 
             // Y velocity (move side to side) (y dot)
-            this->ctrl_command.linear.y = this->clamp(this->x_traj.front()(4), -1.0, 1.0);
+            this->ctrl_command.linear.y = this->clamp(this->drone_traj.x_traj.front()(4), -1.0, 1.0);
         }
         // For real life, we implement our own PID controller
         // which clamps the output, so pass in raw values
         else
         {
             // X velocity (move forward) (x dot)
-            this->ctrl_command.linear.x = this->x_traj.front()(3);
+            this->ctrl_command.linear.x = this->drone_traj.x_traj.front()(3);
 
             // Y velocity (move side to side) (y dot)
-            this->ctrl_command.linear.y = this->x_traj.front()(4);
+            this->ctrl_command.linear.y = this->drone_traj.x_traj.front()(4);
         }
 
 
@@ -191,13 +191,13 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         this->ctrl_command.angular.z = 0;
 
         // Vertical speed (how fast to move upward) (z dot)
-        this->ctrl_command.linear.z = this->clamp(this->x_traj.front()(5), -0.6, 0.6);// / MAX_VERTICAL_VEL;
+        this->ctrl_command.linear.z = this->clamp(this->drone_traj.x_traj.front()(5), -0.6, 0.6);// / MAX_VERTICAL_VEL;
 
         // Pop the front element off the deques
-        this->x_traj.pop_front();
-        this->u_traj.pop_front();
-        this->Ku_traj.pop_front();
-        this->Kv_traj.pop_front();
+        this->drone_traj.x_traj.pop_front();
+        this->drone_traj.u_traj.pop_front();
+        this->drone_traj.Ku_traj.pop_front();
+        this->drone_traj.Kv_traj.pop_front();
 
         ctrl_timer.setPeriod(ros::Duration(0.001));
     }
@@ -205,7 +205,7 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
     // Also, do not hover on the first optimization in a simulated environment
     else if((this->cur_state_init && this->traj_init)
          || !this->is_sim
-         || this->x_traj.empty())
+         || this->drone_traj.x_traj.empty())
     {
         //Set the status to idle
         ctrl_status.status = gtddp_drone_msgs::Status::IDLE;
@@ -259,16 +259,16 @@ void ControlCalculator::open_loop_control(const ros::TimerEvent& time_event)
 
     // Only output to the control topic if the localization has happened and the trajectory has been built
     if(this->cur_state_init && this->traj_init
-    && !this->u_traj.empty())
+    && !this->drone_traj.u_traj.empty())
     {
         // Directly use the controls given by the optimizer
-        this->ctrl_command.linear.x = this->u_traj.front()(0);
-        this->ctrl_command.linear.y = this->u_traj.front()(1);
-        this->ctrl_command.linear.z = this->u_traj.front()(2);
-        this->ctrl_command.angular.z = 0;//this->u_traj.front()(3);
+        this->ctrl_command.linear.x = this->drone_traj.u_traj.front()(0);
+        this->ctrl_command.linear.y = this->drone_traj.u_traj.front()(1);
+        this->ctrl_command.linear.z = this->drone_traj.u_traj.front()(2);
+        this->ctrl_command.angular.z = 0;//this->drone_traj.u_traj.front()(3);
 
         // Pop the front element off the deque
-        this->u_traj.pop_front();
+        this->drone_traj.u_traj.pop_front();
 
         // Publish the control signal
         flight_controller.publish_control(this->ctrl_command);
@@ -403,7 +403,7 @@ void ControlCalculator::trajectory_callback(const gtddp_drone_msgs::Trajectory::
         }
 
         //Push the new data into storage
-        this->x_traj.push_back(x_traj_dat);
+        this->drone_traj.x_traj.push_back(x_traj_dat);
     }
 
     for(t = 0; t < u_data.size(); ++t)
@@ -414,7 +414,7 @@ void ControlCalculator::trajectory_callback(const gtddp_drone_msgs::Trajectory::
             u_traj_dat(i) = u_data[t].ctrl[i];
         }
 
-        this->u_traj.push_back(u_traj_dat);
+        this->drone_traj.u_traj.push_back(u_traj_dat);
     }
 
     for(t = 0; t < Ku_data.size(); ++t)
@@ -429,7 +429,7 @@ void ControlCalculator::trajectory_callback(const gtddp_drone_msgs::Trajectory::
             }
         }
 
-        this->Ku_traj.push_back(Ku_traj_dat);
+        this->drone_traj.Ku_traj.push_back(Ku_traj_dat);
     }
 
     for(t = 0; t < Kv_data.size(); ++t)
@@ -444,7 +444,7 @@ void ControlCalculator::trajectory_callback(const gtddp_drone_msgs::Trajectory::
             }
         }
 
-        this->Kv_traj.push_back(Kv_traj_dat);
+        this->drone_traj.Kv_traj.push_back(Kv_traj_dat);
     }
 
     //The trajectory is now initialized!

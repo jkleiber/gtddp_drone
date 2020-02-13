@@ -78,6 +78,14 @@ Optimizer::Optimizer(ros::Publisher& traj_publisher,
     {
         //Set the current state to the origin
         this->cur_state.setZero();
+
+        // If this is pursuit, add the second drone's start position
+        if(!Constants::ddp_selector.compare("pursuit"))
+        {
+            this->cur_state(12) = 1;
+            this->cur_state(13) = 1;
+        }
+
         current_state.states.fill(0.0);
 
         //Initialize the target trajectory generator
@@ -328,6 +336,32 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
     }
 }
 
+
+void Optimizer::pursuit_traj_callback(const ros::TimerEvent& time_event)
+{
+    if(this->generation_mode && this->num_legs < this->max_num_legs)
+    {
+        printf("LEG #%d\n", num_legs);
+
+        //Update the DDP start and goals, then run the DDP loop to optimize the new trajectory
+        ddpmain.update(this->cur_state, this->goal_state);
+
+        //Optimize trajectory
+        ddpmain.ddp_loop();
+
+        //Update the last goal state to be the last state in the generated trajectory
+        this->last_goal_state = ddpmain.get_x_traj().back();
+
+        // Update the current state to be the last state
+        this->cur_state = this->last_goal_state;
+
+        // Save offline trajectory
+        //this->write_traj_to_files(ddpmain.get_x_traj(), ddpmain.get_u_traj(), ddpmain.get_v_traj(), ddpmain.get_Ku(), ddpmain.get_Kv());
+
+        //Increment the leg counter
+        this->num_legs++;
+    }
+}
 
 
 void Optimizer::offline_traj_callback(const ros::TimerEvent& time_event)

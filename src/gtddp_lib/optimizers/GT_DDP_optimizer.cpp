@@ -8,14 +8,13 @@ using namespace Constants;
 
 GT_DDP_optimizer::GT_DDP_optimizer() {}
 
-GT_DDP_optimizer::GT_DDP_optimizer(Cost_Function c)
+GT_DDP_optimizer::GT_DDP_optimizer(Cost_Function* c)
 {
-    cost = c;
-    Ru = c.get_control_cost_u();
-    Rv = c.get_control_cost_v();
-    Q_x = c.get_state_cost();
-    Q_f = c.get_final_cost();
-    x_target = c.get_target_state();
+    Ru = c->get_control_cost_u();
+    Rv = c->get_control_cost_v();
+    Q_x = c->get_state_cost();
+    Q_f = c->get_final_cost();
+    x_target = c->get_target_state();
 
 //  ***** DO NOT EDIT *****
 //  Initialize running cost and derivatives
@@ -41,6 +40,35 @@ GT_DDP_optimizer::GT_DDP_optimizer(Cost_Function c)
 
 GT_DDP_optimizer::~GT_DDP_optimizer() {}
 
+
+
+/**
+    This function quadratizes the cost along the given state and control trajectories: x_traj,u_traj,v_traj.
+    It assigns the cost and its derivatives at time step i (t = dt * i) to the values passed in parameters 4-13
+    in index i.
+
+    @param x_traj - a vector of Eigen::VectorXd's corresponding to the state trajectory
+    @param u_traj - a vector of Eigen::VectorXd's corresponding to the control_u trajectory
+    @param v_traj - a vector of Eigen::VectorXd's corresponding to the control_v trajectory
+
+*/
+void GT_DDP_optimizer::quadratize_cost_mm(const vector<VectorXd>& x_traj, const vector<VectorXd>& u_traj, const vector<VectorXd>& v_traj)
+{
+    for (int i = 0; i < num_time_steps-1; i++) {
+        L_0_[i]= (0.5 * u_traj[i].transpose() * Ru * u_traj[i]
+                - 0.5 * v_traj[i].transpose() * Rv * v_traj[i]
+                + 0.5 * (x_traj[i] - x_target).transpose() * Q_x * (x_traj[i] - x_target))(0,0);
+        L_x_[i]= Q_x * (x_traj[i] - x_target); //VectorXd::Zero(num_states);//
+		L_u_[i]= Ru * u_traj[i];
+		L_v_[i]=-Rv * v_traj[i];
+		L_xx_[i]= Q_x; // MatrixXd::Zero(num_states, num_states);//
+		L_uu_[i]= Ru;
+		L_vv_[i]= - Rv;
+		L_ux_[i]= MatrixXd::Zero(num_controls_u, num_states);
+		L_vx_[i]= MatrixXd::Zero(num_controls_v, num_states);
+		L_uv_[i]= MatrixXd::Zero(num_controls_u, num_controls_v);
+    }
+}
 
 
 

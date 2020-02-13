@@ -11,13 +11,14 @@ class GT_DDP_optimizer : public DDP_Optimizer
             @param c - the cost function this optimizer will use
         */
         GT_DDP_optimizer();
-        GT_DDP_optimizer(Cost_Function c);
+        GT_DDP_optimizer(Cost_Function* c);
         ~GT_DDP_optimizer();
 
         void backpropagate_mm_rk(const std::vector<Eigen::VectorXd>&,
                                  const std::vector<Eigen::MatrixXd>&, const std::vector<Eigen::MatrixXd>&, const std::vector<Eigen::MatrixXd>&);
 
         void update_controls_mm(const std::vector<Eigen::VectorXd>&,std::vector<Eigen::VectorXd>&, std::vector<Eigen::VectorXd>&);
+        void quadratize_cost_mm(const std::vector<Eigen::VectorXd>&, const std::vector<Eigen::VectorXd>&, const std::vector<Eigen::VectorXd>&);
 
 };
 

@@ -97,7 +97,6 @@ ConstantLoader::ConstantLoader(ros::NodeHandle nh)
     // Update control constraint limits
     // du
     Constants::u0_upper = nh.param<double>(selector + "/u0_upper", 20);
-    std::cout << "u0_upper: " << Constants::u0_upper << std::endl;
     Constants::u1_upper = nh.param<double>(selector + "/u1_upper", 20);
     Constants::u2_upper = nh.param<double>(selector + "/u2_upper", 20);
     Constants::u3_upper = nh.param<double>(selector + "/u3_upper", 20);

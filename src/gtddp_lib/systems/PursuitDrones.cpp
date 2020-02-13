@@ -133,32 +133,29 @@ void PursuitDrones::forward_propagate_mm(vector<VectorXd>& x_traj, const vector<
 } //forward_propagate_mm
 
 
-// TODO: figure out how to make this work for pursuit
-void PursuitDrones::feedforward_controls(VectorXd current_state, const deque<VectorXd>& u_traj, const deque<MatrixXd>& K_traj, deque<VectorXd>& x_traj)
+void PursuitDrones::feedforward_controls(VectorXd current_state, DroneTrajectory& drone_traj)
 {
     // initial condition
     VectorXd x = current_state;
-    VectorXd v_zero(4);
-    v_zero << 0, 0, 0, 0;
 
     // Result
-    deque<VectorXd> result = x_traj;
+    deque<VectorXd> new_x = drone_traj.x_traj;
 
     double t=0;
     // main integration loop : propagation over time step
     for (int i = 0; i < Constants::num_time_steps - 1; i++) {
         // update current inputs
-        ui_ = u_traj[i] + K_traj[i] * (x - x_traj[i]);
-        vi_ = v_zero;
+        ui_ = drone_traj.u_traj[i] + drone_traj.Ku_traj[i] * (x - drone_traj.x_traj[i]);
+        vi_ = drone_traj.v_traj[i] + drone_traj.Kv_traj[i] * (x - drone_traj.x_traj[i]);
 
         stepper.do_step(std::bind(&::PursuitDrones::dynamics_mm, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), x, t, dt);
         t += dt;
-        result[i] = x; //save x trajectory
+        new_x[i] = x; //save x trajectory
         t += dt;
     } //for num_time_steps-1
 
     // Set x_traj to the new state
-    x_traj = result;
+    drone_traj.x_traj = new_x;
 
 } //forward_propagate_mm
 
@@ -282,38 +279,38 @@ void PursuitDrones::linearize_dynamics_mm(const vector<VectorXd>& x_traj, const 
         A_sec(16,20)=((u0 + v0)*(cos_phi_v*cos_psi_v*sin_theta_v + sin_phi_v*sin_psi_v))/m;
         A_sec(17,18)=-(((u0 + v0)*cos_theta_v*sin_phi_v)/m);
         A_sec(17,19)=-(((u0 + v0)*cos_phi_v*sin_theta_v)/m);
-        A_sec(18,18)=(x10*cos_phi_v - x11*sin_phi_v)*tan_theta_v;
-        A_sec(18,19)=pow(sec_theta_v,2)*(x11*cos_phi_v + x10*sin_phi_v);
+        A_sec(18,18)=(x22*cos_phi_v - x23*sin_phi_v)*tan_theta_v;
+        A_sec(18,19)=pow(sec_theta_v,2)*(x23*cos_phi_v + x22*sin_phi_v);
         A_sec(18,21)=1;
         A_sec(18,22)=sin_phi_v*tan_theta_v;
         A_sec(18,23)=cos_phi_v*tan_theta_v;
-        A_sec(19,18)=-(x11*cos_phi_v) - x10*sin_phi_v;
+        A_sec(19,18)=-(x23*cos_phi_v) - x22*sin_phi_v;
         A_sec(19,22)=cos_phi_v;
         A_sec(19,23)=-sin_phi_v;
-        A_sec(20,18)=sec_theta_v*(x10*cos_phi_v - x11*sin_phi_v);
-        A_sec(20,19)=sec_theta_v*(x11*cos_phi_v + x10*sin_phi_v)*tan_theta_v;
+        A_sec(20,18)=sec_theta_v*(x22*cos_phi_v - x23*sin_phi_v);
+        A_sec(20,19)=sec_theta_v*(x23*cos_phi_v + x22*sin_phi_v)*tan_theta_v;
         A_sec(20,22)=sec_theta_v*sin_phi_v;
         A_sec(20,23)=cos_phi_v*sec_theta_v;
-        A_sec(21,22)=((Iyy - Izz)*x11)/Ixx;
-        A_sec(21,23)=((Iyy - Izz)*x10)/Ixx;
-        A_sec(22,21)=((-Ixx + Izz)*x11)/Iyy;
-        A_sec(22,23)=((-Ixx + Izz)*x9)/Iyy;
-        A_sec(23,21)=((Ixx - Iyy)*x10)/Izz;
-        A_sec(23,22)=((Ixx - Iyy)*x9)/Izz;
+        A_sec(21,22)=((Iyy - Izz)*x23)/Ixx;
+        A_sec(21,23)=((Iyy - Izz)*x22)/Ixx;
+        A_sec(22,21)=((-Ixx + Izz)*x23)/Iyy;
+        A_sec(22,23)=((-Ixx + Izz)*x21)/Iyy;
+        A_sec(23,21)=((Ixx - Iyy)*x22)/Izz;
+        A_sec(23,22)=((Ixx - Iyy)*x21)/Izz;
 
-        B_sec(15,12)=(cos_phi_v*cos_psi_v*sin_theta_v + sin_phi_v*sin_psi_v)/m;
-        B_sec(16,12)=(-(cos_psi_v*sin_phi_v) + cos_phi_v*sin_theta_v*sin_psi_v)/m;
-        B_sec(17,12)=(cos_phi_v*cos_theta_v)/m;
-        B_sec(21,13)=1/Ixx;
-        B_sec(22,14)=1/Iyy;
-        B_sec(23,15)=1/Izz;
+        B_sec(15,0)=(cos_phi_v*cos_psi_v*sin_theta_v + sin_phi_v*sin_psi_v)/m;
+        B_sec(16,0)=(-(cos_psi_v*sin_phi_v) + cos_phi_v*sin_theta_v*sin_psi_v)/m;
+        B_sec(17,0)=(cos_phi_v*cos_theta_v)/m;
+        B_sec(21,1)=1/Ixx;
+        B_sec(22,2)=1/Iyy;
+        B_sec(23,3)=1/Izz;
 
-        C_sec(15,12)=(cos_phi_v*cos_psi_v*sin_theta_v + sin_phi_v*sin_psi_v)/m;
-        C_sec(16,12)=(-(cos_psi_v*sin_phi_v) + cos_phi_v*sin_theta_v*sin_psi_v)/m;
-        C_sec(17,12)=(cos_phi_v*cos_theta_v)/m;
-        C_sec(21,13)=1/Ixx;
-        C_sec(22,14)=1/Iyy;
-        C_sec(23,15)=1/Izz;
+        C_sec(15,0)=(cos_phi_v*cos_psi_v*sin_theta_v + sin_phi_v*sin_psi_v)/m;
+        C_sec(16,0)=(-(cos_psi_v*sin_phi_v) + cos_phi_v*sin_theta_v*sin_psi_v)/m;
+        C_sec(17,0)=(cos_phi_v*cos_theta_v)/m;
+        C_sec(21,1)=1/Ixx;
+        C_sec(22,2)=1/Iyy;
+        C_sec(23,3)=1/Izz;
 
         // Apply values to A, B, and C
         A[i]=A_sec;

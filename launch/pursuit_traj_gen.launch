@@ -5,7 +5,7 @@
   <arg name="num_legs" value="80"/>
 
   <include file="$(find gtddp_drone)/launch/constants.launch">
-    <arg name="ddp_select" value="ccddp"/>
+    <arg name="ddp_select" value="pursuit"/>
 
     <!-- DDP Hyperparameters -->
     <arg name="num_time_steps" value="501"/>
@@ -16,6 +16,7 @@
     <arg name="learning_rate" value="0.04"/>
 
     <!-- AR.Drone System Parameters -->
+    <arg name="num_states" value="24"/>
     <arg name="mass" value="0.436"/>
     <arg name="length" value="0.19"/>
     <arg name="Ixx" value="0.0045"/>
@@ -31,20 +32,20 @@
     <arg name="u1_upper" value="5"/>
     <arg name="u2_upper" value="1"/>
     <arg name="u3_upper" value="1"/>
-    <arg name="u0_lower" value="0"/>
+    <arg name="u0_lower" value="-7.25"/>
     <arg name="u1_lower" value="-5"/>
     <arg name="u2_lower" value="-1"/>
     <arg name="u3_lower" value="-1"/>
 
     <!-- Constraints for dv -->
-    <arg name="v0_upper" value="0"/>
-    <arg name="v1_upper" value="1"/>
-    <arg name="v2_upper" value="0.5"/>
-    <arg name="v3_upper" value="0.5"/>
-    <arg name="v0_lower" value="-2"/>
-    <arg name="v1_lower" value="-1"/>
-    <arg name="v2_lower" value="-0.5"/>
-    <arg name="v3_lower" value="-0.5"/>
+    <arg name="v0_upper" value="7.25"/>
+    <arg name="v1_upper" value="5"/>
+    <arg name="v2_upper" value="1"/>
+    <arg name="v3_upper" value="1"/>
+    <arg name="v0_lower" value="-7.25"/>
+    <arg name="v1_lower" value="-5"/>
+    <arg name="v2_lower" value="-1"/>
+    <arg name="v3_lower" value="-1"/>
   </include>
 
   <!-- GT-DDP nodes -->
@@ -53,9 +54,9 @@
     <param name="gen_legs" value="$(arg num_legs)"/>
   </node>
 
-  <!-- Target node -->
+  <!-- Target node
   <node name="gtddp_target_node" pkg="gtddp_drone_target_trajectory" type="gtddp_target_node" output="screen">
     <param name="target_dt" value="$(arg target_timestep)"/>
-  </node>
+  </node> -->
 
 </launch>

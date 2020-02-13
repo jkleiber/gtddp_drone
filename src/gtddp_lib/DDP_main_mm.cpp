@@ -14,7 +14,15 @@
 using namespace Constants;
 DDP_main_mm::DDP_main_mm()
 {
-    drone = new Quadrotor();
+    // Choose the system based on the program selector
+    if(!Constants::ddp_selector.compare("pursuit"))
+    {
+        drone = new PursuitDrones();
+    }
+    else
+    {
+        drone = new Quadrotor();
+    }
 
     //  ***** DO NOT EDIT *****
 //  Initialize state and control trajectories, dF_dx, dF_du, dF_dv
@@ -38,14 +46,34 @@ DDP_main_mm::DDP_main_mm()
 
 DDP_main_mm::DDP_main_mm(Eigen::VectorXd x, Eigen::VectorXd x_t)
 {
+    // Choose the system based on the program selector
+    if(!Constants::ddp_selector.compare("pursuit"))
+    {
+        drone = new PursuitDrones();
+    }
+    else
+    {
+        drone = new Quadrotor();
+    }
 
-    drone = new Quadrotor();
-    cost = Cost_Function(x_t);
+    if(!Constants::ddp_selector.compare("pursuit"))
+    {
+        cost = new PursuitCost();
+    }
+    else
+    {
+        cost = new SingleQuadrotorCost(x_t);
+    }
 
     // If the DDP is constrained, use the CC_DDP_optimizer
     if(!Constants::ddp_selector.compare("ccddp"))
     {
         ddp = new CC_DDP_optimizer(cost);
+    }
+    // If this is a pursuit scenario, use the pursuit optimizer
+    else if(!Constants::ddp_selector.compare("pursuit"))
+    {
+        ddp = new Pursuit_optimizer(cost);
     }
     // Otherwise use the default GT_DDP_optimizer
     else
@@ -82,12 +110,23 @@ DDP_main_mm::~DDP_main_mm() {}
 
 void DDP_main_mm::update(Eigen::VectorXd x, Eigen::VectorXd x_t)
 {
-    cost = Cost_Function(x_t);
+    if(!Constants::ddp_selector.compare("pursuit"))
+    {
+        cost = new PursuitCost();
+    }
+    else
+    {
+        cost = new SingleQuadrotorCost(x_t);
+    }
 
     // If the DDP is constrained, use the CC_DDP_optimizer
     if(!Constants::ddp_selector.compare("ccddp"))
     {
         ddp = new CC_DDP_optimizer(cost);
+    }
+    else if(!Constants::ddp_selector.compare("pursuit"))
+    {
+        ddp = new Pursuit_optimizer(cost);
     }
     // Otherwise use the default GT_DDP_optimizer
     else
@@ -124,7 +163,7 @@ void DDP_main_mm::ddp_loop()
         //this->print_trajectory(this->get_x_traj());
 
         // Output the cost
-        trajectory_cost_mm[i] = cost.calculate_cost_mm(x_traj, u_traj, v_traj);
+        trajectory_cost_mm[i] = cost->calculate_cost_mm(x_traj, u_traj, v_traj);
         printf("Quadrotor DDP 0\tIteration %i\tCost = %10.4f\n", i + 1, trajectory_cost_mm[i]);
 
         // Linearize dynamics along x_traj, u_traj, v_traj

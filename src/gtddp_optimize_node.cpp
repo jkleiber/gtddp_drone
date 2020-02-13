@@ -54,14 +54,14 @@ int main(int argc, char **argv)
     //Set up a service client for getting the next target point
     target_client = traj_node.serviceClient<gtddp_drone_msgs::target>(traj_node.resolveName("/gtddp_drone_target_trajectory/target_state"));
 
+    // Update Constants from launch file
+    ConstantLoader loader(traj_node);
+
     //Wait for there to be a subscriber to init before optimizing
-    while(init_pub.getNumSubscribers() == 0 && GENERATE_TRAJ)
+    while(init_pub.getNumSubscribers() == 0 && GENERATE_TRAJ && Constants::ddp_selector.compare("pursuit"))
     {
         sleep(1);
     }
-
-    // Update Constants from launch file
-    ConstantLoader loader(traj_node);
 
     //Set up the trajectory optimizer
     Optimizer traj_optimizer(traj_pub, cur_state_pub, init_pub, target_client, GENERATE_TRAJ, REAL_TIME, OPEN_LOOP);
@@ -112,7 +112,15 @@ int main(int argc, char **argv)
     {
         //Subscribe to nothing because this is a generated trajectory
         //Optimize the trajectory step-by-step using a timer
-        update_timer = traj_node.createTimer(ros::Duration(1.0), &Optimizer::traj_update_callback, &traj_optimizer, false);
+        if(!Constants::ddp_selector.compare("pursuit"))
+        {
+            std::cout << "Pursuit Mode Enabled\n";
+            update_timer = traj_node.createTimer(ros::Duration(1.0), &Optimizer::pursuit_traj_callback, &traj_optimizer, false);
+        }
+        else
+        {
+            update_timer = traj_node.createTimer(ros::Duration(1.0), &Optimizer::traj_update_callback, &traj_optimizer, false);
+        }
     }
 
     //Pump callbacks
