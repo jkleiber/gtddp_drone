@@ -352,6 +352,8 @@ void Optimizer::pursuit_traj_callback(const ros::TimerEvent& time_event)
         //Update the last goal state to be the last state in the generated trajectory
         this->last_goal_state = ddpmain.get_x_traj().back();
 
+        std::cout << this->last_goal_state << std::endl;
+
         // Update the current state to be the last state
         this->cur_state = this->last_goal_state;
 

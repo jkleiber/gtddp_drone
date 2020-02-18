@@ -63,14 +63,14 @@ Pursuit_optimizer::~Pursuit_optimizer() {}
 */
 void Pursuit_optimizer::quadratize_cost_mm(const vector<VectorXd>& x_traj, const vector<VectorXd>& u_traj, const vector<VectorXd>& v_traj)
 {
-    Eigen::VectorXd pursuer, evader;
+    Eigen::VectorXd pursuer(num_states), evader(num_states);
     for (int i = 0; i < num_time_steps-1; i++) {
-        pursuer = x_traj[i].head(num_states / 2);
-        evader = x_traj[i].tail(num_states / 2);
+        pursuer = x_traj[i];
+        evader << x_traj[i].tail(num_states / 2), x_traj[i].head(num_states / 2);
         L_0_[i]= (0.5 * u_traj[i].transpose() * Ru * u_traj[i]
                 - 0.5 * v_traj[i].transpose() * Rv * v_traj[i]
-                + 0.5 * (evader - pursuer).transpose() * Q_x * (evader - pursuer))(0,0);
-        L_x_[i]= Q_x * (evader - pursuer); //VectorXd::Zero(num_states);//
+                + 0.5 * (pursuer - evader).transpose() * Q_x * (pursuer - evader))(0,0);
+        L_x_[i]= Q_x * (pursuer - evader); //VectorXd::Zero(num_states);//
 		L_u_[i]= Ru * u_traj[i];
 		L_v_[i]=-Rv * v_traj[i];
 		L_xx_[i]= Q_x; // MatrixXd::Zero(num_states, num_states);//
@@ -92,17 +92,18 @@ void Pursuit_optimizer::backpropagate_mm_rk(const vector<VectorXd>& x_traj,
 {
     // initial values for ode
     int end = num_time_steps - 1;
-    VectorXd pursuer = x_traj[end].head(num_states / 2);
-    VectorXd evader = x_traj[end].tail(num_states / 2);
-    MatrixXd V_xx_end = Q_x;
-    VectorXd V_x_end = Q_x * (evader - pursuer);
-    double V_end   = 0.5 * ((evader - pursuer).transpose() * Q_x * (evader - pursuer))(0,0);
+    VectorXd pursuer(num_states), evader(num_states);
+    pursuer = x_traj[end];
+    evader << x_traj[end].tail(num_states / 2), x_traj[end].head(num_states / 2);
+    MatrixXd V_xx_end = Q_f;
+    VectorXd V_x_end = Q_f * (pursuer - evader);
+    double V_end   = 0.5 * ((pursuer - evader).transpose() * Q_f * (pursuer - evader))(0,0);
 
     //packaging into V_pkg, with final condition V[end]
     VectorXd V_pkg(1+num_states+num_states*num_states);
     V_pkg(0)=V_end;
     V_pkg.segment(1,num_states) =V_x_end;
-    Map<RowVectorXd> v_xx_vec(V_xx_end.data(), V_xx_end.size());//flatening
+    Map<RowVectorXd> v_xx_vec(V_xx_end.data(), V_xx_end.size());//flattening
     V_pkg.tail(num_states*num_states) = v_xx_vec; // column-wise stacking
 
     //Eigen::VectorXd dV_pkg to std::vector<double> dV_std
@@ -199,12 +200,14 @@ void Pursuit_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
     // Update the controls using a QP solver
     for (int i = 0; i < num_time_steps-1; i++) {
         // Find dv
-        dv = Eigen::VectorXd::Zero(num_controls_v); //lv_[i] + Kv_[i] * dx_traj[i];
+        dv = lv_[i] + Kv_[i] * dx_traj[i];
+        du = lu_[i] + Ku_[i] * dx_traj[i];
         first_run = true;
 
         /**
          * Double Control constraint DDP logic
          */
+        /*
         while(first_run || dist_u >= Constants::du_converge_dist || dist_v >= Constants::dv_converge_dist)
         {
             //////////////////
@@ -223,7 +226,6 @@ void Pursuit_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
 
             // Calculate linear objective function for du
             c = Qux_[i]*dx_traj[i] + Quv_[i]*dv + Qu_[i];
-            std::cout << c << std::endl;
 
             // Add quadratic and linear objective functions to the program solver
             // Also add boundaries to the solver
@@ -254,7 +256,6 @@ void Pursuit_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
             {
                 du = lu_[i] + Ku_[i] * dx_traj[i];
             }
-            std::cout << du << std::endl;
 
             //////////////////
             // dv
@@ -324,10 +325,10 @@ void Pursuit_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
                 last_dv = dv;
             }
 
-            std::cout << du << std::endl << dv << std::endl << dist_u << ", " << dist_v << std::endl;
+            //std::cout << du << std::endl << dv << std::endl << dist_u << ", " << dist_v << std::endl;
 
             //std::cout << du << "\t" << dv << std::endl;
-        }
+        }*/
 
         // Update controls
         u_traj[i] = u_traj[i] + learning_rate * du;
