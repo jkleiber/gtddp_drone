@@ -63,14 +63,14 @@ Pursuit_optimizer::~Pursuit_optimizer() {}
 */
 void Pursuit_optimizer::quadratize_cost_mm(const vector<VectorXd>& x_traj, const vector<VectorXd>& u_traj, const vector<VectorXd>& v_traj)
 {
-    Eigen::VectorXd pursuer(num_states), evader(num_states);
+    Eigen::VectorXd x_target(num_states);
+    x_target << x_traj[num_time_steps - 1].tail(num_states / 2), x_traj[num_time_steps - 1].head(num_states / 2);
+
     for (int i = 0; i < num_time_steps-1; i++) {
-        pursuer = x_traj[i];
-        evader << x_traj[i].tail(num_states / 2), x_traj[i].head(num_states / 2);
         L_0_[i]= (0.5 * u_traj[i].transpose() * Ru * u_traj[i]
                 - 0.5 * v_traj[i].transpose() * Rv * v_traj[i]
-                + 0.5 * (pursuer - evader).transpose() * Q_x * (pursuer - evader))(0,0);
-        L_x_[i]= Q_x * (pursuer - evader); //VectorXd::Zero(num_states);//
+                + 0.5 * (x_traj[i] - x_target).transpose() * Q_x * (x_traj[i] - x_target))(0,0);
+        L_x_[i]= Q_x * (x_traj[i] - x_target); //VectorXd::Zero(num_states);//
 		L_u_[i]= Ru * u_traj[i];
 		L_v_[i]=-Rv * v_traj[i];
 		L_xx_[i]= Q_x; // MatrixXd::Zero(num_states, num_states);//
@@ -92,12 +92,11 @@ void Pursuit_optimizer::backpropagate_mm_rk(const vector<VectorXd>& x_traj,
 {
     // initial values for ode
     int end = num_time_steps - 1;
-    VectorXd pursuer(num_states), evader(num_states);
-    pursuer = x_traj[end];
-    evader << x_traj[end].tail(num_states / 2), x_traj[end].head(num_states / 2);
+    VectorXd x_target(num_states);
+    x_target << x_traj[end].tail(num_states / 2), x_traj[end].head(num_states / 2);
     MatrixXd V_xx_end = Q_f;
-    VectorXd V_x_end = Q_f * (pursuer - evader);
-    double V_end   = 0.5 * ((pursuer - evader).transpose() * Q_f * (pursuer - evader))(0,0);
+    VectorXd V_x_end = Q_f * (x_traj[end] - x_target);
+    double V_end   = 0.5 * ((x_traj[end] - x_target).transpose() * Q_f * (x_traj[end] - x_target))(0,0);
 
     //packaging into V_pkg, with final condition V[end]
     VectorXd V_pkg(1+num_states+num_states*num_states);
@@ -201,13 +200,13 @@ void Pursuit_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
     for (int i = 0; i < num_time_steps-1; i++) {
         // Find dv
         dv = lv_[i] + Kv_[i] * dx_traj[i];
-        du = lu_[i] + Ku_[i] * dx_traj[i];
+        //du = lu_[i] + Ku_[i] * dx_traj[i];
         first_run = true;
 
         /**
          * Double Control constraint DDP logic
          */
-        /*
+
         while(first_run || dist_u >= Constants::du_converge_dist || dist_v >= Constants::dv_converge_dist)
         {
             //////////////////
@@ -328,10 +327,38 @@ void Pursuit_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
             //std::cout << du << std::endl << dv << std::endl << dist_u << ", " << dist_v << std::endl;
 
             //std::cout << du << "\t" << dv << std::endl;
-        }*/
+        }
 
         // Update controls
         u_traj[i] = u_traj[i] + learning_rate * du;
         v_traj[i] = v_traj[i] + learning_rate * dv;
+    }
+}
+
+/**
+ * @brief Initializes the controls to hover for pursuit mode
+ *
+ * @param x_traj
+ * @param u_traj
+ * @param v_traj
+ * @param dx_traj
+ */
+void Pursuit_optimizer::initialize_trajectories(vector<VectorXd>& x_traj, vector<VectorXd>& u_traj, vector<VectorXd>& v_traj, vector<VectorXd>& dx_traj)
+{
+    for (int i = 0; i < num_time_steps; i++) {
+        x_traj[i] = VectorXd::Zero(num_states);
+    }
+
+    for (int i = 0; i < num_time_steps-1; i++) {
+        u_traj[i] = VectorXd::Zero(num_controls_u);
+    }
+
+	for (int i = 0; i < num_time_steps - 1; i++) {
+		v_traj[i] = VectorXd::Zero(num_controls_v);
+        v_traj[i](0) = 6;
+	}
+
+    for (int i = 0; i < num_time_steps-1; i++) {
+        dx_traj[i] = VectorXd::Zero(num_states);
     }
 }

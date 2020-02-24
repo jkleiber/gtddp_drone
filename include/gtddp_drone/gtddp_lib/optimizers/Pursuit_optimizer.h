@@ -37,6 +37,7 @@ class Pursuit_optimizer : public DDP_Optimizer
 
         void update_controls_mm(const std::vector<Eigen::VectorXd>&,std::vector<Eigen::VectorXd>&, std::vector<Eigen::VectorXd>&);
         void quadratize_cost_mm(const std::vector<Eigen::VectorXd>&, const std::vector<Eigen::VectorXd>&, const std::vector<Eigen::VectorXd>&);
+        void initialize_trajectories(std::vector<Eigen::VectorXd>&, std::vector<Eigen::VectorXd>&, std::vector<Eigen::VectorXd>&,std::vector<Eigen::VectorXd>&);
 };
 
 #endif // PURSUIT_OPTIMIZER_H

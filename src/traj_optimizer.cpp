@@ -83,9 +83,10 @@ Optimizer::Optimizer(ros::Publisher& traj_publisher,
         if(!Constants::ddp_selector.compare("pursuit"))
         {
             this->cur_state(12) = 1;
-            this->cur_state(13) = 1;
         }
 
+        // Send the initial conditions (all 0) to the target trajectory node
+        // NOTE: In pursuit mode we don't care about the init pub, so this is fine the way it is
         current_state.states.fill(0.0);
 
         //Initialize the target trajectory generator
@@ -352,13 +353,11 @@ void Optimizer::pursuit_traj_callback(const ros::TimerEvent& time_event)
         //Update the last goal state to be the last state in the generated trajectory
         this->last_goal_state = ddpmain.get_x_traj().back();
 
-        std::cout << this->last_goal_state << std::endl;
-
         // Update the current state to be the last state
         this->cur_state = this->last_goal_state;
 
         // Save offline trajectory
-        //this->write_traj_to_files(ddpmain.get_x_traj(), ddpmain.get_u_traj(), ddpmain.get_v_traj(), ddpmain.get_Ku(), ddpmain.get_Kv());
+        this->write_traj_to_files(ddpmain.get_x_traj(), ddpmain.get_u_traj(), ddpmain.get_v_traj(), ddpmain.get_Ku(), ddpmain.get_Kv());
 
         //Increment the leg counter
         this->num_legs++;
@@ -1054,4 +1053,6 @@ void Optimizer::write_traj_to_files(std::vector<Eigen::VectorXd> x_traj,
         //Append trajectory
         Kv_traj_out << output;
     }
+
+    std::cout << "Trajectory files written\n";
 }

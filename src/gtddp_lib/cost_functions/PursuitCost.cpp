@@ -9,14 +9,21 @@ PursuitCost::~PursuitCost() {}
 void PursuitCost::initialize_cost_matrix()
 {
     Ru = 0.5 * Eigen::MatrixXd::Identity(Constants::num_controls_u, Constants::num_controls_u);
-    Rv = 1.5 * Eigen::MatrixXd::Identity(Constants::num_controls_v, Constants::num_controls_v);
-    Q_f = Eigen::MatrixXd::Zero(Constants::num_states, Constants::num_states);
-    Q_x = Eigen::MatrixXd::Zero(Constants::num_states, Constants::num_states);
+    Rv = 1.825 * Eigen::MatrixXd::Identity(Constants::num_controls_v, Constants::num_controls_v);
+    Q_f = 10 * Eigen::MatrixXd::Identity(Constants::num_states, Constants::num_states);
+    Q_x = Eigen::MatrixXd::Identity(Constants::num_states, Constants::num_states);
+    x_target = Eigen::VectorXd(Constants::num_states);
+    x_target(0) = 1;
 
-    // Evader coordiantes
+    // Cost to pursuer
     Q_f(0,0) = 100000; //x
     Q_f(1,1) = 100000; //y
     Q_f(2,2) = 100000; //z
+
+    // Cost to evader
+    Q_f(12, 12) = Q_f(0,0);
+    Q_f(13, 13) = Q_f(1,1);
+    Q_f(14, 14) = Q_f(2,2);
 
     Q_x = 0.0001 * Q_f;
 }

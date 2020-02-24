@@ -111,7 +111,7 @@ void DDP_Optimizer::forward_propagate_mm_rk(vector<VectorXd>& dx_traj,
     This function initializes the state and control trajectories (the parameters) to
     vectors of zero VectorXd's
 */
-void DDP_Optimizer::initialize_trajectories_to_zero_mm(vector<VectorXd>& x_traj, vector<VectorXd>& u_traj, vector<VectorXd>& v_traj, vector<VectorXd>& dx_traj)
+void DDP_Optimizer::initialize_trajectories(vector<VectorXd>& x_traj, vector<VectorXd>& u_traj, vector<VectorXd>& v_traj, vector<VectorXd>& dx_traj)
 {
     for (int i = 0; i < num_time_steps; i++) {
         x_traj[i] = VectorXd::Zero(num_states);

@@ -37,7 +37,7 @@ DDP_main_mm::DDP_main_mm()
 
     trajectory_cost_mm.resize(num_iterations);
 
-    ddp->initialize_trajectories_to_zero_mm(x_traj, u_traj, v_traj, dx_traj);
+    ddp->initialize_trajectories(x_traj, u_traj, v_traj, dx_traj);
 
     //Set the initial max iterations to the high value and initialize the leg counter
     this->max_iterations = Constants::num_iterations;
@@ -96,7 +96,7 @@ DDP_main_mm::DDP_main_mm(Eigen::VectorXd x, Eigen::VectorXd x_t)
 
     trajectory_cost_mm.resize(num_iterations);
 
-    ddp->initialize_trajectories_to_zero_mm(x_traj, u_traj, v_traj, dx_traj);
+    ddp->initialize_trajectories(x_traj, u_traj, v_traj, dx_traj);
     x_traj[0]=x;
 
     //Set the initial max iterations to the high value and initialize the leg counter

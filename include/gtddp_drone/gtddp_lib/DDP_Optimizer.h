@@ -14,7 +14,7 @@ class DDP_Optimizer
         void value_dynamics_mm(const std::vector<double>& V_pkg , std::vector<double>& dV_pkg, double);
         void forward_propagate_mm_rk(std::vector<Eigen::VectorXd>&,
                                const std::vector<Eigen::MatrixXd>&, const std::vector<Eigen::MatrixXd>&, const std::vector<Eigen::MatrixXd>&);
-        void initialize_trajectories_to_zero_mm(std::vector<Eigen::VectorXd>&, std::vector<Eigen::VectorXd>&, std::vector<Eigen::VectorXd>&,std::vector<Eigen::VectorXd>&);
+        void initialize_trajectories(std::vector<Eigen::VectorXd>&, std::vector<Eigen::VectorXd>&, std::vector<Eigen::VectorXd>&,std::vector<Eigen::VectorXd>&);
 
 
         virtual void update_controls_mm(const std::vector<Eigen::VectorXd>&,std::vector<Eigen::VectorXd>&, std::vector<Eigen::VectorXd>&) = 0;

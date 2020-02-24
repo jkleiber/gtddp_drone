@@ -77,29 +77,29 @@ void PursuitDrones::dynamics_mm(const Eigen::VectorXd& x, Eigen::VectorXd& dxdt,
     dx(0)=x(3);
     dx(1)=x(4);
     dx(2)=x(5);
-    dx(3)=((u0 + v0)*(cos_phi_u*cos_psi_u*sin_theta_u + sin_phi_u*sin_psi_u))/m;
-    dx(4)=((u0 + v0)*(-(cos_psi_u*sin_phi_u) + cos_phi_u*sin_theta_u*sin_psi_u))/m;
-    dx(5)= -grav + ((u0 + v0)*cos_phi_u*cos_theta_u)/m;
+    dx(3)=((u0)*(cos_phi_u*cos_psi_u*sin_theta_u + sin_phi_u*sin_psi_u))/m;
+    dx(4)=((u0)*(-(cos_psi_u*sin_phi_u) + cos_phi_u*sin_theta_u*sin_psi_u))/m;
+    dx(5)= -grav + ((u0)*cos_phi_u*cos_theta_u)/m;
     dx(6)=x9 + x11*cos_phi_u*tan_theta_u + x10*sin_phi_u*tan_theta_u;
     dx(7)=x10*cos_phi_u - x11*sin_phi_u;
     dx(8)=x11*cos_phi_u*sec_theta_u + x10*sec_theta_u*sin_phi_u;
-    dx(9)=(u1 + v1 + Iyy*x10*x11 - Izz*x10*x11)/Ixx;
-    dx(10)=(u2 + v2 - Ixx*x11*x9 + Izz*x11*x9)/Iyy;
-    dx(11)=(u3 + v3 + Ixx*x10*x9 - Iyy*x10*x9)/Izz;
+    dx(9)=(u1 + Iyy*x10*x11 - Izz*x10*x11)/Ixx;
+    dx(10)=(u2 - Ixx*x11*x9 + Izz*x11*x9)/Iyy;
+    dx(11)=(u3 + Ixx*x10*x9 - Iyy*x10*x9)/Izz;
 
     // Drone 2 (v)
     dx(12)=x(15);
     dx(13)=x(16);
     dx(14)=x(17);
-    dx(15)=((u0 + v0)*(cos_phi_v*cos_psi_v*sin_theta_v + sin_phi_v*sin_psi_v))/m;
-    dx(16)=((u0 + v0)*(-(cos_psi_v*sin_phi_v) + cos_phi_v*sin_theta_v*sin_psi_v))/m;
-    dx(17)= -grav + ((u0 + v0)*cos_phi_v*cos_theta_v)/m;
+    dx(15)=((v0)*(cos_phi_v*cos_psi_v*sin_theta_v + sin_phi_v*sin_psi_v))/m;
+    dx(16)=((v0)*(-(cos_psi_v*sin_phi_v) + cos_phi_v*sin_theta_v*sin_psi_v))/m;
+    dx(17)= -grav + ((v0)*cos_phi_v*cos_theta_v)/m;
     dx(18)=x21 + x23*cos_phi_v*tan_theta_v + x22*sin_phi_v*tan_theta_v;
     dx(19)=x22*cos_phi_v - x23*sin_phi_v;
     dx(20)=x23*cos_phi_v*sec_theta_v + x22*sec_theta_v*sin_phi_v;
-    dx(21)=(u1 + v1 + Iyy*x22*x23 - Izz*x22*x23)/Ixx;
-    dx(22)=(u2 + v2 - Ixx*x23*x21 + Izz*x23*x21)/Iyy;
-    dx(23)=(u3 + v3 + Ixx*x22*x21 - Iyy*x22*x21)/Izz;
+    dx(21)=(v1 + Iyy*x22*x23 - Izz*x22*x23)/Ixx;
+    dx(22)=(v2 - Ixx*x23*x21 + Izz*x23*x21)/Iyy;
+    dx(23)=(v3 + Ixx*x22*x21 - Iyy*x22*x21)/Izz;
 
     dxdt=dx;
 
@@ -120,8 +120,8 @@ void PursuitDrones::forward_propagate_mm(vector<VectorXd>& x_traj, const vector<
     // main integration loop : propagation over time step
     for (int i = 0; i < num_time_steps-1; i++) {
        //update current inputs
-        ui_=u_traj[i];
-        vi_=v_traj[i];
+        ui_ = u_traj[i];
+        vi_ = v_traj[i];
 
         using namespace std::placeholders;
         stepper.do_step(std::bind(&::PursuitDrones::dynamics_mm, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), x, t, dt);
