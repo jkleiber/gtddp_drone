@@ -191,7 +191,7 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         this->ctrl_command.angular.z = 0;
 
         // Vertical speed (how fast to move upward) (z dot)
-        this->ctrl_command.linear.z = this->clamp(this->drone_traj.x_traj.front()(5), -0.6, 0.6);// / MAX_VERTICAL_VEL;
+        this->ctrl_command.linear.z = this->clamp(this->drone_traj.x_traj.front()(5), -1.0, 1.0);// / MAX_VERTICAL_VEL;
 
         // Pop the front element off the deques
         this->drone_traj.x_traj.pop_front();

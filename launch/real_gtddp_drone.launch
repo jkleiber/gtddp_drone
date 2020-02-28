@@ -26,7 +26,7 @@
   <!-- AR.Drone Driver -->
   <include file="$(find ardrone_autonomy)/launch/ardrone.launch">
     <!-- Change the ip argument to configure the IP address of the AR.Drone to connect to -->
-    <arg name="ip" value="192.168.1.11"/>
+    <arg name="ip" value="192.168.1.12"/>
   </include>
 
   <!-- VICON -->
