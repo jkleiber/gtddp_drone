@@ -257,14 +257,14 @@ void PursuitDrones::linearize_dynamics_mm(const vector<VectorXd>& x_traj, const 
         B_sec(9,1)=1/Ixx;
         B_sec(10,2)=1/Iyy;
         B_sec(11,3)=1/Izz;
-
+/*
         C_sec(3,0)=(cos_phi_u*cos_psi_u*sin_theta_u + sin_phi_u*sin_psi_u)/m;
         C_sec(4,0)=(-(cos_psi_u*sin_phi_u) + cos_phi_u*sin_theta_u*sin_psi_u)/m;
         C_sec(5,0)=(cos_phi_u*cos_theta_u)/m;
         C_sec(9,1)=1/Ixx;
         C_sec(10,2)=1/Iyy;
         C_sec(11,3)=1/Izz;
-
+*/
 
 
         // Drone 2 (v)
@@ -297,14 +297,14 @@ void PursuitDrones::linearize_dynamics_mm(const vector<VectorXd>& x_traj, const 
         A_sec(22,23)=((-Ixx + Izz)*x21)/Iyy;
         A_sec(23,21)=((Ixx - Iyy)*x22)/Izz;
         A_sec(23,22)=((Ixx - Iyy)*x21)/Izz;
-
+/*
         B_sec(15,0)=(cos_phi_v*cos_psi_v*sin_theta_v + sin_phi_v*sin_psi_v)/m;
         B_sec(16,0)=(-(cos_psi_v*sin_phi_v) + cos_phi_v*sin_theta_v*sin_psi_v)/m;
         B_sec(17,0)=(cos_phi_v*cos_theta_v)/m;
         B_sec(21,1)=1/Ixx;
         B_sec(22,2)=1/Iyy;
         B_sec(23,3)=1/Izz;
-
+*/
         C_sec(15,0)=(cos_phi_v*cos_psi_v*sin_theta_v + sin_phi_v*sin_psi_v)/m;
         C_sec(16,0)=(-(cos_psi_v*sin_phi_v) + cos_phi_v*sin_theta_v*sin_psi_v)/m;
         C_sec(17,0)=(cos_phi_v*cos_theta_v)/m;

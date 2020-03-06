@@ -8,22 +8,23 @@ PursuitCost::~PursuitCost() {}
 
 void PursuitCost::initialize_cost_matrix()
 {
-    Ru = 0.75 * Eigen::MatrixXd::Identity(Constants::num_controls_u, Constants::num_controls_u);
-    Rv = 3.5 * Eigen::MatrixXd::Identity(Constants::num_controls_v, Constants::num_controls_v);
-    Q_f = 10 * Eigen::MatrixXd::Identity(Constants::num_states, Constants::num_states);
-    Q_x = Eigen::MatrixXd::Identity(Constants::num_states, Constants::num_states);
-    x_target = Eigen::VectorXd(Constants::num_states);
-    x_target(0) = 1;
+    Ru = 0.5 * Eigen::MatrixXd::Identity(Constants::num_controls_u, Constants::num_controls_u);
+    Rv = 2.5 * Eigen::MatrixXd::Identity(Constants::num_controls_v, Constants::num_controls_v);
+    Q_f = Eigen::MatrixXd::Zero(Constants::num_states, Constants::num_states);
+    Q_x = Eigen::MatrixXd::Zero(Constants::num_states, Constants::num_states);
 
-    // Cost to pursuer
-    Q_f(0,0) = 100000; //x
-    Q_f(1,1) = 100000; //y
-    Q_f(2,2) = 100000; //z
+    // Intermediate Q and L matrices for solving for Q_f and Q_x
+    Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(Constants::num_states / 2, Constants::num_states / 2);
+    Eigen::MatrixXd L = Eigen::MatrixXd::Zero(Constants::num_states / 2, Constants::num_states);
+    L << Eigen::MatrixXd::Identity(Constants::num_states / 2, Constants::num_states / 2), (-1) * Eigen::MatrixXd::Identity(Constants::num_states / 2, Constants::num_states / 2);
 
-    // Cost to evader
-    Q_f(12, 12) = 0;//Q_f(0,0);
-    Q_f(13, 13) = 0;//Q_f(1,1);
-    Q_f(14, 14) = 0;//Q_f(2,2);
+    // Positional cost
+    Q(0,0) = 100000; //x
+    Q(1,1) = 100000; //y
+    Q(2,2) = 100000; //z
+
+    // Translate to Q_f
+    Q_f = L.transpose() * Q * L;
 
     Q_x = 0.0001 * Q_f;
 }
@@ -31,13 +32,10 @@ void PursuitCost::initialize_cost_matrix()
 double PursuitCost::calculate_cost_mm(const std::vector<Eigen::VectorXd>& x_traj, const std::vector<Eigen::VectorXd>& u_traj, const std::vector<Eigen::VectorXd>& v_traj)
 {
 	double total_cost = 0;
-    Eigen::VectorXd pursuer(Constants::num_states), evader(Constants::num_states);
 
 	for (int i = 0; i < Constants::num_time_steps - 1; i++) {
         // Running State Cost
-        pursuer = x_traj[i];
-        evader << x_traj[i].tail(Constants::num_states / 2), x_traj[i].head(Constants::num_states / 2);
-		total_cost += 0.5 * ((pursuer - evader).transpose() * Q_x * (pursuer - evader))(0, 0) * Constants::dt;
+		total_cost += 0.5 * (x_traj[i].transpose() * Q_x * x_traj[i])(0, 0) * Constants::dt;
 
         // Running control cost for pursuer
         total_cost += 0.5 * (u_traj[i].transpose() * Ru * u_traj[i])(0, 0) * Constants::dt;
@@ -47,9 +45,7 @@ double PursuitCost::calculate_cost_mm(const std::vector<Eigen::VectorXd>& x_traj
 	}
 
     // Terminal Cost
-    pursuer = x_traj[Constants::num_time_steps - 1];
-    evader << x_traj[Constants::num_time_steps - 1].tail(Constants::num_states / 2), x_traj[Constants::num_time_steps - 1].head(Constants::num_states / 2);
-	total_cost += ((pursuer - evader).transpose() * Q_f * (pursuer - evader))(0, 0);
+	total_cost += (x_traj[Constants::num_time_steps - 1].transpose() * Q_f * x_traj[Constants::num_time_steps - 1])(0, 0);
 
 	return total_cost;
 }

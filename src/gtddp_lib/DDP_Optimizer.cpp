@@ -21,8 +21,9 @@ void DDP_Optimizer::value_dynamics_mm(const std::vector<double>& V_std , std::ve
     for(int j=0;j<num_states;j++) {
         V_xx.col(j)=V_pkg.segment(num_states*(j+1)+1,num_states);
     }
+
     //
-    Qx= Ai_.transpose() * V_x+ L_xi_;              //(num_states);
+    Qx= Ai_.transpose() * V_x + L_xi_;             //(num_states);
     Qu= Bi_.transpose() * V_x + L_ui_;             //(num_controls_u);
     Qv= Ci_.transpose() * V_x + L_vi_;             //(num_controls_v);
     Qxx= L_xxi_ + 2 * V_xx * Ai_;                  //(num_states, num_states);
@@ -98,7 +99,7 @@ void DDP_Optimizer::forward_propagate_mm_rk(vector<VectorXd>& dx_traj,
     for (int i = 0; i < (num_time_steps - 1); i++)
     {
         //update dx
-        dx_update_mm dum(A[i], B[i] ,C[i], lu_[i],lv_[i], Ku_[i], Kv_[i]);
+        dx_update_mm dum(A[i], B[i] ,C[i], lu_[i], lv_[i], Ku_[i], Kv_[i]);
         stepper.do_step(dum, dx, t, dt);
         dx_traj[i+1]=dx;
         t+=-dt;

@@ -63,14 +63,11 @@ Pursuit_optimizer::~Pursuit_optimizer() {}
 */
 void Pursuit_optimizer::quadratize_cost_mm(const vector<VectorXd>& x_traj, const vector<VectorXd>& u_traj, const vector<VectorXd>& v_traj)
 {
-    Eigen::VectorXd x_target(num_states);
-    x_target << x_traj[num_time_steps - 1].tail(num_states / 2), x_traj[num_time_steps - 1].tail(num_states / 2);
-
     for (int i = 0; i < num_time_steps-1; i++) {
         L_0_[i]= (0.5 * u_traj[i].transpose() * Ru * u_traj[i]
                 - 0.5 * v_traj[i].transpose() * Rv * v_traj[i]
-                + 0.5 * (x_traj[i] - x_target).transpose() * Q_x * (x_traj[i] - x_target))(0,0);
-        L_x_[i]= Q_x * (x_traj[i] - x_target); //VectorXd::Zero(num_states);//
+                + 0.5 * (x_traj[i].transpose() * Q_x * x_traj[i]))(0,0);
+        L_x_[i]= Q_x * x_traj[i]; //VectorXd::Zero(num_states);//
 		L_u_[i]= Ru * u_traj[i];
 		L_v_[i]=-Rv * v_traj[i];
 		L_xx_[i]= Q_x; // MatrixXd::Zero(num_states, num_states);//
@@ -92,11 +89,9 @@ void Pursuit_optimizer::backpropagate_mm_rk(const vector<VectorXd>& x_traj,
 {
     // initial values for ode
     int end = num_time_steps - 1;
-    VectorXd x_target(num_states);
-    x_target << x_traj[end].tail(num_states / 2), x_traj[end].tail(num_states / 2);
     MatrixXd V_xx_end = Q_f;
-    VectorXd V_x_end = Q_f * (x_traj[end] - x_target);
-    double V_end   = 0.5 * ((x_traj[end] - x_target).transpose() * Q_f * (x_traj[end] - x_target))(0,0);
+    VectorXd V_x_end = Q_f * x_traj[end];
+    double V_end   = 0.5 * (x_traj[end].transpose() * Q_f * x_traj[end])(0,0);
 
     //packaging into V_pkg, with final condition V[end]
     VectorXd V_pkg(1+num_states+num_states*num_states);
@@ -195,7 +190,6 @@ void Pursuit_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
     upper_v << v0_upper, v1_upper, v2_upper, v3_upper;
     lower_v << v0_lower, v1_lower, v2_lower, v3_lower;
 
-
     // Update the controls using a QP solver
     for (int i = 0; i < num_time_steps-1; i++) {
         // Find dv
@@ -205,7 +199,8 @@ void Pursuit_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
 
         /**
          * Double Control constraint DDP logic
-         *//*
+         */
+        /*
         while(first_run || dist_u >= Constants::du_converge_dist || dist_v >= Constants::dv_converge_dist)
         {
             //////////////////
@@ -342,6 +337,7 @@ void Pursuit_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
  * @param v_traj
  * @param dx_traj
  */
+//TODO: this doesn't do anything because the parent class's function isn't virtual
 void Pursuit_optimizer::initialize_trajectories(vector<VectorXd>& x_traj, vector<VectorXd>& u_traj, vector<VectorXd>& v_traj, vector<VectorXd>& dx_traj)
 {
     for (int i = 0; i < num_time_steps; i++) {
@@ -349,12 +345,11 @@ void Pursuit_optimizer::initialize_trajectories(vector<VectorXd>& x_traj, vector
     }
 
     for (int i = 0; i < num_time_steps-1; i++) {
-        u_traj[i] = VectorXd::Zero(num_controls_u);
+        u_traj[i] = VectorXd::Ones(num_controls_u);
     }
 
 	for (int i = 0; i < num_time_steps - 1; i++) {
-		v_traj[i] = VectorXd::Zero(num_controls_v);
-        //v_traj[i](0) = 6;
+		v_traj[i] = VectorXd::Ones(num_controls_v);
 	}
 
     for (int i = 0; i < num_time_steps-1; i++) {

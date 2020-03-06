@@ -54,9 +54,5 @@
     <param name="gen_legs" value="$(arg num_legs)"/>
   </node>
 
-  <!-- Target node
-  <node name="gtddp_target_node" pkg="gtddp_drone_target_trajectory" type="gtddp_target_node" output="screen">
-    <param name="target_dt" value="$(arg target_timestep)"/>
-  </node> -->
 
 </launch>
