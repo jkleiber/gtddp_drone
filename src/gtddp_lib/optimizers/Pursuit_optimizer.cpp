@@ -91,6 +91,7 @@ void Pursuit_optimizer::backpropagate_mm_rk(const vector<VectorXd>& x_traj,
     int end = num_time_steps - 1;
     MatrixXd V_xx_end = Q_f;
     VectorXd V_x_end = Q_f * x_traj[end];
+    std::cout << "Vx: " << V_x_end.transpose() << std::endl << std::endl;
     double V_end   = 0.5 * (x_traj[end].transpose() * Q_f * x_traj[end])(0,0);
 
     //packaging into V_pkg, with final condition V[end]
@@ -144,7 +145,19 @@ void Pursuit_optimizer::backpropagate_mm_rk(const vector<VectorXd>& x_traj,
         Qv_[i] = Qv;
         Qvx_[i] = Qvx;
 
+        // TODO: remove
+        /*
+        if(i == 0)
+        {
+            std::cout << "Lu: " << L_ui_ << std::endl;
+            std::cout << "B: " << Bi_ << std::endl;
+            std::cout << "estimated Qu\n" << Bi_.transpose() * V_x_end + L_ui_<< std::endl;
+            std::cout << "Qu\n" << Qu <<std::endl;
+        }*/
+
     } //back propagating loop
+
+    std::cout << "Qu: " << Qu_[0] << std::endl << std::endl;
 }//back_propagate();
 
 

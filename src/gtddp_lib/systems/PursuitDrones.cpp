@@ -129,7 +129,6 @@ void PursuitDrones::forward_propagate_mm(vector<VectorXd>& x_traj, const vector<
         x_traj[i+1] = x; //save x trajectory
         t += dt;
     } //for num_time_steps-1
-
 } //forward_propagate_mm
 
 

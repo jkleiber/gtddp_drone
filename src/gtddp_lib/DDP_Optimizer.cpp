@@ -120,10 +120,12 @@ void DDP_Optimizer::initialize_trajectories(vector<VectorXd>& x_traj, vector<Vec
 
     for (int i = 0; i < num_time_steps-1; i++) {
         u_traj[i] = VectorXd::Zero(num_controls_u);
+        u_traj[i](0) = 6;
     }
 
 	for (int i = 0; i < num_time_steps - 1; i++) {
 		v_traj[i] = VectorXd::Zero(num_controls_v);
+        v_traj[i](0) = 6;
 	}
 
     for (int i = 0; i < num_time_steps-1; i++) {

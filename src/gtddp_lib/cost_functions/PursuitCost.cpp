@@ -8,7 +8,7 @@ PursuitCost::~PursuitCost() {}
 
 void PursuitCost::initialize_cost_matrix()
 {
-    Ru = 0.5 * Eigen::MatrixXd::Identity(Constants::num_controls_u, Constants::num_controls_u);
+    Ru = 0.005 * Eigen::MatrixXd::Identity(Constants::num_controls_u, Constants::num_controls_u);
     Rv = 2.5 * Eigen::MatrixXd::Identity(Constants::num_controls_v, Constants::num_controls_v);
     Q_f = Eigen::MatrixXd::Zero(Constants::num_states, Constants::num_states);
     Q_x = Eigen::MatrixXd::Zero(Constants::num_states, Constants::num_states);
@@ -23,10 +23,14 @@ void PursuitCost::initialize_cost_matrix()
     Q(1,1) = 100000; //y
     Q(2,2) = 100000; //z
 
-    // Translate to Q_f
-    Q_f = L.transpose() * Q * L;
+    Q(3,3) = 100000; //x
+    Q(4,4) = 100000; //y
+    Q(5,5) = 100000; //z*
 
-    Q_x = 0.0001 * Q_f;
+    // Translate to Q_f
+    Q_f = 0.01 * (L.transpose() * Q * L);
+
+    Q_x = 0.01 * Q_f;
 }
 
 double PursuitCost::calculate_cost_mm(const std::vector<Eigen::VectorXd>& x_traj, const std::vector<Eigen::VectorXd>& u_traj, const std::vector<Eigen::VectorXd>& v_traj)

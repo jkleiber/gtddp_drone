@@ -9,9 +9,9 @@
 
     <!-- DDP Hyperparameters -->
     <arg name="num_time_steps" value="1001"/>
-    <arg name="num_iterations" value="50"/>
+    <arg name="num_iterations" value="2"/>
     <arg name="num_long_legs" value="5"/>
-    <arg name="short_iterations" value="20"/>
+    <arg name="short_iterations" value="2"/>
     <arg name="dt" value="0.001"/>
     <arg name="learning_rate" value="0.04"/>
 

@@ -162,24 +162,38 @@ void DDP_main_mm::ddp_loop()
         drone->forward_propagate_mm(x_traj, u_traj, v_traj);
         //this->print_trajectory(this->get_x_traj());
 
+        std::cout << "1: " << x_traj[0].transpose() << std::endl;
+
         // Output the cost
         trajectory_cost_mm[i] = cost->calculate_cost_mm(x_traj, u_traj, v_traj);
         printf("Quadrotor DDP 0\tIteration %i\tCost = %10.4f\n", i + 1, trajectory_cost_mm[i]);
 
+        std::cout << "2: " << x_traj[0].transpose()  << std::endl;
+
         // Linearize dynamics along x_traj, u_traj, v_traj
         drone->linearize_dynamics_mm(x_traj, u_traj, v_traj, A, B, C);
+
+        std::cout << "3: " << x_traj[0].transpose()  << std::endl;
 
         // Linearize cost along x_traj, u_traj, v_traj
         ddp->quadratize_cost_mm(x_traj, u_traj, v_traj);
 
+        std::cout << "4: " << x_traj[0].transpose()  << std::endl;
+
         // Backpropagate the value function and its derivatives along x_traj, u_traj
         ddp->backpropagate_mm_rk(x_traj, A, B, C);
+
+        std::cout << "5: " << x_traj[0].transpose()  << std::endl;
 
         // forward propagate the dynamics along x_traj, u_traj, v_traj to get dx_traj
         ddp->forward_propagate_mm_rk(dx_traj, A, B, C);
 
+        std::cout << "6: " << x_traj[0].transpose()   << std::endl;
+
         // Update the controls
         ddp->update_controls_mm(dx_traj, u_traj, v_traj);
+
+        std::cout << "7: " << x_traj[0].transpose()   << std::endl;
 
         ////
     } // END MAIN DDP LOOP
