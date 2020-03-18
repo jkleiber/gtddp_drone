@@ -49,6 +49,16 @@ namespace Constants {
     double Iyy(0.0051);
     double Izz(0.0095);
 
+    // Control initial conditions
+    double u0_init(0);
+    double u1_init(0);
+    double u2_init(0);
+    double u3_init(0);
+    double v0_init(0);
+    double v1_init(0);
+    double v2_init(0);
+    double v3_init(0);
+
     std::string ddp_selector("gtddp");
 }
 
@@ -113,4 +123,16 @@ ConstantLoader::ConstantLoader(ros::NodeHandle nh)
     Constants::v1_lower = nh.param<double>(selector + "/v1_lower", -20);
     Constants::v2_lower = nh.param<double>(selector + "/v2_lower", -20);
     Constants::v3_lower = nh.param<double>(selector + "/v3_lower", -20);
+
+    // Control initial conditions
+    // du
+    Constants::u0_init = nh.param<double>(selector + "/u0_init", 0);
+    Constants::u1_init = nh.param<double>(selector + "/u1_init", 0);
+    Constants::u2_init = nh.param<double>(selector + "/u2_init", 0);
+    Constants::u3_init = nh.param<double>(selector + "/u3_init", 0);
+    // dv
+    Constants::v0_init = nh.param<double>(selector + "/v0_init", 0);
+    Constants::v1_init = nh.param<double>(selector + "/v1_init", 0);
+    Constants::v2_init = nh.param<double>(selector + "/v2_init", 0);
+    Constants::v3_init = nh.param<double>(selector + "/v3_init", 0);
 }

@@ -91,7 +91,7 @@ void Pursuit_optimizer::backpropagate_mm_rk(const vector<VectorXd>& x_traj,
     int end = num_time_steps - 1;
     MatrixXd V_xx_end = Q_f;
     VectorXd V_x_end = Q_f * x_traj[end];
-    std::cout << "Vx: " << V_x_end.transpose() << std::endl << std::endl;
+    //std::cout << "Vx: " << V_x_end.transpose() << std::endl << std::endl;
     double V_end   = 0.5 * (x_traj[end].transpose() * Q_f * x_traj[end])(0,0);
 
     //packaging into V_pkg, with final condition V[end]
@@ -157,7 +157,7 @@ void Pursuit_optimizer::backpropagate_mm_rk(const vector<VectorXd>& x_traj,
 
     } //back propagating loop
 
-    std::cout << "Qu: " << Qu_[0] << std::endl << std::endl;
+    //std::cout << "Qu: " << Qu_[0] << std::endl << std::endl;
 }//back_propagate();
 
 
@@ -212,8 +212,7 @@ void Pursuit_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
 
         /**
          * Double Control constraint DDP logic
-         */
-        /*
+         *//*
         while(first_run || dist_u >= Constants::du_converge_dist || dist_v >= Constants::dv_converge_dist)
         {
             //////////////////
@@ -334,8 +333,8 @@ void Pursuit_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
             //std::cout << du << std::endl << dv << std::endl << dist_u << ", " << dist_v << std::endl;
 
             //std::cout << du << "\t" << dv << std::endl;
-        }*/
-
+        }
+*/
         // Update controls
         u_traj[i] = u_traj[i] + learning_rate * du;
         v_traj[i] = v_traj[i] + learning_rate * dv;

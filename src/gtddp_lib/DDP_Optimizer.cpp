@@ -22,6 +22,7 @@ void DDP_Optimizer::value_dynamics_mm(const std::vector<double>& V_std , std::ve
         V_xx.col(j)=V_pkg.segment(num_states*(j+1)+1,num_states);
     }
 
+
     //
     Qx= Ai_.transpose() * V_x + L_xi_;             //(num_states);
     Qu= Bi_.transpose() * V_x + L_ui_;             //(num_controls_u);
@@ -45,6 +46,7 @@ void DDP_Optimizer::value_dynamics_mm(const std::vector<double>& V_std , std::ve
     Kui_ = -G_inv * (Qux - Quv * Qvv_inv * Qvx);
     lvi_ = -H_inv * (Qv - Qvu * Quu_inv * Qu);
     Kvi_ = -H_inv * (Qvx - Qvu * Quu_inv * Qux);
+
 
     MatrixXd dVxxdt =-(Qxx + Kui_.transpose()*Quu*Kui_ + Kvi_.transpose()*Qvv*Kvi_ + 2 * Kui_.transpose()*Qux + 2 * Kvi_.transpose()*Qvx + 2 * Kui_.transpose()*Quv*Kvi_);
     VectorXd dVxdt = -(Qx + Kui_.transpose()*Qu + Kvi_.transpose()*Qv + Qux.transpose()*lui_ + Qvx.transpose()*lvi_ + Kui_.transpose() *Quu*lui_ + Kvi_.transpose() *Qvv*lvi_ + Kui_.transpose() *Quv*lvi_ + Kvi_.transpose() *Qvu*lui_);
@@ -118,14 +120,21 @@ void DDP_Optimizer::initialize_trajectories(vector<VectorXd>& x_traj, vector<Vec
         x_traj[i] = VectorXd::Zero(num_states);
     }
 
+    // TODO: make initial conditions more robust by allowing a vector as input instead of hardcoding for a 4-space vector
     for (int i = 0; i < num_time_steps-1; i++) {
         u_traj[i] = VectorXd::Zero(num_controls_u);
-        u_traj[i](0) = 6;
+        u_traj[i](0) = Constants::u0_init;
+        u_traj[i](1) = Constants::u1_init;
+        u_traj[i](2) = Constants::u2_init;
+        u_traj[i](3) = Constants::u3_init;
     }
 
 	for (int i = 0; i < num_time_steps - 1; i++) {
 		v_traj[i] = VectorXd::Zero(num_controls_v);
-        v_traj[i](0) = 6;
+        v_traj[i](0) = Constants::v0_init;
+        v_traj[i](1) = Constants::v1_init;
+        v_traj[i](2) = Constants::v2_init;
+        v_traj[i](3) = Constants::v3_init;
 	}
 
     for (int i = 0; i < num_time_steps-1; i++) {

@@ -48,7 +48,17 @@
     <arg name="v2_lower" default="-200"/>
     <arg name="v3_lower" default="-200"/>
 
+    <!-- Initial conditions for u_traj-->
+    <arg name="u0_init" default="0"/>
+    <arg name="u1_init" default="0"/>
+    <arg name="u2_init" default="0"/>
+    <arg name="u3_init" default="0"/>
 
+    <!-- Initial conditions for v_traj-->
+    <arg name="v0_init" default="0"/>
+    <arg name="v1_init" default="0"/>
+    <arg name="v2_init" default="0"/>
+    <arg name="v3_init" default="0"/>
 
     <!-- ROS Parameters -->
     <param name="ddp_select" value="$(arg ddp_select)"/>
@@ -69,6 +79,18 @@
         <param name="Ixx" value="$(arg Ixx)"/>
         <param name="Iyy" value="$(arg Iyy)"/>
         <param name="Izz" value="$(arg Izz)"/>
+
+        <!-- Initial conditions u_traj -->
+        <param name="u0_init" value="$(arg u0_init)"/>
+        <param name="u1_init" value="$(arg u1_init)"/>
+        <param name="u2_init" value="$(arg u2_init)"/>
+        <param name="u3_init" value="$(arg u3_init)"/>
+
+        <!-- Initial conditions v_traj -->
+        <param name="v0_init" value="$(arg v0_init)"/>
+        <param name="v1_init" value="$(arg v1_init)"/>
+        <param name="v2_init" value="$(arg v2_init)"/>
+        <param name="v3_init" value="$(arg v3_init)"/>
     </group>
 
     <!-- Control Constrained GT-DDP -->
@@ -111,6 +133,18 @@
         <param name="v1_lower" value="$(arg v1_lower)"/>
         <param name="v2_lower" value="$(arg v2_lower)"/>
         <param name="v3_lower" value="$(arg v3_lower)"/>
+
+        <!-- Initial conditions u_traj -->
+        <param name="u0_init" value="$(arg u0_init)"/>
+        <param name="u1_init" value="$(arg u1_init)"/>
+        <param name="u2_init" value="$(arg u2_init)"/>
+        <param name="u3_init" value="$(arg u3_init)"/>
+
+        <!-- Initial conditions v_traj -->
+        <param name="v0_init" value="$(arg v0_init)"/>
+        <param name="v1_init" value="$(arg v1_init)"/>
+        <param name="v2_init" value="$(arg v2_init)"/>
+        <param name="v3_init" value="$(arg v3_init)"/>
     </group>
 
     <!-- Pursuit GT-DDP -->
@@ -153,6 +187,18 @@
         <param name="v1_lower" value="$(arg v1_lower)"/>
         <param name="v2_lower" value="$(arg v2_lower)"/>
         <param name="v3_lower" value="$(arg v3_lower)"/>
+
+        <!-- Initial conditions u_traj -->
+        <param name="u0_init" value="$(arg u0_init)"/>
+        <param name="u1_init" value="$(arg u1_init)"/>
+        <param name="u2_init" value="$(arg u2_init)"/>
+        <param name="u3_init" value="$(arg u3_init)"/>
+
+        <!-- Initial conditions v_traj -->
+        <param name="v0_init" value="$(arg v0_init)"/>
+        <param name="v1_init" value="$(arg v1_init)"/>
+        <param name="v2_init" value="$(arg v2_init)"/>
+        <param name="v3_init" value="$(arg v3_init)"/>
     </group>
 
 </launch>

@@ -39,6 +39,16 @@ namespace Constants {
     extern double v2_upper, v2_lower;
     extern double v3_upper, v3_lower;
 
+    // Initial conditions
+    extern double u0_init;
+    extern double u1_init;
+    extern double u2_init;
+    extern double u3_init;
+    extern double v0_init;
+    extern double v1_init;
+    extern double v2_init;
+    extern double v3_init;
+
     extern std::string ddp_selector;
 
 }
