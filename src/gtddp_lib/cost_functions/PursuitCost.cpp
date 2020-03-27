@@ -8,8 +8,8 @@ PursuitCost::~PursuitCost() {}
 
 void PursuitCost::initialize_cost_matrix()
 {
-    Ru = 0.08 * Eigen::MatrixXd::Identity(Constants::num_controls_u, Constants::num_controls_u);
-    Rv = 2.0 * Eigen::MatrixXd::Identity(Constants::num_controls_v, Constants::num_controls_v);
+    Ru = Constants::Ru * Eigen::MatrixXd::Identity(Constants::num_controls_u, Constants::num_controls_u);
+    Rv = Constants::Rv * Eigen::MatrixXd::Identity(Constants::num_controls_v, Constants::num_controls_v);
     Q_f = Eigen::MatrixXd::Zero(Constants::num_states, Constants::num_states);
     Q_x = Eigen::MatrixXd::Zero(Constants::num_states, Constants::num_states);
 
@@ -18,10 +18,16 @@ void PursuitCost::initialize_cost_matrix()
     Eigen::MatrixXd L = Eigen::MatrixXd::Zero(Constants::num_states / 2, Constants::num_states);
     L << (-1) * Eigen::MatrixXd::Identity(Constants::num_states / 2, Constants::num_states / 2), Eigen::MatrixXd::Identity(Constants::num_states / 2, Constants::num_states / 2);
 
+    // Set hover for u and v
+    u_hover.setZero(Constants::num_controls_u);
+    u_hover << Constants::u0_hover, Constants::u1_hover, Constants::u2_hover, Constants::u3_hover;
+    v_hover.setZero(Constants::num_controls_u);
+    v_hover << Constants::v0_hover, Constants::v1_hover, Constants::v2_hover, Constants::v3_hover;
+
     // Positional cost
-    Q(0,0) = 1000; //x
-    Q(1,1) = 1000; //y
-    Q(2,2) = 1000; //z
+    Q(0,0) = Constants::Q1; //x
+    Q(1,1) = Constants::Q2; //y
+    Q(2,2) = Constants::Q3; //z
     /*
     // Velocity cost
     Q(3,3) = 1000; //x dot
@@ -29,10 +35,10 @@ void PursuitCost::initialize_cost_matrix()
     Q(5,5) = 1000; //z dot
     */
 
-    // Translate to Q_f
+    // Translate to Q_x
     Q_f = (L.transpose() * Q * L);
 
-    //Q_x = 0.00001 * Q_f;
+    Q_x = Constants::Qx_multiplier * Q_f;
 }
 
 double PursuitCost::calculate_cost_mm(const std::vector<Eigen::VectorXd>& x_traj, const std::vector<Eigen::VectorXd>& u_traj, const std::vector<Eigen::VectorXd>& v_traj)
@@ -44,10 +50,10 @@ double PursuitCost::calculate_cost_mm(const std::vector<Eigen::VectorXd>& x_traj
 		total_cost += 0.5 * (x_traj[i].transpose() * Q_x * x_traj[i])(0, 0) * Constants::dt;
 
         // Running control cost for pursuer
-        total_cost += 0.5 * (u_traj[i].transpose() * Ru * u_traj[i])(0, 0) * Constants::dt;
+        total_cost += 0.5 * ((u_traj[i] - u_hover).transpose() * Ru * (u_traj[i] - u_hover))(0, 0) * Constants::dt;
 
         // Running control cost for evader
-        total_cost += - 0.5 * (v_traj[i].transpose() * Rv * v_traj[i])(0, 0) * Constants::dt;
+        total_cost += - 0.5 * ((v_traj[i] - v_hover).transpose() * Rv * (v_traj[i] - v_hover))(0, 0) * Constants::dt;
 	}
 
     // Terminal Cost

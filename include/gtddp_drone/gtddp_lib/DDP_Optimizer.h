@@ -32,7 +32,7 @@ class DDP_Optimizer
 
     protected:
         Eigen::MatrixXd Ru, Rv, Q_f, Q_x;
-        Eigen::VectorXd x_target;
+        Eigen::VectorXd x_target, u_hover, v_hover;
 
         // stepper for forward propagating & contolled_stepper for backward propagating
         boost::numeric::odeint::runge_kutta_dopri5<Eigen::VectorXd, double, Eigen::VectorXd, double, boost::numeric::odeint::vector_space_algebra> stepper;

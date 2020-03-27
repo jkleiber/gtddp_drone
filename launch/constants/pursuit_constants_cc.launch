@@ -2,15 +2,15 @@
     <arg name="is_sim" value="1"/>
     <arg name="traj_gen" value="1"/>
     <arg name="target_timestep" value="0.5"/>
-    <arg name="num_legs" value="5"/>
+    <arg name="num_legs" value="2"/>
 
     <include file="$(find gtddp_drone)/launch/constants.launch">
         <arg name="ddp_select" value="pursuit"/>
 
         <!-- DDP Hyperparameters -->
-        <arg name="num_time_steps" value="1001"/>
-        <arg name="num_iterations" value="50"/>
-        <arg name="num_long_legs" value="5"/>
+        <arg name="num_time_steps" value="2001"/>
+        <arg name="num_iterations" value="75"/>
+        <arg name="num_long_legs" value="30"/>
         <arg name="short_iterations" value="15"/>
         <arg name="dt" value="0.001"/>
         <arg name="learning_rate" value="0.03"/>
@@ -28,28 +28,39 @@
         <arg name="dist_converge_v" value="1"/>
 
         <!-- Constraints for du -->
-        <arg name="u0_upper" value="8"/>
-        <arg name="u1_upper" value="5"/>
+        <arg name="u0_upper" value="15"/>
+        <arg name="u1_upper" value="10"/>
         <arg name="u2_upper" value="1"/>
         <arg name="u3_upper" value="1"/>
-        <arg name="u0_lower" value="0"/>
-        <arg name="u1_lower" value="-5"/>
+        <arg name="u0_lower" value="4.5"/>
+        <arg name="u1_lower" value="-10"/>
         <arg name="u2_lower" value="-1"/>
         <arg name="u3_lower" value="-1"/>
 
         <!-- Constraints for dv -->
-        <arg name="v0_upper" value="8"/>
-        <arg name="v1_upper" value="5"/>
+        <arg name="v0_upper" value="15"/>
+        <arg name="v1_upper" value="10"/>
         <arg name="v2_upper" value="1"/>
         <arg name="v3_upper" value="1"/>
-        <arg name="v0_lower" value="0"/>
-        <arg name="v1_lower" value="-5"/>
+        <arg name="v0_lower" value="4.5"/>
+        <arg name="v1_lower" value="-10"/>
         <arg name="v2_lower" value="-1"/>
         <arg name="v3_lower" value="-1"/>
 
         <!-- Initial conditions for u_traj -->
-        <arg name="u0_init" value="6"/>
-        <arg name="v0_init" value="6"/>
+        <arg name="u0_hover" value="5"/>
+        <arg name="v0_hover" value="5"/>
+
+        <!-- Cost Function Parameters -->
+        <arg name="Ru" value="0.1" />
+        <arg name="Rv" value="10" />
+        <arg name="Q1" value="1000" />
+        <arg name="Q2" value="1000" />
+        <arg name="Q3" value="1000" />
+        <arg name="Qx_multiplier" value="0.0" />
+
+        <!-- Constrain the pursuit controls? -->
+        <arg name="constrained" value="true" />
     </include>
 
     <param name="gtddp_optimize_node/is_gen" value="$(arg traj_gen)"/>

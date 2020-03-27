@@ -50,14 +50,26 @@ namespace Constants {
     double Izz(0.0095);
 
     // Control initial conditions
-    double u0_init(0);
-    double u1_init(0);
-    double u2_init(0);
-    double u3_init(0);
-    double v0_init(0);
-    double v1_init(0);
-    double v2_init(0);
-    double v3_init(0);
+    double u0_hover(0);
+    double u1_hover(0);
+    double u2_hover(0);
+    double u3_hover(0);
+    double v0_hover(0);
+    double v1_hover(0);
+    double v2_hover(0);
+    double v3_hover(0);
+
+    // TODO: this is still experimental. Eventually this needs to take in a vector of numbers rather than hardcoded values
+    // Cost function parameters
+    double Ru(1);
+    double Rv(1);
+    double Q1(100000);
+    double Q2(100000);
+    double Q3(100000);
+    double Qx_multiplier(100000);
+
+    // Should this be control-constrained (pursuit)
+    bool pursuit_constrained(false);
 
     std::string ddp_selector("gtddp");
 }
@@ -126,13 +138,25 @@ ConstantLoader::ConstantLoader(ros::NodeHandle nh)
 
     // Control initial conditions
     // du
-    Constants::u0_init = nh.param<double>(selector + "/u0_init", 0);
-    Constants::u1_init = nh.param<double>(selector + "/u1_init", 0);
-    Constants::u2_init = nh.param<double>(selector + "/u2_init", 0);
-    Constants::u3_init = nh.param<double>(selector + "/u3_init", 0);
+    Constants::u0_hover = nh.param<double>(selector + "/u0_hover", 0);
+    Constants::u1_hover = nh.param<double>(selector + "/u1_hover", 0);
+    Constants::u2_hover = nh.param<double>(selector + "/u2_hover", 0);
+    Constants::u3_hover = nh.param<double>(selector + "/u3_hover", 0);
     // dv
-    Constants::v0_init = nh.param<double>(selector + "/v0_init", 0);
-    Constants::v1_init = nh.param<double>(selector + "/v1_init", 0);
-    Constants::v2_init = nh.param<double>(selector + "/v2_init", 0);
-    Constants::v3_init = nh.param<double>(selector + "/v3_init", 0);
+    Constants::v0_hover = nh.param<double>(selector + "/v0_hover", 0);
+    Constants::v1_hover = nh.param<double>(selector + "/v1_hover", 0);
+    Constants::v2_hover = nh.param<double>(selector + "/v2_hover", 0);
+    Constants::v3_hover = nh.param<double>(selector + "/v3_hover", 0);
+
+    // TODO: this is only used in PursuitCost. Eventually extend it to the SingleQuadrotorCost as well
+    // Cost function parameters
+    Constants::Ru = nh.param<double>(selector + "/Ru", Constants::Ru);
+    Constants::Rv = nh.param<double>(selector + "/Rv", Constants::Rv);
+    Constants::Q1 = nh.param<double>(selector + "/Q1", Constants::Q1);
+    Constants::Q2 = nh.param<double>(selector + "/Q2", Constants::Q2);
+    Constants::Q3 = nh.param<double>(selector + "/Q", Constants::Q3);
+    Constants::Qx_multiplier = nh.param<double>(selector + "/Qx_multiplier", Constants::Qx_multiplier);
+
+    // Pursuit constraint
+    Constants::pursuit_constrained = nh.param<bool>(selector + "/constrained", Constants::pursuit_constrained);
 }

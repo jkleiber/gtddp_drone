@@ -40,14 +40,25 @@ namespace Constants {
     extern double v3_upper, v3_lower;
 
     // Initial conditions
-    extern double u0_init;
-    extern double u1_init;
-    extern double u2_init;
-    extern double u3_init;
-    extern double v0_init;
-    extern double v1_init;
-    extern double v2_init;
-    extern double v3_init;
+    extern double u0_hover;
+    extern double u1_hover;
+    extern double u2_hover;
+    extern double u3_hover;
+    extern double v0_hover;
+    extern double v1_hover;
+    extern double v2_hover;
+    extern double v3_hover;
+
+    // Cost function parameters
+    extern double Ru;
+    extern double Rv;
+    extern double Q1;
+    extern double Q2;
+    extern double Q3;
+    extern double Qx_multiplier;
+
+    // Pursuit constraint toggle
+    extern bool pursuit_constrained;
 
     extern std::string ddp_selector;
 

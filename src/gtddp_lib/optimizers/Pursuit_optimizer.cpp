@@ -13,6 +13,8 @@ Pursuit_optimizer::Pursuit_optimizer(Cost_Function* c)
     Rv = c->get_control_cost_v();
     Q_x = c->get_state_cost();
     Q_f = c->get_final_cost();
+    u_hover = c->get_hover_control_u();
+    v_hover = c->get_hover_control_v();
 
 //  ***** DO NOT EDIT *****
 //  Initialize running cost and derivatives
@@ -64,12 +66,12 @@ Pursuit_optimizer::~Pursuit_optimizer() {}
 void Pursuit_optimizer::quadratize_cost_mm(const vector<VectorXd>& x_traj, const vector<VectorXd>& u_traj, const vector<VectorXd>& v_traj)
 {
     for (int i = 0; i < num_time_steps-1; i++) {
-        L_0_[i]= (0.5 * u_traj[i].transpose() * Ru * u_traj[i]
-                - 0.5 * v_traj[i].transpose() * Rv * v_traj[i]
+        L_0_[i]= (0.5 * (u_traj[i] - u_hover).transpose() * Ru * (u_traj[i] - u_hover)
+                - 0.5 * (v_traj[i] - v_hover).transpose() * Rv * (v_traj[i] - v_hover)
                 + 0.5 * (x_traj[i].transpose() * Q_x * x_traj[i]))(0,0);
         L_x_[i]= Q_x * x_traj[i]; //VectorXd::Zero(num_states);//
-		L_u_[i]= Ru * u_traj[i];
-		L_v_[i]=-Rv * v_traj[i];
+		L_u_[i]= Ru * (u_traj[i] - u_hover);
+		L_v_[i]=-Rv * (v_traj[i] - v_hover);
 		L_xx_[i]= Q_x; // MatrixXd::Zero(num_states, num_states);//
 		L_uu_[i]= Ru;
 		L_vv_[i]= - Rv;
@@ -204,16 +206,51 @@ void Pursuit_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
     lower_v << v0_lower, v1_lower, v2_lower, v3_lower;
 
     // Update the controls using a QP solver
-    for (int i = 0; i < num_time_steps-1; i++) {
-        // Find dv
+    for (int i = 0; i < num_time_steps-1; i++)
+    {
+        /**************************************
+        *   NaN Checking to prevent crashes
+        ***************************************/
+        // dx_traj nan check
+        for(int j = 0; j < Constants::num_states; ++j)
+        {
+            if(!isfinite(dx_traj[i](j)))
+            {
+                std::cout << "Error: dx_traj[" << i << "](" << j << ") contains non-finite value\n";
+                exit(-1);
+            }
+        }
+        // u_traj nan check
+        for(int j = 0; j < Constants::num_controls_u; ++j)
+        {
+            if(!isfinite(u_traj[i](j)))
+            {
+                std::cout << "Error: u_traj[" << i << "](" << j << ") contains non-finite value\n";
+                exit(-1);
+            }
+        }
+        // v_traj nan check
+        for(int j = 0; j < Constants::num_controls_v; ++j)
+        {
+            if(!isfinite(v_traj[i](j)))
+            {
+                std::cout << "Error: v_traj[" << i << "](" << j << ") contains non-finite value\n";
+                exit(-1);
+            }
+        }
+
+
+        // Initialize du and dv in the unconstrained case
+        // If this is a constrained problem, then du will simply be overwritten
         dv = lv_[i] + Kv_[i] * dx_traj[i];
         du = lu_[i] + Ku_[i] * dx_traj[i];
         first_run = true;
 
         /**
          * Double Control constraint DDP logic
-         *//*
-        while(first_run || dist_u >= Constants::du_converge_dist || dist_v >= Constants::dv_converge_dist)
+         * Only run this if the pursuit algorithm is intended to respect control constraints
+         */
+        while(Constants::pursuit_constrained && (first_run || dist_u >= Constants::du_converge_dist || dist_v >= Constants::dv_converge_dist))
         {
             //////////////////
             // du
@@ -334,7 +371,7 @@ void Pursuit_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
 
             //std::cout << du << "\t" << dv << std::endl;
         }
-*/
+
         // Update controls
         u_traj[i] = u_traj[i] + learning_rate * du;
         v_traj[i] = v_traj[i] + learning_rate * dv;

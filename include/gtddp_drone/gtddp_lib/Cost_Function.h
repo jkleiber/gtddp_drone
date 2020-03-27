@@ -24,7 +24,8 @@ class Cost_Function
         Eigen::MatrixXd get_state_cost() { return Q_x; }
         Eigen::MatrixXd get_final_cost() { return Q_f; }
         Eigen::VectorXd get_target_state() { return x_target; }
-
+        Eigen::VectorXd get_hover_control_u() { return u_hover; }
+        Eigen::VectorXd get_hover_control_v() { return v_hover; }
 
     protected:
         Eigen::MatrixXd Ru;
@@ -32,6 +33,8 @@ class Cost_Function
         Eigen::MatrixXd Q_x;
         Eigen::MatrixXd Q_f;
         Eigen::VectorXd x_target;
+        Eigen::VectorXd u_hover;
+        Eigen::VectorXd v_hover;
 };
 
 #endif // COST_FUNCTION_H

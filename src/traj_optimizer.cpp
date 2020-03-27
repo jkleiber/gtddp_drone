@@ -358,6 +358,11 @@ void Optimizer::pursuit_traj_callback(const ros::TimerEvent& time_event)
         //Increment the leg counter
         this->num_legs++;
     }
+    // End the trajectory generation program once the trajectory is generated
+    else if(this->generation_mode)
+    {
+        exit(0);
+    }
 }
 
 
