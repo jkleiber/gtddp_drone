@@ -14,12 +14,17 @@
 #include <vector>
 
 #include "Constants.h"
+
+// Cost Functions
 #include "Cost_Function.h"
+#include "cost_functions/SingleQuadrotorCost.h"
+#include "cost_functions/PursuitCost.h"
 
 // Optimizers
 #include "DDP_Optimizer.h"
 #include "optimizers/CC_DDP_optimizer.h"
 #include "optimizers/GT_DDP_optimizer.h"
+#include "optimizers/Pursuit_optimizer.h"
 
 // Systems
 #include "Drone.h"
@@ -48,7 +53,7 @@ public:
 private:
 
     Drone *drone;
-    Cost_Function cost;
+    Cost_Function *cost;
     DDP_Optimizer *ddp;
 
     Eigen::VectorXd x_target;

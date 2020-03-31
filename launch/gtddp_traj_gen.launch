@@ -9,7 +9,7 @@
 
     <!-- DDP Hyperparameters -->
     <arg name="num_time_steps" value="501"/>
-    <arg name="num_iterations" value="150"/>
+    <arg name="num_iterations" value="4"/><!--"150"/>-->
     <arg name="num_long_legs" value="5"/>
     <arg name="short_iterations" value="100"/>
     <arg name="dt" value="0.001"/>

@@ -41,16 +41,19 @@ class ControlCalculator
 {
     public:
         ControlCalculator();
-        ControlCalculator(ros::Publisher ctrl_sig_pub, ros::Publisher status_pub, int sim_status);
+        ControlCalculator(ros::Publisher ctrl_sig_pub, int sim_status);
+        ControlCalculator(ros::Publisher ctrl_sig_pub, int sim_status, bool is_pursuit, ros::Publisher ctrl_sig_pub_2);
 
         //Initialization
         void logging_init();
 
-        //Callback functions
-        void recalculate_control_callback(const ros::TimerEvent& time_event);
+        // Callback functions
+        // Drone state estimate(s)
         void state_estimate_callback(const nav_msgs::Odometry::ConstPtr& odom);
-        //TODO: rename the state_estimate_callback below to something else
-        //void state_estimate_callback(const tum_ardrone::filter_state::ConstPtr& estimate_event);
+        void state_estimate_callback_2(const nav_msgs::Odometry::ConstPtr& odom);
+        // Drone controller
+        void recalculate_control_callback(const ros::TimerEvent& time_event);
+        // Trajectory handler
         void trajectory_callback(const gtddp_drone_msgs::Trajectory::ConstPtr& traj_msg);
 
         // Test Code
@@ -62,11 +65,11 @@ class ControlCalculator
         ~ControlCalculator();
 
     private:
-        //Flight controller
-        FlightController flight_controller;
+        bool is_pursuit;
 
-        //Controller status
-        gtddp_drone_msgs::Status ctrl_status;
+        //Flight controllers
+        FlightController flight_controller;
+        FlightController flight_controller_2;
 
         //Output format utils
         double angleWrap(double angle);
@@ -74,21 +77,19 @@ class ControlCalculator
 
         //Publish control system data to the drone
         ros::Publisher control_signal_pub;
+        ros::Publisher control_signal_pub_2;
         ros::Publisher status_pub;
         geometry_msgs::Twist ctrl_command;
+        geometry_msgs::Twist ctrl_command_2;
 
         //Store the current trajectory information
-        std::deque<Eigen::VectorXd> x_traj;
-        std::deque<Eigen::VectorXd> u_traj;
-        std::deque<Eigen::MatrixXd> Ku_traj;
-        std::deque<Eigen::MatrixXd> Kv_traj;
+        DroneTrajectory drone_traj;
 
         //Store current state data
         Eigen::VectorXd cur_state;
 
-        //Use quadrotor dynamics
-        //TODO: change to System class
-        Quadrotor quadrotor;
+        //Use specified dynamics
+        Drone *drone;
 
         //Change execution rate for the control callback
         ros::Timer ctrl_timer;
@@ -99,6 +100,7 @@ class ControlCalculator
 
         //Flags for initialization
         bool cur_state_init;
+        bool cur_state_init_2;
         bool traj_init;
 
         //Simulation flag
@@ -106,6 +108,8 @@ class ControlCalculator
 
         std::ofstream ground_truth_data;
         std::ofstream command_data;
+
+
 };
 
 

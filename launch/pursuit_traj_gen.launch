@@ -1,0 +1,19 @@
+<launch>
+    <arg name="pursuit_constrained" value="true"/>
+
+    <!-- Constrained pursuit -->
+    <group if="$(arg pursuit_constrained)" >
+        <include file="$(find gtddp_drone)/launch/constants/pursuit_constants_cc.launch">
+        </include>
+    </group>
+    <!-- Unconstrained pursuit -->
+    <group unless="$(arg pursuit_constrained)">
+        <include file="$(find gtddp_drone)/launch/constants/pursuit_constants.launch">
+        </include>
+    </group>
+
+    <!-- GT-DDP trajectory generation -->
+    <node name="gtddp_optimize_node" pkg="gtddp_drone" type="gtddp_optimize_node" output="screen" required="true">
+    </node>
+
+</launch>

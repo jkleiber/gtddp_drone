@@ -15,9 +15,6 @@ Optimizer::Optimizer()
     this->goal_state.resize(Constants::num_states);
     this->last_goal_state.resize(Constants::num_states);
 
-    //Set the control status to unknown
-    this->ctrl_status = -1;
-
     //Set the optimizer to uninitialized
     this->initialized = false;
 
@@ -63,9 +60,6 @@ Optimizer::Optimizer(ros::Publisher& traj_publisher,
     this->goal_state.resize(Constants::num_states);
     this->last_goal_state.resize(Constants::num_states);
 
-    //Set the control status to unknown
-    this->ctrl_status = -1;
-
     //Set the optimizer to uninitialized
     this->initialized = false;
 
@@ -78,7 +72,19 @@ Optimizer::Optimizer(ros::Publisher& traj_publisher,
     {
         //Set the current state to the origin
         this->cur_state.setZero();
-        current_state.states.fill(0.0);
+
+        // If this is pursuit, add the second drone's start position
+        if(!Constants::ddp_selector.compare("pursuit"))
+        {
+            this->cur_state(12) = 1;
+        }
+
+        // Send the initial conditions (all 0) to the target trajectory node
+        // NOTE: In pursuit mode we don't care about the init pub, so this is fine the way it is
+        for(int i = 0; i < Constants::num_states; ++i)
+        {
+            current_state.state.push_back(0.0);
+        }
 
         //Initialize the target trajectory generator
         this->init_pub.publish(current_state);
@@ -268,7 +274,7 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
 {
     //Check to make sure current state and target state are initialized
     //If they are, then optimize the current trajectory
-    if((this->cur_state_init && initialized) || (this->generation_mode && this->num_legs < this->max_num_legs)) // && this->ctrl_status == gtddp_drone_msgs::Status::IDLE)
+    if((this->cur_state_init && initialized) || (this->generation_mode && this->num_legs < this->max_num_legs))
     {
         //Create a service to update the current target
         gtddp_drone_msgs::target target_srv;
@@ -287,10 +293,6 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
             //Optimize trajectory
             ddpmain.ddp_loop();
 
-            //TODO: Experiment with this being the last state calculated by GTDDP
-            //Update the last goal state to be the current goal state
-            //this->last_goal_state = goal_state;
-            //v.s.
             //Update the last goal state to be the last state in the generated trajectory
             this->last_goal_state = ddpmain.get_x_traj().back();
 
@@ -309,9 +311,6 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
                 this->write_traj_to_files(ddpmain.get_x_traj(), ddpmain.get_u_traj(), ddpmain.get_v_traj(), ddpmain.get_Ku(), ddpmain.get_Kv());
             }
 
-            //Set ctrl status to unknown so the controller can start flying
-            this->ctrl_status = -1;
-
             //Increment the leg counter
             this->num_legs++;
         }
@@ -328,6 +327,37 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
     }
 }
 
+
+void Optimizer::pursuit_traj_callback(const ros::TimerEvent& time_event)
+{
+    if(this->generation_mode && this->num_legs < this->max_num_legs)
+    {
+        printf("LEG #%d\n", num_legs);
+
+        //Update the DDP start and goals, then run the DDP loop to optimize the new trajectory
+        ddpmain.update(this->cur_state, this->goal_state);
+
+        //Optimize trajectory
+        ddpmain.ddp_loop();
+
+        //Update the last goal state to be the last state in the generated trajectory
+        this->last_goal_state = ddpmain.get_x_traj().back();
+
+        // Update the current state to be the last state
+        this->cur_state = this->last_goal_state;
+
+        // Save offline trajectory
+        this->write_traj_to_files(ddpmain.get_x_traj(), ddpmain.get_u_traj(), ddpmain.get_v_traj(), ddpmain.get_Ku(), ddpmain.get_Kv());
+
+        //Increment the leg counter
+        this->num_legs++;
+    }
+    // End the trajectory generation program once the trajectory is generated
+    else if(this->generation_mode)
+    {
+        exit(0);
+    }
+}
 
 
 void Optimizer::offline_traj_callback(const ros::TimerEvent& time_event)
@@ -357,7 +387,7 @@ void Optimizer::offline_traj_callback(const ros::TimerEvent& time_event)
         temp_vector.setZero();
 
         //Read the x_traj file
-        for(int i = 0; i < Constants::num_time_steps; ++i)
+        for(int i = 0; i < Constants::offline_traj_batch_size; ++i)
         {
             //Check to see if this file is OK to read
             if(!x_traj_in.good())
@@ -416,7 +446,7 @@ void Optimizer::offline_traj_callback(const ros::TimerEvent& time_event)
         temp_vector.setZero();
 
         //Read the u_traj file
-        for(int i = 0; i < Constants::num_time_steps; ++i)
+        for(int i = 0; i < Constants::offline_traj_batch_size; ++i)
         {
             //Check to see if this file is OK to read
             if(!u_traj_in.good())
@@ -451,7 +481,7 @@ void Optimizer::offline_traj_callback(const ros::TimerEvent& time_event)
         temp_vector.setZero();
 
         //Read the u_traj file
-        for(int i = 0; i < Constants::num_time_steps; ++i)
+        for(int i = 0; i < Constants::offline_traj_batch_size; ++i)
         {
             //Check to see if this file is OK to read
             if(!v_traj_in.good())
@@ -484,7 +514,7 @@ void Optimizer::offline_traj_callback(const ros::TimerEvent& time_event)
         temp_matrix.setZero();
 
         //Read the Ku_traj file
-        for(int i = 0; i < Constants::num_time_steps; ++i)
+        for(int i = 0; i < Constants::offline_traj_batch_size; ++i)
         {
             //Check to see if this file is OK to read
             if(!Ku_traj_in.good())
@@ -530,7 +560,7 @@ void Optimizer::offline_traj_callback(const ros::TimerEvent& time_event)
         temp_matrix.setZero();
 
         //Read the Ku_traj file
-        for(int i = 0; i < Constants::num_time_steps; ++i)
+        for(int i = 0; i < Constants::offline_traj_batch_size; ++i)
         {
             //Check to see if this file is OK to read
             if(!Kv_traj_in.good())
@@ -597,7 +627,7 @@ void Optimizer::open_loop_traj_callback(const ros::TimerEvent& time_event)
         temp_vector.setZero();
 
         //Read the u_traj file
-        for(int i = 0; i < Constants::num_time_steps; ++i)
+        for(int i = 0; i < Constants::offline_traj_batch_size; ++i)
         {
             //Check to see if this file is OK to read
             if(!u_traj_in.good())
@@ -683,7 +713,7 @@ void Optimizer::state_estimate_callback(const nav_msgs::Odometry::ConstPtr& odom
     //Decode the current state
     for(int i = 0; i < Constants::num_states; ++i)
     {
-        this->current_state.states[i] = this->cur_state(i);
+        this->current_state.state[i] = this->cur_state(i);
     }
 
     //Publish the debugging current state info
@@ -695,21 +725,12 @@ void Optimizer::state_estimate_callback(const nav_msgs::Odometry::ConstPtr& odom
 /**
  *
  */
-void Optimizer::status_callback(const gtddp_drone_msgs::Status::ConstPtr& status)
-{
-    this->ctrl_status = status->status;
-}
-
-
-/**
- *
- */
 void Optimizer::target_state_decode(const gtddp_drone_msgs::state_data& target_event)
 {
     printf("TARGET: [");
     for(int i = 0; i < Constants::num_states; ++i)
     {
-        this->goal_state(i) = target_event.states[i];
+        this->goal_state(i) = target_event.state[i];
 
         printf("%f ", this->goal_state(i));
     }
@@ -742,9 +763,9 @@ void Optimizer::init_optimizer(const std_msgs::Empty::ConstPtr& init_msg)
     else if(!initialized && !this->real_time)
     {
         //Set the offsets
-        x_offset = current_state.states[0];
-        y_offset = current_state.states[1];
-        z_offset = current_state.states[2];
+        x_offset = cur_state(0);
+        y_offset = cur_state(1);
+        z_offset = cur_state(2);
 
         double cur_time = (ros::Time::now() - begin_time).toSec();
 
@@ -805,10 +826,11 @@ gtddp_drone_msgs::state_data Optimizer::get_state_data_msg(std::vector<Eigen::Ve
     //Set up a state data message
     gtddp_drone_msgs::state_data state_msg;
 
+    state_msg.state.resize(Constants::num_states);
     //Loop through each state variable for this particular state to extract the value
     for(int i = 0; i < Constants::num_states; ++i)
     {
-        state_msg.states[i] = (x_traj[idx](i));
+        state_msg.state[i] = (x_traj[idx](i));
     }
 
     //Return the generated message
@@ -1018,4 +1040,6 @@ void Optimizer::write_traj_to_files(std::vector<Eigen::VectorXd> x_traj,
         //Append trajectory
         Kv_traj_out << output;
     }
+
+    std::cout << "Trajectory files written\n";
 }

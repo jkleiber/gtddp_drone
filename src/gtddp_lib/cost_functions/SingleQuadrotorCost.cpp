@@ -1,18 +1,18 @@
-#include "gtddp_drone/gtddp_lib/Cost_Function.h"
+#include "gtddp_drone/gtddp_lib/cost_functions/SingleQuadrotorCost.h"
 
 using namespace std;
 using namespace Eigen;
 using namespace Constants;
 
-Cost_Function::Cost_Function() {}
-Cost_Function::Cost_Function(Eigen::VectorXd x_t)
+SingleQuadrotorCost::SingleQuadrotorCost() {}
+SingleQuadrotorCost::SingleQuadrotorCost(Eigen::VectorXd x_t)
 {
     initialize_cost_matrix();
     x_target = x_t;
 }
-Cost_Function::~Cost_Function() {}
+SingleQuadrotorCost::~SingleQuadrotorCost() {}
 
-void Cost_Function::initialize_cost_matrix(){
+void SingleQuadrotorCost::initialize_cost_matrix(){
 
     /*  BEGIN COST MATRIX INITIALIZATION
      Ru is num_controls_u x num_controls_u matrix of control cost weights for u
@@ -62,7 +62,7 @@ void Cost_Function::initialize_cost_matrix(){
 
 }
 
-double Cost_Function::calculate_cost_mm(const vector<VectorXd>& x_traj, const vector<VectorXd>& u_traj, const vector<VectorXd>& v_traj)
+double SingleQuadrotorCost::calculate_cost_mm(const vector<VectorXd>& x_traj, const vector<VectorXd>& u_traj, const vector<VectorXd>& v_traj)
 {
 	double total_cost = 0;
 

@@ -39,7 +39,7 @@ def getKey(settings):
 
 
 vel = Twist()
-SPEED = 0.3
+SPEED = 0.2
 
 # Main Function
 if __name__=="__main__":

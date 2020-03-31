@@ -49,6 +49,31 @@ namespace Constants {
     double Iyy(0.0051);
     double Izz(0.0095);
 
+    // Control initial conditions
+    double u0_hover(0);
+    double u1_hover(0);
+    double u2_hover(0);
+    double u3_hover(0);
+    double v0_hover(0);
+    double v1_hover(0);
+    double v2_hover(0);
+    double v3_hover(0);
+
+    // TODO: this is still experimental. Eventually this needs to take in a vector of numbers rather than hardcoded values
+    // Cost function parameters
+    double Ru(1);
+    double Rv(1);
+    double Q1(100000);
+    double Q2(100000);
+    double Q3(100000);
+    double Qx_multiplier(100000);
+
+    // Should this be control-constrained (pursuit)
+    bool pursuit_constrained(false);
+
+    // How many traj points to read per loop from offline
+    int offline_traj_batch_size(300);
+
     std::string ddp_selector("gtddp");
 }
 
@@ -97,7 +122,6 @@ ConstantLoader::ConstantLoader(ros::NodeHandle nh)
     // Update control constraint limits
     // du
     Constants::u0_upper = nh.param<double>(selector + "/u0_upper", 20);
-    std::cout << "u0_upper: " << Constants::u0_upper << std::endl;
     Constants::u1_upper = nh.param<double>(selector + "/u1_upper", 20);
     Constants::u2_upper = nh.param<double>(selector + "/u2_upper", 20);
     Constants::u3_upper = nh.param<double>(selector + "/u3_upper", 20);
@@ -114,4 +138,31 @@ ConstantLoader::ConstantLoader(ros::NodeHandle nh)
     Constants::v1_lower = nh.param<double>(selector + "/v1_lower", -20);
     Constants::v2_lower = nh.param<double>(selector + "/v2_lower", -20);
     Constants::v3_lower = nh.param<double>(selector + "/v3_lower", -20);
+
+    // Control initial conditions
+    // du
+    Constants::u0_hover = nh.param<double>(selector + "/u0_hover", 0);
+    Constants::u1_hover = nh.param<double>(selector + "/u1_hover", 0);
+    Constants::u2_hover = nh.param<double>(selector + "/u2_hover", 0);
+    Constants::u3_hover = nh.param<double>(selector + "/u3_hover", 0);
+    // dv
+    Constants::v0_hover = nh.param<double>(selector + "/v0_hover", 0);
+    Constants::v1_hover = nh.param<double>(selector + "/v1_hover", 0);
+    Constants::v2_hover = nh.param<double>(selector + "/v2_hover", 0);
+    Constants::v3_hover = nh.param<double>(selector + "/v3_hover", 0);
+
+    // TODO: this is only used in PursuitCost. Eventually extend it to the SingleQuadrotorCost as well
+    // Cost function parameters
+    Constants::Ru = nh.param<double>(selector + "/Ru", Constants::Ru);
+    Constants::Rv = nh.param<double>(selector + "/Rv", Constants::Rv);
+    Constants::Q1 = nh.param<double>(selector + "/Q1", Constants::Q1);
+    Constants::Q2 = nh.param<double>(selector + "/Q2", Constants::Q2);
+    Constants::Q3 = nh.param<double>(selector + "/Q", Constants::Q3);
+    Constants::Qx_multiplier = nh.param<double>(selector + "/Qx_multiplier", Constants::Qx_multiplier);
+
+    // Pursuit constraint
+    Constants::pursuit_constrained = nh.param<bool>(selector + "/constrained", Constants::pursuit_constrained);
+
+    // How many timesteps to read at a time from offline trajectory files
+    Constants::offline_traj_batch_size = nh.param<int>(selector + "/offline_batch_size", Constants::offline_traj_batch_size);
 }

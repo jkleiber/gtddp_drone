@@ -9,12 +9,11 @@
 class Cost_Function
 {
     public:
-        Cost_Function();
-        Cost_Function(Eigen::VectorXd x_t);
-        ~Cost_Function();
-    
-    
-        void initialize_cost_matrix();
+        virtual void initialize_cost_matrix() = 0;
+        virtual double calculate_cost_mm(const std::vector<Eigen::VectorXd>&,
+                                         const std::vector<Eigen::VectorXd>&,
+                                         const std::vector<Eigen::VectorXd>&) = 0;
+
         void set_control_cost_u(Eigen::MatrixXd val) { Ru = val; }
 		void set_control_cost_v(Eigen::MatrixXd val) { Rv = val; }
         void set_state_cost(Eigen::MatrixXd val) { Q_x = val; }
@@ -25,13 +24,17 @@ class Cost_Function
         Eigen::MatrixXd get_state_cost() { return Q_x; }
         Eigen::MatrixXd get_final_cost() { return Q_f; }
         Eigen::VectorXd get_target_state() { return x_target; }
-		double calculate_cost_mm(const std::vector<Eigen::VectorXd>&, const std::vector<Eigen::VectorXd>&, const std::vector<Eigen::VectorXd>&);
-    private:
+        Eigen::VectorXd get_hover_control_u() { return u_hover; }
+        Eigen::VectorXd get_hover_control_v() { return v_hover; }
+
+    protected:
         Eigen::MatrixXd Ru;
 		Eigen::MatrixXd Rv;
         Eigen::MatrixXd Q_x;
         Eigen::MatrixXd Q_f;
         Eigen::VectorXd x_target;
+        Eigen::VectorXd u_hover;
+        Eigen::VectorXd v_hover;
 };
 
 #endif // COST_FUNCTION_H

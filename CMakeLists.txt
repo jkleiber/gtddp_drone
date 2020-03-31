@@ -139,11 +139,13 @@ include(${CGAL_USE_FILE})
 ## Declare a C++ library
 add_library(GTDDP_LIB
   src/gtddp_lib/Constants.cpp
-  src/gtddp_lib/Cost_Function.cpp
   src/gtddp_lib/DDP_main_mm.cpp
   src/gtddp_lib/DDP_Optimizer.cpp
+  src/gtddp_lib/cost_functions/SingleQuadrotorCost.cpp
+  src/gtddp_lib/cost_functions/PursuitCost.cpp
   src/gtddp_lib/optimizers/CC_DDP_optimizer.cpp
   src/gtddp_lib/optimizers/GT_DDP_optimizer.cpp
+  src/gtddp_lib/optimizers/Pursuit_optimizer.cpp
   src/gtddp_lib/systems/PursuitDrones.cpp
   src/gtddp_lib/systems/Quadrotor.cpp
 )
@@ -153,10 +155,12 @@ add_library(GTDDP_LIB
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(gtddp_control_node src/gtddp_control_node.cpp src/control_calc.cpp src/flight_controller.cpp)
+add_executable(pursuit_control_node src/pursuit_control_node.cpp src/control_calc.cpp src/flight_controller.cpp)
 add_executable(gtddp_optimize_node src/gtddp_optimize_node.cpp src/traj_optimizer.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(gtddp_control_node ${catkin_LIBRARIES} GTDDP_LIB ${CGAL_LIBRARIES})
+target_link_libraries(pursuit_control_node ${catkin_LIBRARIES} GTDDP_LIB ${CGAL_LIBRARIES})
 target_link_libraries(gtddp_optimize_node ${catkin_LIBRARIES} GTDDP_LIB ${CGAL_LIBRARIES})
 
 

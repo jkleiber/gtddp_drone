@@ -6,38 +6,6 @@ using namespace boost::numeric::odeint;
 using namespace Constants;
 
 
-/**
-    This function quadratizes the cost along the given state and control trajectories: x_traj,u_traj,v_traj.
-    It assigns the cost and its derivatives at time step i (t = dt * i) to the values passed in parameters 4-13
-    in index i.
-
-    @param x_traj - a vector of Eigen::VectorXd's corresponding to the state trajectory
-    @param u_traj - a vector of Eigen::VectorXd's corresponding to the control_u trajectory
-    @param v_traj - a vector of Eigen::VectorXd's corresponding to the control_v trajectory
-
-*/
-void DDP_Optimizer::quadratize_cost_mm(const vector<VectorXd>& x_traj, const vector<VectorXd>& u_traj, const vector<VectorXd>& v_traj)
-{
-    for (int i = 0; i < num_time_steps-1; i++) {
-        L_0_[i]= (0.5 * u_traj[i].transpose() * Ru * u_traj[i]
-                - 0.5 * v_traj[i].transpose() * Rv * v_traj[i]
-                + 0.5 * (x_traj[i] - x_target).transpose() * Q_x * (x_traj[i] - x_target))(0,0);
-        L_x_[i]= Q_x * (x_traj[i] - x_target); //VectorXd::Zero(num_states);//
-		L_u_[i]= Ru * u_traj[i];
-		L_v_[i]=-Rv * v_traj[i];
-		L_xx_[i]= Q_x; // MatrixXd::Zero(num_states, num_states);//
-		L_uu_[i]= Ru;
-		L_vv_[i]= - Rv;
-		L_ux_[i]= MatrixXd::Zero(num_controls_u, num_states);
-		L_vx_[i]= MatrixXd::Zero(num_controls_v, num_states);
-		L_uv_[i]= MatrixXd::Zero(num_controls_u, num_controls_v);
-    }
-}
-
-
-
-
-
 /** This function is the backward ode function of Values paramatized with the running cost over horizon */
 void DDP_Optimizer::value_dynamics_mm(const std::vector<double>& V_std , std::vector<double>& dV_std,  double t)
 {
@@ -53,8 +21,10 @@ void DDP_Optimizer::value_dynamics_mm(const std::vector<double>& V_std , std::ve
     for(int j=0;j<num_states;j++) {
         V_xx.col(j)=V_pkg.segment(num_states*(j+1)+1,num_states);
     }
+
+
     //
-    Qx= Ai_.transpose() * V_x+ L_xi_;              //(num_states);
+    Qx= Ai_.transpose() * V_x + L_xi_;             //(num_states);
     Qu= Bi_.transpose() * V_x + L_ui_;             //(num_controls_u);
     Qv= Ci_.transpose() * V_x + L_vi_;             //(num_controls_v);
     Qxx= L_xxi_ + 2 * V_xx * Ai_;                  //(num_states, num_states);
@@ -76,6 +46,7 @@ void DDP_Optimizer::value_dynamics_mm(const std::vector<double>& V_std , std::ve
     Kui_ = -G_inv * (Qux - Quv * Qvv_inv * Qvx);
     lvi_ = -H_inv * (Qv - Qvu * Quu_inv * Qu);
     Kvi_ = -H_inv * (Qvx - Qvu * Quu_inv * Qux);
+
 
     MatrixXd dVxxdt =-(Qxx + Kui_.transpose()*Quu*Kui_ + Kvi_.transpose()*Qvv*Kvi_ + 2 * Kui_.transpose()*Qux + 2 * Kvi_.transpose()*Qvx + 2 * Kui_.transpose()*Quv*Kvi_);
     VectorXd dVxdt = -(Qx + Kui_.transpose()*Qu + Kvi_.transpose()*Qv + Qux.transpose()*lui_ + Qvx.transpose()*lvi_ + Kui_.transpose() *Quu*lui_ + Kvi_.transpose() *Qvv*lvi_ + Kui_.transpose() *Quv*lvi_ + Kvi_.transpose() *Qvu*lui_);
@@ -130,7 +101,7 @@ void DDP_Optimizer::forward_propagate_mm_rk(vector<VectorXd>& dx_traj,
     for (int i = 0; i < (num_time_steps - 1); i++)
     {
         //update dx
-        dx_update_mm dum(A[i], B[i] ,C[i], lu_[i],lv_[i], Ku_[i], Kv_[i]);
+        dx_update_mm dum(A[i], B[i] ,C[i], lu_[i], lv_[i], Ku_[i], Kv_[i]);
         stepper.do_step(dum, dx, t, dt);
         dx_traj[i+1]=dx;
         t+=-dt;
@@ -143,12 +114,13 @@ void DDP_Optimizer::forward_propagate_mm_rk(vector<VectorXd>& dx_traj,
     This function initializes the state and control trajectories (the parameters) to
     vectors of zero VectorXd's
 */
-void DDP_Optimizer::initialize_trajectories_to_zero_mm(vector<VectorXd>& x_traj, vector<VectorXd>& u_traj, vector<VectorXd>& v_traj, vector<VectorXd>& dx_traj)
+void DDP_Optimizer::initialize_trajectories(vector<VectorXd>& x_traj, vector<VectorXd>& u_traj, vector<VectorXd>& v_traj, vector<VectorXd>& dx_traj)
 {
     for (int i = 0; i < num_time_steps; i++) {
         x_traj[i] = VectorXd::Zero(num_states);
     }
 
+    // TODO: make initial conditions more robust by allowing a vector as input instead of hardcoding for a 4-space vector
     for (int i = 0; i < num_time_steps-1; i++) {
         u_traj[i] = VectorXd::Zero(num_controls_u);
     }
