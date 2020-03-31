@@ -60,6 +60,9 @@ namespace Constants {
     // Pursuit constraint toggle
     extern bool pursuit_constrained;
 
+    // Offline trajectory batch size
+    extern int offline_traj_batch_size;
+
     extern std::string ddp_selector;
 
 }

@@ -86,9 +86,6 @@ class Optimizer
         //Optimizer initialization flag
         bool initialized;
 
-        //Track the controller's state
-        int ctrl_status;
-
         //Save callback data here
         Eigen::VectorXd cur_state;
         gtddp_drone_msgs::state_data current_state;

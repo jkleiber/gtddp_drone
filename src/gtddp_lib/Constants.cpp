@@ -71,6 +71,9 @@ namespace Constants {
     // Should this be control-constrained (pursuit)
     bool pursuit_constrained(false);
 
+    // How many traj points to read per loop from offline
+    int offline_traj_batch_size(300);
+
     std::string ddp_selector("gtddp");
 }
 
@@ -159,4 +162,7 @@ ConstantLoader::ConstantLoader(ros::NodeHandle nh)
 
     // Pursuit constraint
     Constants::pursuit_constrained = nh.param<bool>(selector + "/constrained", Constants::pursuit_constrained);
+
+    // How many timesteps to read at a time from offline trajectory files
+    Constants::offline_traj_batch_size = nh.param<int>(selector + "/offline_batch_size", Constants::offline_traj_batch_size);
 }

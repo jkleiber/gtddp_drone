@@ -22,7 +22,6 @@ ros::Publisher traj_pub;
 ros::ServiceClient target_client;
 
 //Subscribers
-ros::Subscriber control_status_sub;
 ros::Subscriber estimate_sub;
 ros::Subscriber go_button;
 
@@ -84,9 +83,6 @@ int main(int argc, char **argv)
         {
             estimate_sub = traj_node.subscribe(traj_node.resolveName("/vicon/ardrone1/odom"), MAX_BUFFER, &Optimizer::state_estimate_callback, &traj_optimizer);
         }
-
-        //Subscribe to the control status (for iterative DDP use)
-        control_status_sub = traj_node.subscribe(traj_node.resolveName("/gtddp_drone/status"), MAX_BUFFER, &Optimizer::status_callback, &traj_optimizer);
 
         //Set up timer for recalculations
         //If the optimization is happening in real time, run the optimization callbacks

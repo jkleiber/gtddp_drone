@@ -6,9 +6,6 @@
 #include <std_msgs/String.h>
 #include <sstream>
 
-//Include user msgs
-#include <gtddp_drone_msgs/Status.h>
-
 //Include package libraries
 #include "gtddp_drone/gtddp_lib/Constants.h"
 #include "gtddp_drone/control_calc.h"
@@ -31,15 +28,13 @@ int main(int argc, char **argv)
     const int OPEN_LOOP = control_node.param("gtddp_control_node/is_open_loop", 0);
 
     //Advertise control output, status, and landing mode
-    ros::Publisher ctrl_sig_pub = control_node.advertise<geometry_msgs::Twist>(control_node.resolveName("/cmd_vel"), MAX_BUFFER);
-    ros::Publisher stat_pub = control_node.advertise<gtddp_drone_msgs::Status>(control_node.resolveName("/gtddp_drone/status"), MAX_BUFFER);
-    ros::Publisher land_pub = control_node.advertise<std_msgs::Empty>(control_node.resolveName("/ardrone/land"), MAX_BUFFER);
+    ros::Publisher ctrl_sig_pub = control_node.advertise<geometry_msgs::Twist>(control_node.resolveName("/cmd_vel"), 1);
 
     //Set up the control calculator
-    ControlCalculator control_calc(ctrl_sig_pub, stat_pub, SIMULATION);
+    ControlCalculator control_calc(ctrl_sig_pub, SIMULATION);
 
     //Set up callbacks for the current trajectory topic and the state estimation
-    ros::Subscriber traj_sub = control_node.subscribe(control_node.resolveName("/gtddp_drone/trajectory"), MAX_BUFFER, &ControlCalculator::trajectory_callback, &control_calc);
+    ros::Subscriber traj_sub = control_node.subscribe(control_node.resolveName("/gtddp_drone/trajectory"), 1, &ControlCalculator::trajectory_callback, &control_calc);
     ros::Subscriber estimate_sub;
 
     ros::Timer update_timer;
@@ -48,11 +43,11 @@ int main(int argc, char **argv)
     if(SIMULATION)
     {
         ROS_INFO("Simulation mode active");
-        estimate_sub = control_node.subscribe(control_node.resolveName("/ground_truth/state"), MAX_BUFFER, &ControlCalculator::state_estimate_callback, &control_calc);
+        estimate_sub = control_node.subscribe(control_node.resolveName("/ground_truth/state"), 1, &ControlCalculator::state_estimate_callback, &control_calc);
     }
     else
     {
-        estimate_sub = control_node.subscribe(control_node.resolveName("/vicon/ardrone1/odom"), MAX_BUFFER, &ControlCalculator::state_estimate_callback, &control_calc);
+        estimate_sub = control_node.subscribe(control_node.resolveName("/vicon/ardrone1/odom"), 1, &ControlCalculator::state_estimate_callback, &control_calc);
     }
 
     //Set up a timer to call the control calculation function at the appropriate update rate
@@ -66,13 +61,6 @@ int main(int argc, char **argv)
     }
 
     control_calc.set_timer(update_timer);
-
-    //Set up and change the settings of tum_ardrone to use the Vicon system
-    /*ros::Publisher tum_settings = control_node.advertise<std_msgs::String>(control_node.resolveName("switch_control"), 10);
-    std_msgs::String str;
-    std::stringstream ss("Vicon");
-    str.data = ss.str();
-    tum_settings.publish(str);*/
 
     //Create an empty message
     std_msgs::Empty empty_msg;
