@@ -67,6 +67,9 @@ Optimizer::Optimizer(ros::Publisher& traj_publisher,
     this->generation_mode = generate_traj;
     this->real_time = real_time;
 
+    // Resize the current state message's state vector
+    this->current_state.state.resize(Constants::num_states);
+
     //Set up for trajectory generation if needed
     if(this->generation_mode)
     {
@@ -172,6 +175,12 @@ void Optimizer::logging_init()
     if(home_dir[strlen(home_dir)-1] != '/')
     {
         filepath += "/";
+    }
+
+    // In pursuit, add the pursuit tag
+    if(!Constants::ddp_selector.compare("pursuit"))
+    {
+        filepath += "pursuit_";
     }
 
     //Get the timestamp
@@ -430,6 +439,25 @@ void Optimizer::offline_traj_callback(const ros::TimerEvent& time_event)
                     temp_vector(cell_idx) += z_offset;
                 }
                 //printf("5\n");
+
+                // Apply offsets to the evader drone if this is a pursuit-evasion game
+                if(!Constants::ddp_selector.compare("pursuit"))
+                {
+                    if(cell_idx == 12)
+                    {
+                        temp_vector(cell_idx) += x_offset_2;
+                    }
+                    //Y
+                    else if(cell_idx == 13)
+                    {
+                        temp_vector(cell_idx) += y_offset_2;
+                    }
+                    //Z
+                    else if(cell_idx == 14)
+                    {
+                        temp_vector(cell_idx) += z_offset_2;
+                    }
+                }
 
                 //Increment the cell index
                 cell_idx++;
@@ -725,6 +753,56 @@ void Optimizer::state_estimate_callback(const nav_msgs::Odometry::ConstPtr& odom
 /**
  *
  */
+void Optimizer::state_estimate_callback_2(const nav_msgs::Odometry::ConstPtr& odom)
+{
+    //Position
+    this->cur_state(12) = odom->pose.pose.position.x;
+    this->cur_state(13) = odom->pose.pose.position.y;
+    this->cur_state(14) = odom->pose.pose.position.z;
+
+    //Orientation
+    tf::Pose pose;
+    tf::poseMsgToTF(odom->pose.pose, pose);
+    tf::Matrix3x3 mat(pose.getRotation());
+
+    //Convert the quaternion to euler angles of yaw, pitch, and roll
+    //This should be in radians
+    mat.getEulerYPR(this->cur_state(20), this->cur_state(19), this->cur_state(18));
+
+    //Linear velocity
+    this->cur_state(15) = odom->twist.twist.linear.x;
+    this->cur_state(16) = odom->twist.twist.linear.y;
+    this->cur_state(17) = odom->twist.twist.linear.z;
+
+    //Angular velocity
+    this->cur_state(21) = odom->twist.twist.angular.x;
+    this->cur_state(22) = odom->twist.twist.angular.y;
+    this->cur_state(23) = odom->twist.twist.angular.z;
+
+    //Set the last goal to the current state if this is the first leg
+    if(!last_goal_state_init)
+    {
+        this->last_goal_state = this->cur_state;
+    }
+
+    //Set the current state as initialized
+    this->cur_state_init = true;
+
+    //Decode the current state for the evader
+    for(int i = 12; i < Constants::num_states; ++i)
+    {
+        this->current_state.state[i] = this->cur_state(i);
+    }
+
+    //Publish the debugging current state info
+    this->state_pub.publish(this->current_state);
+}
+
+
+
+/**
+ *
+ */
 void Optimizer::target_state_decode(const gtddp_drone_msgs::state_data& target_event)
 {
     printf("TARGET: [");
@@ -753,6 +831,9 @@ void Optimizer::init_optimizer(const std_msgs::Empty::ConstPtr& init_msg)
         //Log the initial conditions
         std::cout << "REAL TIME OPERATION ENABLED\n";
         std::string data_str = std::to_string(cur_time) + "," + std::to_string(cur_state(0)) + "," + std::to_string(cur_state(1)) + "," + std::to_string(cur_state(2)) + "\n";
+
+        // TODO: real time pursuit initialization
+
         this->init_data << data_str;
 
         //Set the optimizer as initialized
@@ -767,10 +848,30 @@ void Optimizer::init_optimizer(const std_msgs::Empty::ConstPtr& init_msg)
         y_offset = cur_state(1);
         z_offset = cur_state(2);
 
+        if(!Constants::ddp_selector.compare("pursuit"))
+        {
+            x_offset_2 = cur_state(12);
+            y_offset_2 = cur_state(13);
+            z_offset_2 = cur_state(14);
+        }
+
         double cur_time = (ros::Time::now() - begin_time).toSec();
 
         //Log the initial conditions
-        std::string data_str = std::to_string(cur_time) + "," + std::to_string(cur_state(0)) + "," + std::to_string(cur_state(1)) + "," + std::to_string(cur_state(2)) + "\n";
+        std::string data_str = std::to_string(cur_time) + "," + std::to_string(cur_state(0)) + "," + std::to_string(cur_state(1)) + "," + std::to_string(cur_state(2));
+
+        // Add pursuit to the data string as well if needed
+        if(!Constants::ddp_selector.compare("pursuit"))
+        {
+            data_str += "," + std::to_string(cur_state(12)) + "," +
+                        std::to_string(cur_state(13)) + "," +
+                        std::to_string(cur_state(14)) + "\n";
+        }
+        else
+        {
+            data_str += "\n";
+        }
+
         std::cout << "INITIAL CONDITIONS: " << data_str << std::endl;
         this->init_data << data_str;
 

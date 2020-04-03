@@ -64,6 +64,7 @@ class Optimizer
         void offline_traj_callback(const ros::TimerEvent& time_event);
         void open_loop_traj_callback(const ros::TimerEvent& time_event);
         void state_estimate_callback(const nav_msgs::Odometry::ConstPtr& odom);
+        void state_estimate_callback_2(const nav_msgs::Odometry::ConstPtr& odom);
         void status_callback(const gtddp_drone_msgs::Status::ConstPtr& status);
         void init_optimizer(const std_msgs::Empty::ConstPtr& init_msg);
 
@@ -139,6 +140,11 @@ class Optimizer
         double x_offset;
         double y_offset;
         double z_offset;
+
+        // Offline trajectory offsets for evader
+        double x_offset_2;
+        double y_offset_2;
+        double z_offset_2;
 
         //Real-time optimization
         bool real_time;

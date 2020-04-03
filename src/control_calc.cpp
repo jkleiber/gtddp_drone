@@ -141,6 +141,12 @@ void ControlCalculator::logging_init()
         filepath += "/";
     }
 
+    // If this is a pursuit-evasion situation, then add the pursuit tag
+    if(this->is_pursuit)
+    {
+        filepath += "pursuit_";
+    }
+
     //Get the timestamp
     auto cur_stamp = std::chrono::system_clock::now();
     std::time_t timestamp = std::chrono::system_clock::to_time_t(cur_stamp);
@@ -179,7 +185,6 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
     && this->traj_init
     && !this->drone_traj.x_traj.empty())
     {
-        std::cout << "control\n";
         // Only predict the next set of timesteps once per interval
         if(this->timestep == 0 && this->drone_traj.x_traj.size() >= Constants::num_time_steps)
         {
@@ -336,7 +341,25 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
     }
 
     // Log the commands
-    std::string data_str = std::to_string(cur_time) + "," + std::to_string(ctrl_command.linear.x) + "," + std::to_string(ctrl_command.linear.y) + "," + std::to_string(ctrl_command.linear.z) + "," + std::to_string(ctrl_command.angular.z) + "\n";
+    std::string data_str =  std::to_string(cur_time) + "," +
+                            std::to_string(ctrl_command.linear.x) + "," +
+                            std::to_string(ctrl_command.linear.y) + "," +
+                            std::to_string(ctrl_command.linear.z) + "," +
+                            std::to_string(ctrl_command.angular.z);
+
+    // Add more commands if we are controlling 2 drones
+    if(this->is_pursuit)
+    {
+        data_str += "," + std::to_string(ctrl_command_2.linear.x) + "," +
+                    std::to_string(ctrl_command_2.linear.y) + "," +
+                    std::to_string(ctrl_command_2.linear.z) + "," +
+                    std::to_string(ctrl_command_2.angular.z) + "\n";
+    }
+    else
+    {
+        data_str += "\n";
+    }
+
     this->command_data << data_str;
 }
 

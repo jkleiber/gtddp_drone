@@ -9,7 +9,6 @@
 
 //Define program constants
 #define MAX_BUFFER 10
-//#define SIMULATION 1
 
 
 //ROS Variables
@@ -22,7 +21,7 @@ ros::Publisher traj_pub;
 ros::ServiceClient target_client;
 
 //Subscribers
-ros::Subscriber estimate_sub;
+ros::Subscriber estimate_sub, estimate_sub_2;
 ros::Subscriber go_button;
 
 //Timers
@@ -56,7 +55,8 @@ int main(int argc, char **argv)
     // Update Constants from launch file
     ConstantLoader loader(traj_node);
 
-    //Wait for there to be a subscriber to init before optimizing
+    // Wait for there to be a subscriber to init before optimizing
+    // In pursuit-evasion, we do not need to wait for the init pub, so this will automatically continue in this case
     while(init_pub.getNumSubscribers() == 0 && GENERATE_TRAJ && Constants::ddp_selector.compare("pursuit"))
     {
         sleep(1);
@@ -70,18 +70,31 @@ int main(int argc, char **argv)
     if(!GENERATE_TRAJ)
     {
         //Subscribe to the keyboard's GO button
-        go_button = traj_node.subscribe(traj_node.resolveName("/gtddp_drone/start"), MAX_BUFFER, &Optimizer::init_optimizer, &traj_optimizer);
+        go_button = traj_node.subscribe(traj_node.resolveName("/gtddp_drone/start"), 1, &Optimizer::init_optimizer, &traj_optimizer);
 
         //Subscribe to state estimation and target state topics
         //In simulations, subscribe to ground truth
         if(SIMULATION)
         {
-            estimate_sub = traj_node.subscribe(traj_node.resolveName("ground_truth/state"), MAX_BUFFER, &Optimizer::state_estimate_callback, &traj_optimizer);
+            if(!Constants::ddp_selector.compare("pursuit"))
+            {
+                estimate_sub = traj_node.subscribe(traj_node.resolveName("/drone1/ground_truth/state"), 1, &Optimizer::state_estimate_callback, &traj_optimizer);
+                estimate_sub_2 = traj_node.subscribe(traj_node.resolveName("/drone2/ground_truth/state"), 1, &Optimizer::state_estimate_callback_2, &traj_optimizer);
+            }
+            else
+            {
+                estimate_sub = traj_node.subscribe(traj_node.resolveName("ground_truth/state"), 1, &Optimizer::state_estimate_callback, &traj_optimizer);
+            }
         }
         //Otherwise subscribe to the vicon system
         else
         {
-            estimate_sub = traj_node.subscribe(traj_node.resolveName("/vicon/ardrone1/odom"), MAX_BUFFER, &Optimizer::state_estimate_callback, &traj_optimizer);
+            estimate_sub = traj_node.subscribe(traj_node.resolveName("/vicon/ardrone1/odom"), 1, &Optimizer::state_estimate_callback, &traj_optimizer);
+
+            if(!Constants::ddp_selector.compare("pursuit"))
+            {
+                estimate_sub_2 = traj_node.subscribe(traj_node.resolveName("/vicon/ardrone2/odom"), 1, &Optimizer::state_estimate_callback_2, &traj_optimizer);
+            }
         }
 
         //Set up timer for recalculations
