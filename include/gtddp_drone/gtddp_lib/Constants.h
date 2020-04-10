@@ -5,6 +5,7 @@
 
 #include <ros/ros.h>
 #include <string.h>
+#include <eigen3/Eigen/Dense>
 
 namespace Constants {
 
@@ -30,31 +31,15 @@ namespace Constants {
 
     extern double du_converge_dist;
     extern double dv_converge_dist;
-    extern double u0_upper, u0_lower;
-    extern double u1_upper, u1_lower;
-    extern double u2_upper, u2_lower;
-    extern double u3_upper, u3_lower;
-    extern double v0_upper, v0_lower;
-    extern double v1_upper, v1_lower;
-    extern double v2_upper, v2_lower;
-    extern double v3_upper, v3_lower;
+    extern Eigen::VectorXd u_upper, u_lower, v_upper, v_lower;
 
     // Initial conditions
-    extern double u0_hover;
-    extern double u1_hover;
-    extern double u2_hover;
-    extern double u3_hover;
-    extern double v0_hover;
-    extern double v1_hover;
-    extern double v2_hover;
-    extern double v3_hover;
+    extern Eigen::VectorXd u_hover, v_hover;
 
     // Cost function parameters
-    extern double Ru;
-    extern double Rv;
-    extern double Q1;
-    extern double Q2;
-    extern double Q3;
+    extern Eigen::MatrixXd Ru;
+    extern Eigen::MatrixXd Rv;
+    extern Eigen::MatrixXd Q;
     extern double Qx_multiplier;
 
     // Pursuit constraint toggle

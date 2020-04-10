@@ -71,172 +71,79 @@
     <!-- Constrain the pursuit controls? -->
     <arg name="constrained" default="false" />
 
+
+
+    <!-- ************************************** -->
     <!-- ROS Parameters -->
+
+
+
+    <!-- DDP Type Selector -->
     <param name="ddp_select" value="$(arg ddp_select)"/>
 
-    <!-- GT-DDP -->
-    <group ns="gtddp" if="$(eval ddp_select == 'gtddp')">
-        <param name="num_states" value="$(arg num_states)"/>
-        <param name="num_controls_u" value="$(arg num_controls_u)"/>
-        <param name="num_controls_v" value="$(arg num_controls_v)"/>
-        <param name="num_time_steps" value="$(arg num_time_steps)"/>
-        <param name="num_iterations" value="$(arg num_iterations)"/>
-        <param name="num_long_legs" value="$(arg num_long_legs)"/>
-        <param name="short_iterations" value="$(arg short_iterations)"/>
-        <param name="dt" value="$(arg dt)"/>
-        <param name="learning_rate" value="$(arg learning_rate)"/>
-        <param name="mass" value="$(arg mass)"/>
-        <param name="length" value="$(arg length)"/>
-        <param name="Ixx" value="$(arg Ixx)"/>
-        <param name="Iyy" value="$(arg Iyy)"/>
-        <param name="Izz" value="$(arg Izz)"/>
+    <!-- GT-DDP Hyperparameters -->
+    <param name="num_states" value="$(arg num_states)"/>
+    <param name="num_controls_u" value="$(arg num_controls_u)"/>
+    <param name="num_controls_v" value="$(arg num_controls_v)"/>
+    <param name="num_time_steps" value="$(arg num_time_steps)"/>
+    <param name="num_iterations" value="$(arg num_iterations)"/>
+    <param name="num_long_legs" value="$(arg num_long_legs)"/>
+    <param name="short_iterations" value="$(arg short_iterations)"/>
+    <param name="dt" value="$(arg dt)"/>
+    <param name="learning_rate" value="$(arg learning_rate)"/>
 
-        <!-- Initial conditions u_traj -->
-        <param name="u0_hover" value="$(arg u0_hover)"/>
-        <param name="u1_hover" value="$(arg u1_hover)"/>
-        <param name="u2_hover" value="$(arg u2_hover)"/>
-        <param name="u3_hover" value="$(arg u3_hover)"/>
+    <!-- Drone parameters -->
+    <param name="mass" value="$(arg mass)"/>
+    <param name="length" value="$(arg length)"/>
+    <param name="Ixx" value="$(arg Ixx)"/>
+    <param name="Iyy" value="$(arg Iyy)"/>
+    <param name="Izz" value="$(arg Izz)"/>
 
-        <!-- Initial conditions v_traj -->
-        <param name="v0_hover" value="$(arg v0_hover)"/>
-        <param name="v1_hover" value="$(arg v1_hover)"/>
-        <param name="v2_hover" value="$(arg v2_hover)"/>
-        <param name="v3_hover" value="$(arg v3_hover)"/>
+    <!-- Convergence Hyperparameters -->
+    <param name="dist_converge_u" value="$(arg dist_converge_u)"/>
+    <param name="dist_converge_v" value="$(arg dist_converge_v)"/>
 
-        <!-- Cost Function parameters-->
-        <param name="Ru" value="$(arg Ru)" />
-        <param name="Rv" value="$(arg Rv)" />
-        <param name="Q1" value="$(arg Q1)" />
-        <param name="Q2" value="$(arg Q2)" />
-        <param name="Q3" value="$(arg Q3)" />
-        <param name="Qx_multiplier" value="$(arg Qx_multiplier)" />
-    </group>
+    <!-- Constraints for du -->
+    <param name="u0_upper" value="$(arg u0_upper)"/>
+    <param name="u1_upper" value="$(arg u1_upper)"/>
+    <param name="u2_upper" value="$(arg u2_upper)"/>
+    <param name="u3_upper" value="$(arg u3_upper)"/>
+    <param name="u0_lower" value="$(arg u0_lower)"/>
+    <param name="u1_lower" value="$(arg u1_lower)"/>
+    <param name="u2_lower" value="$(arg u2_lower)"/>
+    <param name="u3_lower" value="$(arg u3_lower)"/>
 
-    <!-- Control Constrained GT-DDP -->
-    <group ns="ccddp" if="$(eval ddp_select == 'ccddp')">
-        <param name="num_states" value="$(arg num_states)"/>
-        <param name="num_controls_u" value="$(arg num_controls_u)"/>
-        <param name="num_controls_v" value="$(arg num_controls_v)"/>
-        <param name="num_time_steps" value="$(arg num_time_steps)"/>
-        <param name="num_iterations" value="$(arg num_iterations)"/>
-        <param name="num_long_legs" value="$(arg num_long_legs)"/>
-        <param name="short_iterations" value="$(arg short_iterations)"/>
-        <param name="dt" value="$(arg dt)"/>
-        <param name="learning_rate" value="$(arg learning_rate)"/>
-        <param name="mass" value="$(arg mass)"/>
-        <param name="length" value="$(arg length)"/>
-        <param name="Ixx" value="$(arg Ixx)"/>
-        <param name="Iyy" value="$(arg Iyy)"/>
-        <param name="Izz" value="$(arg Izz)"/>
+    <!-- Constraints for dv -->
+    <param name="v0_upper" value="$(arg v0_upper)"/>
+    <param name="v1_upper" value="$(arg v1_upper)"/>
+    <param name="v2_upper" value="$(arg v2_upper)"/>
+    <param name="v3_upper" value="$(arg v3_upper)"/>
+    <param name="v0_lower" value="$(arg v0_lower)"/>
+    <param name="v1_lower" value="$(arg v1_lower)"/>
+    <param name="v2_lower" value="$(arg v2_lower)"/>
+    <param name="v3_lower" value="$(arg v3_lower)"/>
 
-        <!-- Convergence Hyperparameters -->
-        <param name="dist_converge_u" value="$(arg dist_converge_u)"/>
-        <param name="dist_converge_v" value="$(arg dist_converge_v)"/>
+    <!-- Initial conditions u_traj -->
+    <param name="u0_hover" value="$(arg u0_hover)"/>
+    <param name="u1_hover" value="$(arg u1_hover)"/>
+    <param name="u2_hover" value="$(arg u2_hover)"/>
+    <param name="u3_hover" value="$(arg u3_hover)"/>
 
-        <!-- Constraints for du -->
-        <param name="u0_upper" value="$(arg u0_upper)"/>
-        <param name="u1_upper" value="$(arg u1_upper)"/>
-        <param name="u2_upper" value="$(arg u2_upper)"/>
-        <param name="u3_upper" value="$(arg u3_upper)"/>
-        <param name="u0_lower" value="$(arg u0_lower)"/>
-        <param name="u1_lower" value="$(arg u1_lower)"/>
-        <param name="u2_lower" value="$(arg u2_lower)"/>
-        <param name="u3_lower" value="$(arg u3_lower)"/>
+    <!-- Initial conditions v_traj -->
+    <param name="v0_hover" value="$(arg v0_hover)"/>
+    <param name="v1_hover" value="$(arg v1_hover)"/>
+    <param name="v2_hover" value="$(arg v2_hover)"/>
+    <param name="v3_hover" value="$(arg v3_hover)"/>
 
-        <!-- Constraints for dv -->
-        <param name="v0_upper" value="$(arg v0_upper)"/>
-        <param name="v1_upper" value="$(arg v1_upper)"/>
-        <param name="v2_upper" value="$(arg v2_upper)"/>
-        <param name="v3_upper" value="$(arg v3_upper)"/>
-        <param name="v0_lower" value="$(arg v0_lower)"/>
-        <param name="v1_lower" value="$(arg v1_lower)"/>
-        <param name="v2_lower" value="$(arg v2_lower)"/>
-        <param name="v3_lower" value="$(arg v3_lower)"/>
+    <!-- Cost Function parameters-->
+    <param name="Ru" value="$(arg Ru)" />
+    <param name="Rv" value="$(arg Rv)" />
+    <param name="Q1" value="$(arg Q1)" />
+    <param name="Q2" value="$(arg Q2)" />
+    <param name="Q3" value="$(arg Q3)" />
+    <param name="Qx_multiplier" value="$(arg Qx_multiplier)" />
 
-        <!-- Initial conditions u_traj -->
-        <param name="u0_hover" value="$(arg u0_hover)"/>
-        <param name="u1_hover" value="$(arg u1_hover)"/>
-        <param name="u2_hover" value="$(arg u2_hover)"/>
-        <param name="u3_hover" value="$(arg u3_hover)"/>
-
-        <!-- Initial conditions v_traj -->
-        <param name="v0_hover" value="$(arg v0_hover)"/>
-        <param name="v1_hover" value="$(arg v1_hover)"/>
-        <param name="v2_hover" value="$(arg v2_hover)"/>
-        <param name="v3_hover" value="$(arg v3_hover)"/>
-
-        <!-- Cost Function parameters-->
-        <param name="Ru" value="$(arg Ru)" />
-        <param name="Rv" value="$(arg Rv)" />
-        <param name="Q1" value="$(arg Q1)" />
-        <param name="Q2" value="$(arg Q2)" />
-        <param name="Q3" value="$(arg Q3)" />
-        <param name="Qx_multiplier" value="$(arg Qx_multiplier)" />
-    </group>
-
-    <!-- Pursuit GT-DDP -->
-    <group ns="pursuit" if="$(eval ddp_select == 'pursuit')">
-        <param name="num_states" value="$(arg num_states)"/>
-        <param name="num_controls_u" value="$(arg num_controls_u)"/>
-        <param name="num_controls_v" value="$(arg num_controls_v)"/>
-        <param name="num_time_steps" value="$(arg num_time_steps)"/>
-        <param name="num_iterations" value="$(arg num_iterations)"/>
-        <param name="num_long_legs" value="$(arg num_long_legs)"/>
-        <param name="short_iterations" value="$(arg short_iterations)"/>
-        <param name="dt" value="$(arg dt)"/>
-        <param name="learning_rate" value="$(arg learning_rate)"/>
-        <param name="mass" value="$(arg mass)"/>
-        <param name="length" value="$(arg length)"/>
-        <param name="Ixx" value="$(arg Ixx)"/>
-        <param name="Iyy" value="$(arg Iyy)"/>
-        <param name="Izz" value="$(arg Izz)"/>
-
-        <!-- Convergence Hyperparameters -->
-        <param name="dist_converge_u" value="$(arg dist_converge_u)"/>
-        <param name="dist_converge_v" value="$(arg dist_converge_v)"/>
-
-        <!-- Constraints for du -->
-        <param name="u0_upper" value="$(arg u0_upper)"/>
-        <param name="u1_upper" value="$(arg u1_upper)"/>
-        <param name="u2_upper" value="$(arg u2_upper)"/>
-        <param name="u3_upper" value="$(arg u3_upper)"/>
-        <param name="u0_lower" value="$(arg u0_lower)"/>
-        <param name="u1_lower" value="$(arg u1_lower)"/>
-        <param name="u2_lower" value="$(arg u2_lower)"/>
-        <param name="u3_lower" value="$(arg u3_lower)"/>
-
-        <!-- Constraints for dv -->
-        <param name="v0_upper" value="$(arg v0_upper)"/>
-        <param name="v1_upper" value="$(arg v1_upper)"/>
-        <param name="v2_upper" value="$(arg v2_upper)"/>
-        <param name="v3_upper" value="$(arg v3_upper)"/>
-        <param name="v0_lower" value="$(arg v0_lower)"/>
-        <param name="v1_lower" value="$(arg v1_lower)"/>
-        <param name="v2_lower" value="$(arg v2_lower)"/>
-        <param name="v3_lower" value="$(arg v3_lower)"/>
-
-        <!-- Initial conditions u_traj -->
-        <param name="u0_hover" value="$(arg u0_hover)"/>
-        <param name="u1_hover" value="$(arg u1_hover)"/>
-        <param name="u2_hover" value="$(arg u2_hover)"/>
-        <param name="u3_hover" value="$(arg u3_hover)"/>
-
-        <!-- Initial conditions v_traj -->
-        <param name="v0_hover" value="$(arg v0_hover)"/>
-        <param name="v1_hover" value="$(arg v1_hover)"/>
-        <param name="v2_hover" value="$(arg v2_hover)"/>
-        <param name="v3_hover" value="$(arg v3_hover)"/>
-
-        <!-- Cost Function parameters-->
-        <param name="Ru" value="$(arg Ru)" />
-        <param name="Rv" value="$(arg Rv)" />
-        <param name="Q1" value="$(arg Q1)" />
-        <param name="Q2" value="$(arg Q2)" />
-        <param name="Q3" value="$(arg Q3)" />
-        <param name="Qx_multiplier" value="$(arg Qx_multiplier)" />
-
-        <!-- Constrain the pursuit's controls? -->
-        <param name="constrained" value="$(arg constrained)" />
-    </group>
+    <!-- Constrain the pursuit's controls? -->
+    <param name="constrained" value="$(arg constrained)" />
 
 </launch>

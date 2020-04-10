@@ -1,0 +1,51 @@
+# General runtime parameters
+is_sim: 1
+gtddp_optimize_node/is_gen: 1
+target_timestep: 0.5
+gtddp_optimize_node/gen_legs: 1
+
+# DDP Type
+ddp_select: "pursuit"
+
+# DDP Hyperparameters
+num_time_steps: 2001
+num_iterations: 100
+num_long_legs: 30
+short_iterations: 15
+dt: 0.001
+learning_rate: 0.0125
+
+# AR.Drone System Parameters
+num_states: 24
+num_controls_u: 4
+num_controls_v: 4
+mass: 0.436
+length: 0.19
+Ixx: 0.0045
+Iyy: 0.0051
+Izz: 0.0095
+
+# Convergence Hyperparameters
+dist_converge_u: 1
+dist_converge_v: 1
+
+# Constraints for du
+u_upper: [8, 7, 1, 1]
+u_lower: [4, -7, -1, -1]
+
+# Constraints for dv
+v_upper: [8, 7, 1, 1]
+v_lower: [4, -7, -1, -1]
+
+# Initial conditions for u_traj
+u_hover: [5, 0, 0, 0]
+v_hover: [5, 0, 0, 0]
+
+# Cost Function Parameters
+Ru: [0.1, 0.1, 0.1, 0.1]
+Rv: [3, 3, 1, 1]
+Q: [1000, 1000, 1000, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+Qx_multiplier: 0.0
+
+# Constrain the pursuit controls?
+constrained: true

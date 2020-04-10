@@ -79,7 +79,8 @@ Optimizer::Optimizer(ros::Publisher& traj_publisher,
         // If this is pursuit, add the second drone's start position
         if(!Constants::ddp_selector.compare("pursuit"))
         {
-            this->cur_state(12) = 1;
+            this->cur_state(12) = 0.7;
+            this->cur_state(13) = 0.7;
         }
 
         // Send the initial conditions (all 0) to the target trajectory node

@@ -1,0 +1,28 @@
+# General runtime parameters
+gtddp_control_node/is_simulation: 1
+gtddp_optimize_node/is_simulation: 1
+gtddp_optimize_node/is_real_time: 0
+gtddp_optimize_node/is_gen: 0
+gtddp_target_node/target_dt: 0.5
+
+
+# DDP Type
+ddp_select: "ccddp"
+
+# DDP Hyperparameters
+num_time_steps: 501
+num_iterations: 150
+num_long_legs: 5
+short_iterations: 100
+dt: 0.001
+learning_rate: 0.04
+
+# AR.Drone System Parameters
+num_states: 12
+num_controls_u: 4
+num_controls_v: 4
+mass: 0.436
+length: 0.19
+Ixx: 0.0045
+Iyy: 0.0051
+Izz: 0.0095

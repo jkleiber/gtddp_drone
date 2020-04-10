@@ -184,12 +184,12 @@ void CC_DDP_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
 
     // Establish boundaries
     // du
-    upper_u << u0_upper, u1_upper, u2_upper, u3_upper;
-    lower_u << u0_lower, u1_lower, u2_lower, u3_lower;
+    upper_u = Constants::u_upper;
+    lower_u = Constants::u_lower;
 
     // dv
-    upper_v << v0_upper, v1_upper, v2_upper, v3_upper;
-    lower_v << v0_lower, v1_lower, v2_lower, v3_lower;
+    upper_v = Constants::v_upper;
+    lower_v = Constants::v_lower;
 
 
     // Update the controls using a QP solver

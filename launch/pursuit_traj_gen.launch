@@ -3,13 +3,11 @@
 
     <!-- Constrained pursuit -->
     <group if="$(arg pursuit_constrained)" >
-        <include file="$(find gtddp_drone)/launch/constants/pursuit_constants_cc.launch">
-        </include>
+        <rosparam file="$(find gtddp_drone)/launch/constants/pursuit_cc_params.yaml" command="load"/>
     </group>
     <!-- Unconstrained pursuit -->
     <group unless="$(arg pursuit_constrained)">
-        <include file="$(find gtddp_drone)/launch/constants/pursuit_constants.launch">
-        </include>
+        <rosparam file="$(find gtddp_drone)/launch/constants/pursuit_gen_params.yaml" command="load"/>
     </group>
 
     <!-- GT-DDP trajectory generation -->

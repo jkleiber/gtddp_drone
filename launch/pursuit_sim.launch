@@ -3,8 +3,7 @@
     <arg name="real_time" value="0"/>
     <arg name="target_timestep" value="1.0"/>
 
-    <include file="$(find gtddp_drone)/launch/constants/pursuit_constants_sim.launch">
-    </include>
+    <rosparam file="$(find gtddp_drone)/launch/constants/pursuit_sim_constants.yaml" command="load" />
 
 
     <!-- GT-DDP nodes -->

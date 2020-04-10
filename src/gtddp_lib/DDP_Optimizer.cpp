@@ -120,13 +120,14 @@ void DDP_Optimizer::initialize_trajectories(vector<VectorXd>& x_traj, vector<Vec
         x_traj[i] = VectorXd::Zero(num_states);
     }
 
-    // TODO: make initial conditions more robust by allowing a vector as input instead of hardcoding for a 4-space vector
     for (int i = 0; i < num_time_steps-1; i++) {
-        u_traj[i] = VectorXd::Zero(num_controls_u);
+        // u_traj[i] = VectorXd::Zero(num_controls_u);
+        u_traj[i] = Constants::u_hover;
     }
 
 	for (int i = 0; i < num_time_steps - 1; i++) {
-		v_traj[i] = VectorXd::Zero(num_controls_v);
+		// v_traj[i] = VectorXd::Zero(num_controls_v);
+        v_traj[i] = Constants::v_hover;
 	}
 
     for (int i = 0; i < num_time_steps-1; i++) {

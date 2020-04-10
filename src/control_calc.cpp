@@ -43,6 +43,7 @@ ControlCalculator::ControlCalculator(ros::Publisher ctrl_sig_pub, int sim_status
     this->cur_state_init = false;
     this->cur_state_init_2 = false;
     this->traj_init = false;
+    this->is_pursuit = false;
 
     //Set simulation status
     this->is_sim = sim_status;
@@ -58,7 +59,6 @@ ControlCalculator::ControlCalculator(ros::Publisher ctrl_sig_pub, int sim_status
 
     // Assume Quadrotor controller
     this->drone = new Quadrotor();
-    this->is_pursuit = false;
 }
 
 

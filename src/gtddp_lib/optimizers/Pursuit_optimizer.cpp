@@ -13,8 +13,8 @@ Pursuit_optimizer::Pursuit_optimizer(Cost_Function* c)
     Rv = c->get_control_cost_v();
     Q_x = c->get_state_cost();
     Q_f = c->get_final_cost();
-    u_hover = c->get_hover_control_u();
-    v_hover = c->get_hover_control_v();
+    u_hover = Constants::u_hover;
+    v_hover = Constants::v_hover;
 
 //  ***** DO NOT EDIT *****
 //  Initialize running cost and derivatives
@@ -198,12 +198,12 @@ void Pursuit_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
 
     // Establish boundaries
     // du
-    upper_u << u0_upper, u1_upper, u2_upper, u3_upper;
-    lower_u << u0_lower, u1_lower, u2_lower, u3_lower;
+    upper_u = Constants::u_upper;
+    lower_u = Constants::u_lower;
 
     // dv
-    upper_v << v0_upper, v1_upper, v2_upper, v3_upper;
-    lower_v << v0_lower, v1_lower, v2_lower, v3_lower;
+    upper_v = Constants::v_upper;
+    lower_v = Constants::v_lower;
 
     // Update the controls using a QP solver
     for (int i = 0; i < num_time_steps-1; i++)

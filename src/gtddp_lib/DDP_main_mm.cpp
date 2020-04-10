@@ -110,6 +110,7 @@ DDP_main_mm::~DDP_main_mm() {}
 
 void DDP_main_mm::update(Eigen::VectorXd x, Eigen::VectorXd x_t)
 {
+
     if(!Constants::ddp_selector.compare("pursuit"))
     {
         cost = new PursuitCost();
