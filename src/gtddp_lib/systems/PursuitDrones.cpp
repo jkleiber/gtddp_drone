@@ -144,8 +144,8 @@ void PursuitDrones::feedforward_controls(VectorXd current_state, DroneTrajectory
     // main integration loop : propagation over time step
     for (int i = 0; i < Constants::num_time_steps - 1; i++) {
         // update current inputs
-        ui_ = drone_traj.u_traj[i] + drone_traj.Ku_traj[i] * (x - drone_traj.x_traj[i]);
-        vi_ = drone_traj.v_traj[i] + drone_traj.Kv_traj[i] * (x - drone_traj.x_traj[i]);
+        ui_ = drone_traj.u_traj[i] + drone_traj.Ku_traj[i] * (drone_traj.x_traj[i] - x);
+        vi_ = drone_traj.v_traj[i] + drone_traj.Kv_traj[i] * (drone_traj.x_traj[i] - x);
 
         stepper.do_step(std::bind(&::PursuitDrones::dynamics_mm, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), x, t, dt);
         t += dt;

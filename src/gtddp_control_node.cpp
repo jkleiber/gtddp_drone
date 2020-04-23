@@ -57,7 +57,7 @@ int main(int argc, char **argv)
     }
     else
     {
-        update_timer = control_node.createTimer(ros::Duration(0.001), &ControlCalculator::recalculate_control_callback, &control_calc, false);
+        update_timer = control_node.createTimer(ros::Duration(0.0009), &ControlCalculator::recalculate_control_callback, &control_calc, false);
     }
 
     control_calc.set_timer(update_timer);

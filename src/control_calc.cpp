@@ -188,6 +188,7 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         // Only predict the next set of timesteps once per interval
         if(this->timestep == 0 && this->drone_traj.x_traj.size() >= Constants::num_time_steps)
         {
+            // printf("%f <- %f with ctrl: %f\n", this->drone_traj.x_traj.front()(2), this->cur_state(2), this->drone_traj.x_traj.front()(5));
             //Forward propagate controls to find the correct output based on the starting position
             //This serves to get the drone back on track when it strays due to hover, wind, etc.
             drone->feedforward_controls(this->cur_state, this->drone_traj);
@@ -209,6 +210,8 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         //     printf("%f ", this->drone_traj.x_traj.front()(i));
         // }
         // printf("}}\n");
+
+
 
         /* Form the control message */
         // Simulation does PID for us, so clamp the output

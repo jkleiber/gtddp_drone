@@ -30,20 +30,20 @@ dist_converge_u: 1
 dist_converge_v: 1
 
 # Constraints for du
-u_upper: [8, 7, 1, 1]
-u_lower: [4, -7, -1, -1]
+u_upper: [6, 1, 1, 1]
+u_lower: [3.5, -1, -1, -1]
 
 # Constraints for dv
-v_upper: [8, 7, 1, 1]
-v_lower: [4, -7, -1, -1]
+v_upper: [4.5, 1, 1, 1]
+v_lower: [2.0, -1, -1, -1]
 
 # Initial conditions for u_traj
-u_hover: [5, 0, 0, 0]
-v_hover: [5, 0, 0, 0]
+u_hover: [4.3, 0, 0, 0]
+v_hover: [4.3, 0, 0, 0]
 
 # Cost Function Parameters
-Ru: [0.1, 0.1, 0.1, 0.1]
-Rv: [3, 3, 1, 1]
+Ru: [0.09, 0.1, 0.1, 0.1]
+Rv: [5, 5, 1, 1]
 Q: [1000, 1000, 1000, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 Qx_multiplier: 0.0
 
