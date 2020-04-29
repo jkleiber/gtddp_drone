@@ -80,7 +80,6 @@ void GT_DDP_optimizer::backpropagate_mm_rk(const vector<VectorXd>& x_traj,
     int end = num_time_steps - 1;
     MatrixXd V_xx_end = Q_f;
     VectorXd V_x_end = Q_f * (x_traj[end] - x_target);
-    std::cout << V_x_end.transpose() << std::endl << std::endl;
     double V_end   = 0.5 * ((x_traj[end] - x_target).transpose() * Q_f * (x_traj[end] - x_target))(0,0);
 
     //packaging into V_pkg, with final condition V[end]
@@ -126,8 +125,6 @@ void GT_DDP_optimizer::backpropagate_mm_rk(const vector<VectorXd>& x_traj,
         Kv_[i]=Kvi_;
 
     } //back propagating loop
-
-    std::cout << Qu << std::endl << std::endl;
 }//back_propagate();
 
 

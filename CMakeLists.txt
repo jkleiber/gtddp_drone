@@ -148,6 +148,7 @@ add_library(GTDDP_LIB
   src/gtddp_lib/optimizers/Pursuit_optimizer.cpp
   src/gtddp_lib/systems/PursuitDrones.cpp
   src/gtddp_lib/systems/Quadrotor.cpp
+  src/gtddp_lib/systems/CartPole.cpp
 )
 
 

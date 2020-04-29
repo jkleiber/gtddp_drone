@@ -1,0 +1,17 @@
+<launch>
+    <arg name="constrained" value="false"/>
+
+    <!-- Constrained -->
+    <group if="$(arg constrained)" >
+        <rosparam file="$(find gtddp_drone)/launch/constants/cart_pole_cc_params.yaml" command="load"/>
+    </group>
+    <!-- Unconstrained -->
+    <group unless="$(arg constrained)">
+        <rosparam file="$(find gtddp_drone)/launch/constants/cart_pole_gen_params.yaml" command="load"/>
+    </group>
+
+    <!-- GT-DDP trajectory generation -->
+    <node name="gtddp_optimize_node" pkg="gtddp_drone" type="gtddp_optimize_node" output="screen" required="true">
+    </node>
+
+</launch>

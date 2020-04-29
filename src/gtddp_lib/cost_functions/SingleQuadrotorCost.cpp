@@ -30,38 +30,11 @@ void SingleQuadrotorCost::initialize_cost_matrix(){
      *
      * Intuition for Q_x: Scale Q_f by a larger amount to get to the target faster, smaller Q_x is more stable though
      */
-    Ru = MatrixXd::Identity(num_controls_u, num_controls_u); //0.015 *
-    Rv = 2.0 * MatrixXd::Identity(num_controls_v, num_controls_v);
-    Q_x = MatrixXd::Identity(num_states, num_states);
-    Q_f = MatrixXd::Identity(num_states, num_states);
 
     // Set the costs from the paramters file
     Ru = Constants::Ru;
     Rv = Constants::Rv;
     Q_f = Constants::Q;
-
-    // //Set Ru values individually
-    // Ru(0, 0) = 0.7;  //thrust
-    // Ru(1, 1) = 0.5;   //u1 moment //0.04 worked pretty well in case this breaks
-    // Ru(2, 2) = 0.5;   //u2 moment
-    // Ru(3, 3) = 0.5;   //u3 moment
-
-    // //Quadrotor Cost
-    // Q_f(0,0) = 1000000; //x
-    // Q_f(1,1) = 1000000; //y
-    // Q_f(2,2) = 1000000; //z
-    // //velocity states
-    // Q_f(3,3) = 10000;   //x dot
-    // Q_f(4,4) = 10000;   //y dot
-    // Q_f(5,5) = 10000;   //z dot
-    // //angular states
-    // Q_f(6,6) = 10000;  //roll
-    // Q_f(7,7) = 10000;  //pitch
-    // Q_f(8,8) = 10000;  //yaw
-    // //angular velocity states
-    // Q_f(9,9) = 1000;    //roll rate
-    // Q_f(10,10) = 1000;  //pitch rate
-    // Q_f(11,11) = 10000; //yaw rate
 
     Q_x = Constants::Qx_multiplier*Q_f;
 

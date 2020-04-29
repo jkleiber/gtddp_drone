@@ -38,6 +38,7 @@ namespace Constants {
     // System Constant doubles
     double m(0.436);
     double length(0.19);
+    double M(10);
     double Ixx(0.0045);
     double Iyy(0.0051);
     double Izz(0.0095);
@@ -91,6 +92,7 @@ ConstantLoader::ConstantLoader(ros::NodeHandle nh)
 
     // Update the system dynamics constants
     Constants::m = nh.param<double>("/mass", 0.436);
+    Constants::M = nh.param<double>("/cart_mass", 10.0);
     Constants::length = nh.param<double>("/length", 0.19);
     Constants::Ixx = nh.param<double>("/Ixx", 0.0045);
     Constants::Iyy = nh.param<double>("/Iyy", 0.0051);
@@ -100,8 +102,9 @@ ConstantLoader::ConstantLoader(ros::NodeHandle nh)
     Constants::du_converge_dist = nh.param("/du_converge_dist", 2.0);
     Constants::dv_converge_dist = nh.param("/dv_converge_dist", 2.0);
 
-    // Temporary vector for param loading
+    // Temporaries
     std::vector<double> tmp_vector;
+    int Q_dim;
 
     // Update control constraint limits
     // du
@@ -216,15 +219,24 @@ ConstantLoader::ConstantLoader(ros::NodeHandle nh)
         }
     }
 
-    // Q
-    Constants::Q = Eigen::MatrixXd::Zero(12,12);
+    // Find dimension of Q
+    if (!Constants::ddp_selector.compare("pursuit"))
+    {
+        Q_dim = Constants::num_states / 2;
+    }
+    else {
+        Q_dim = Constants::num_states;
+    }
+
+    // Q matrix
+    Constants::Q = Eigen::MatrixXd::Zero(Q_dim, Q_dim);
     if(!nh.getParam("/Q", tmp_vector))
     {
         ROS_WARN("Warning: unable to load Ru");
     }
     else
     {
-        for(int i = 0; i < 12; ++i)
+        for(int i = 0; i < Q_dim; ++i)
         {
             Constants::Q(i, i) = tmp_vector[i];
         }

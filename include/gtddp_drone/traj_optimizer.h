@@ -61,6 +61,7 @@ class Optimizer
         //Callback functions
         void traj_update_callback(const ros::TimerEvent& time_event);
         void pursuit_traj_callback(const ros::TimerEvent& time_event);
+        void cart_pole_traj_callback(const ros::TimerEvent& time_event);
         void offline_traj_callback(const ros::TimerEvent& time_event);
         void open_loop_traj_callback(const ros::TimerEvent& time_event);
         void state_estimate_callback(const nav_msgs::Odometry::ConstPtr& odom);

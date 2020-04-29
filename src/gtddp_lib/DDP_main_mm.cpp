@@ -19,6 +19,10 @@ DDP_main_mm::DDP_main_mm()
     {
         drone = new PursuitDrones();
     }
+    else if(!Constants::ddp_selector.compare("ccddp_cart_pole") || !Constants::ddp_selector.compare("gtddp_cart_pole"))
+    {
+        drone = new CartPole();
+    }
     else
     {
         drone = new Quadrotor();
@@ -51,6 +55,10 @@ DDP_main_mm::DDP_main_mm(Eigen::VectorXd x, Eigen::VectorXd x_t)
     {
         drone = new PursuitDrones();
     }
+    else if(!Constants::ddp_selector.compare("ccddp_cart_pole") || !Constants::ddp_selector.compare("gtddp_cart_pole"))
+    {
+        drone = new CartPole();
+    }
     else
     {
         drone = new Quadrotor();
@@ -60,13 +68,18 @@ DDP_main_mm::DDP_main_mm(Eigen::VectorXd x, Eigen::VectorXd x_t)
     {
         cost = new PursuitCost();
     }
+    else if(!Constants::ddp_selector.compare("ccddp_cart_pole") || !Constants::ddp_selector.compare("gtddp_cart_pole"))
+    {
+        // If needed, make a cart pole specific cost
+        cost = new SingleQuadrotorCost(x_t);
+    }
     else
     {
         cost = new SingleQuadrotorCost(x_t);
     }
 
     // If the DDP is constrained, use the CC_DDP_optimizer
-    if(!Constants::ddp_selector.compare("ccddp"))
+    if(!Constants::ddp_selector.compare("ccddp") || !Constants::ddp_selector.compare("ccddp_cart_pole"))
     {
         ddp = new CC_DDP_optimizer(cost);
     }
@@ -115,16 +128,22 @@ void DDP_main_mm::update(Eigen::VectorXd x, Eigen::VectorXd x_t)
     {
         cost = new PursuitCost();
     }
+    else if(!Constants::ddp_selector.compare("ccddp_cart_pole") || !Constants::ddp_selector.compare("gtddp_cart_pole"))
+    {
+        // If needed, make a cart pole specific cost
+        cost = new SingleQuadrotorCost(x_t);
+    }
     else
     {
         cost = new SingleQuadrotorCost(x_t);
     }
 
     // If the DDP is constrained, use the CC_DDP_optimizer
-    if(!Constants::ddp_selector.compare("ccddp"))
+    if(!Constants::ddp_selector.compare("ccddp") || !Constants::ddp_selector.compare("ccddp_cart_pole"))
     {
         ddp = new CC_DDP_optimizer(cost);
     }
+    // If this is a pursuit scenario, use the pursuit optimizer
     else if(!Constants::ddp_selector.compare("pursuit"))
     {
         ddp = new Pursuit_optimizer(cost);
@@ -161,7 +180,7 @@ void DDP_main_mm::ddp_loop()
     {
         // Play the controls on the real dynamics to generate new x_traj, u_traj, v_traj //
         drone->forward_propagate_mm(x_traj, u_traj, v_traj);
-        //this->print_trajectory(this->get_x_traj());
+        // this->print_trajectory(this->get_x_traj());
 
         // Output the cost
         trajectory_cost_mm[i] = cost->calculate_cost_mm(x_traj, u_traj, v_traj);

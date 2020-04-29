@@ -82,6 +82,11 @@ Optimizer::Optimizer(ros::Publisher& traj_publisher,
             this->cur_state(12) = 0.7;
             this->cur_state(13) = 0.7;
         }
+        else if(!Constants::ddp_selector.compare("ccddp_cart_pole") || !Constants::ddp_selector.compare("gtddp_cart_pole"))
+        {
+            this->cur_state(0) = 1;
+            this->cur_state(2) = 0.5;
+        }
 
         // Send the initial conditions (all 0) to the target trajectory node
         // NOTE: In pursuit mode we don't care about the init pub, so this is fine the way it is
@@ -340,6 +345,41 @@ void Optimizer::traj_update_callback(const ros::TimerEvent& time_event)
 
 void Optimizer::pursuit_traj_callback(const ros::TimerEvent& time_event)
 {
+    if(this->generation_mode && this->num_legs < this->max_num_legs)
+    {
+        printf("LEG #%d\n", num_legs);
+
+        //Update the DDP start and goals, then run the DDP loop to optimize the new trajectory
+        ddpmain.update(this->cur_state, this->goal_state);
+
+        //Optimize trajectory
+        ddpmain.ddp_loop();
+
+        //Update the last goal state to be the last state in the generated trajectory
+        this->last_goal_state = ddpmain.get_x_traj().back();
+
+        // Update the current state to be the last state
+        this->cur_state = this->last_goal_state;
+
+        // Save offline trajectory
+        this->write_traj_to_files(ddpmain.get_x_traj(), ddpmain.get_u_traj(), ddpmain.get_v_traj(), ddpmain.get_Ku(), ddpmain.get_Kv());
+
+        //Increment the leg counter
+        this->num_legs++;
+    }
+    // End the trajectory generation program once the trajectory is generated
+    else if(this->generation_mode)
+    {
+        exit(0);
+    }
+}
+
+
+void Optimizer::cart_pole_traj_callback(const ros::TimerEvent& time_event)
+{
+    // The goal state is for the cart to have no displacement, and for the pendulum to be vertical
+    this->goal_state = Eigen::VectorXd::Zero(4);
+
     if(this->generation_mode && this->num_legs < this->max_num_legs)
     {
         printf("LEG #%d\n", num_legs);
@@ -1026,7 +1066,7 @@ void Optimizer::write_traj_to_files(std::vector<Eigen::VectorXd> x_traj,
         }
 
         //Append trajectory
-        x_traj_out << output;
+        x_traj_out << output << std::flush;
     }
 
     //Append the most recent u_traj to the u trajectory file
@@ -1053,7 +1093,7 @@ void Optimizer::write_traj_to_files(std::vector<Eigen::VectorXd> x_traj,
         }
 
         //Append trajectory
-        u_traj_out << output;
+        u_traj_out << output << std::flush;
     }
 
     //Append the most recent v_traj to the v trajectory file
@@ -1080,7 +1120,7 @@ void Optimizer::write_traj_to_files(std::vector<Eigen::VectorXd> x_traj,
         }
 
         //Append trajectory
-        v_traj_out << output;
+        v_traj_out << output << std::flush;
     }
 
     //Append the most recent Ku traj to the Ku trajectory file
@@ -1110,7 +1150,7 @@ void Optimizer::write_traj_to_files(std::vector<Eigen::VectorXd> x_traj,
         }
 
         //Append trajectory
-        Ku_traj_out << output;
+        Ku_traj_out << output << std::flush;
     }
 
     //Append the most recent K traj to the K trajectory file
@@ -1140,7 +1180,7 @@ void Optimizer::write_traj_to_files(std::vector<Eigen::VectorXd> x_traj,
         }
 
         //Append trajectory
-        Kv_traj_out << output;
+        Kv_traj_out << output << std::flush;
     }
 
     std::cout << "Trajectory files written\n";

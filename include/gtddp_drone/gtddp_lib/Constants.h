@@ -25,6 +25,7 @@ namespace Constants {
 
     extern double m;
     extern double length;
+    extern double M;
     extern double Ixx;
     extern double Iyy;
     extern double Izz;

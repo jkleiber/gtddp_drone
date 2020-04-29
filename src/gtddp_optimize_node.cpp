@@ -55,9 +55,14 @@ int main(int argc, char **argv)
     // Update Constants from launch file
     ConstantLoader loader(traj_node);
 
+    // Only use target trajectory node in trajectory tracking applications
+    bool use_target_traj = Constants::ddp_selector.compare("pursuit")
+                        && Constants::ddp_selector.compare("ccddp_cart_pole")
+                        && Constants::ddp_selector.compare("gtddp_cart_pole");
+
     // Wait for there to be a subscriber to init before optimizing
     // In pursuit-evasion, we do not need to wait for the init pub, so this will automatically continue in this case
-    while(init_pub.getNumSubscribers() == 0 && GENERATE_TRAJ && Constants::ddp_selector.compare("pursuit"))
+    while(init_pub.getNumSubscribers() == 0 && GENERATE_TRAJ && use_target_traj)
     {
         sleep(1);
     }
@@ -125,6 +130,11 @@ int main(int argc, char **argv)
         {
             std::cout << "Pursuit Mode Enabled\n";
             update_timer = traj_node.createTimer(ros::Duration(1.0), &Optimizer::pursuit_traj_callback, &traj_optimizer, false);
+        }
+        else if(!Constants::ddp_selector.compare("ccddp_cart_pole") || !Constants::ddp_selector.compare("gtddp_cart_pole"))
+        {
+            std::cout << "Cart-Pole Mode Enabled\n";
+            update_timer = traj_node.createTimer(ros::Duration(1.0), &Optimizer::cart_pole_traj_callback, &traj_optimizer, false);
         }
         else
         {
