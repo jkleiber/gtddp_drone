@@ -87,6 +87,9 @@ void CartPole::feedforward_controls(VectorXd current_state, DroneTrajectory& dro
         u_ = drone_traj.u_traj[i] + drone_traj.Ku_traj[i] * (x - drone_traj.x_traj[i]);
         v_ = v_zero;
 
+        // Save feedback control
+        drone_traj.u_traj[i] = u_;
+
         stepper.do_step(std::bind(&::CartPole::dynamics_mm, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), x, t, dt);
         t += dt;
         result[i] = x; //save x trajectory

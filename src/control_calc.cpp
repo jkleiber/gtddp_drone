@@ -16,16 +16,41 @@ ControlCalculator::ControlCalculator() : drone_traj()
     //Initialize logging
     this->logging_init();
 
-    //Set the beginning time
-    this->begin_time = ros::Time::now();
+    // Track timestep
+    this->timestep = 0;
+
+    // Assume Quadrotor controller
+    // TODO: move to new design pattern
+    this->drone = new Quadrotor();
+    this->is_pursuit = false;
+}
+
+
+ControlCalculator::ControlCalculator(int sim_status) : drone_traj()
+{
+    //Initialize current state size
+    this->cur_state.resize(Constants::num_states);
+
+    //Reset flags
+    this->cur_state_init = false;
+    this->cur_state_init_2 = false;
+    this->traj_init = false;
+    this->is_pursuit = false;
+
+    //Set simulation status
+    this->is_sim = sim_status;
+
+    //Initialize logging
+    this->logging_init();
 
     // Track timestep
     this->timestep = 0;
 
     // Assume Quadrotor controller
+    // TODO: move to new design pattern
     this->drone = new Quadrotor();
-    this->is_pursuit = false;
 }
+
 
 
 /**
@@ -58,6 +83,7 @@ ControlCalculator::ControlCalculator(ros::Publisher ctrl_sig_pub, int sim_status
     this->timestep = 0;
 
     // Assume Quadrotor controller
+    // TODO: move to new design pattern
     this->drone = new Quadrotor();
 }
 
@@ -72,6 +98,7 @@ ControlCalculator::ControlCalculator(ros::Publisher ctrl_sig_pub,
     this->control_signal_pub = ctrl_sig_pub;
 
     // If this is pursuit, set a second control signal publisher
+    // TODO: move to new design pattern
     this->is_pursuit = is_pursuit;
     if(is_pursuit)
     {
@@ -105,7 +132,14 @@ ControlCalculator::ControlCalculator(ros::Publisher ctrl_sig_pub,
 }
 
 
+void ControlCalculator::control_init()
+{
+    //Set the beginning time
+    this->begin_time = ros::Time::now();
+}
 
+
+// TODO: allow filepath prefix specification
 void ControlCalculator::logging_init()
 {
     //Declare local variables
@@ -259,6 +293,7 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         // Pop the front element off the deques
         this->drone_traj.x_traj.pop_front();
         this->drone_traj.u_traj.pop_front();
+        this->drone_traj.v_traj.pop_front();
         this->drone_traj.Ku_traj.pop_front();
         this->drone_traj.Kv_traj.pop_front();
 
@@ -363,7 +398,56 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         data_str += "\n";
     }
 
-    this->command_data << data_str;
+    this->command_data << data_str << std::flush;
+}
+
+
+void ControlCalculator::set_system(Drone *drone)
+{
+    this->drone = drone;
+}
+
+
+void ControlCalculator::feedback_controller(Eigen::VectorXd current_state)
+{
+    if(drone_traj.x_traj.size() >= Constants::num_time_steps)
+    {
+        drone->feedforward_controls(current_state, this->drone_traj);
+    }
+}
+
+
+/**
+ * @brief Indicates if the trajectory is available to be used for controlling the system
+ *
+ * @return true The optimized trajectory has been received
+ * @return false No trajectory points are in the deque
+ */
+bool ControlCalculator::is_traj_available()
+{
+    return !this->drone_traj.x_traj.empty();
+}
+
+
+TrajectoryPoint ControlCalculator::pop_traj_point()
+{
+    TrajectoryPoint traj_pt;
+
+    // Load the front element into the trajectory point
+    traj_pt.x = this->drone_traj.x_traj.front();
+    traj_pt.u = this->drone_traj.u_traj.front();
+    traj_pt.v = this->drone_traj.v_traj.front();
+    traj_pt.Ku = this->drone_traj.Ku_traj.front();
+    traj_pt.Kv = this->drone_traj.Kv_traj.front();
+
+    // Pop the front element off the deques
+    this->drone_traj.x_traj.pop_front();
+    this->drone_traj.u_traj.pop_front();
+    this->drone_traj.v_traj.pop_front();
+    this->drone_traj.Ku_traj.pop_front();
+    this->drone_traj.Kv_traj.pop_front();
+
+    return traj_pt;
 }
 
 
@@ -411,7 +495,7 @@ void ControlCalculator::open_loop_control(const ros::TimerEvent& time_event)
 
     // Log the commands
     std::string data_str = std::to_string(cur_time) + "," + std::to_string(ctrl_command.linear.x) + "," + std::to_string(ctrl_command.linear.y) + "," + std::to_string(ctrl_command.linear.z) + "," + std::to_string(ctrl_command.angular.z) + "\n";
-    this->command_data << data_str;
+    this->command_data << data_str << std::flush;
 }
 
 /**
@@ -460,7 +544,7 @@ void ControlCalculator::state_estimate_callback(const nav_msgs::Odometry::ConstP
     }
     data_str += "\n";
 
-    this->ground_truth_data << data_str;
+    this->ground_truth_data << data_str << std::flush;
 
     //Set the current state as initialized
     this->cur_state_init = true;
@@ -512,10 +596,51 @@ void ControlCalculator::state_estimate_callback_2(const nav_msgs::Odometry::Cons
     }
     data_str += "\n";
 
-    this->ground_truth_data << data_str;
+    this->ground_truth_data << data_str << std::flush;
 
     //Set the current state as initialized
     this->cur_state_init_2 = true;
+}
+
+
+void ControlCalculator::log_ground_truth(Eigen::VectorXd x_data)
+{
+    double cur_time = (ros::Time::now() - begin_time).toSec();
+
+    //Output data to the logging file
+    std::string data_str = std::to_string(cur_time) + ",";
+    for(int i = 0; i < Constants::num_states; ++i)
+    {
+        data_str += std::to_string(x_data(i));
+
+        if(i < Constants::num_states - 1)
+        {
+            data_str += ",";
+        }
+    }
+    data_str += "\n";
+
+    this->ground_truth_data << data_str << std::flush;
+}
+
+void ControlCalculator::log_control(Eigen::VectorXd ctrl_data)
+{
+    double cur_time = (ros::Time::now() - begin_time).toSec();
+
+    //Output data to the logging file
+    std::string data_str = std::to_string(cur_time) + ",";
+    for(int i = 0; i < Constants::num_controls_u; ++i)
+    {
+        data_str += std::to_string(ctrl_data(i));
+
+        if(i < Constants::num_controls_u - 1)
+        {
+            data_str += ",";
+        }
+    }
+    data_str += "\n";
+
+    this->command_data << data_str << std::flush;
 }
 
 
@@ -576,7 +701,7 @@ void ControlCalculator::trajectory_callback(const gtddp_drone_msgs::Trajectory::
             v_traj_dat(i) = v_data[t].ctrl[i];
         }
 
-        this->drone_traj.u_traj.push_back(u_traj_dat);
+        this->drone_traj.v_traj.push_back(v_traj_dat);
     }
 
     for(t = 0; t < Ku_data.size(); ++t)

@@ -19,6 +19,11 @@ typedef struct drone_traj_t{
     std::deque<Eigen::MatrixXd> Kv_traj;
 } DroneTrajectory;
 
+typedef struct traj_pt_t {
+    Eigen::VectorXd x, u, v;
+    Eigen::MatrixXd Ku, Kv;
+} TrajectoryPoint;
+
 class Drone {
     public:
         virtual void forward_propagate_mm(std::vector<Eigen::VectorXd>&, const std::vector<Eigen::VectorXd>&, const std::vector<Eigen::VectorXd>&) = 0;

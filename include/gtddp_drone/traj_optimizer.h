@@ -72,6 +72,9 @@ class Optimizer
         //Target state helpers
         void target_state_decode(const gtddp_drone_msgs::state_data& target_event);
 
+        // File access
+        bool is_offline_good();
+
     private:
         //Publisher for the trajectory data
         ros::Publisher traj_pub;
@@ -149,6 +152,9 @@ class Optimizer
 
         //Real-time optimization
         bool real_time;
+
+        // Check to make sure the files are still good
+        bool offline_good;
 };
 
 #endif

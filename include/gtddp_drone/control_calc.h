@@ -41,11 +41,13 @@ class ControlCalculator
 {
     public:
         ControlCalculator();
+        ControlCalculator(int sim_status);
         ControlCalculator(ros::Publisher ctrl_sig_pub, int sim_status);
         ControlCalculator(ros::Publisher ctrl_sig_pub, int sim_status, bool is_pursuit, ros::Publisher ctrl_sig_pub_2);
 
         //Initialization
         void logging_init();
+        void control_init();
 
         // Callback functions
         // Drone state estimate(s)
@@ -55,6 +57,19 @@ class ControlCalculator
         void recalculate_control_callback(const ros::TimerEvent& time_event);
         // Trajectory handler
         void trajectory_callback(const gtddp_drone_msgs::Trajectory::ConstPtr& traj_msg);
+
+        void set_system(Drone *drone);
+
+        // Feedback controller
+        void feedback_controller(Eigen::VectorXd current_state);
+
+        // Trajectory access
+        bool is_traj_available();
+        TrajectoryPoint pop_traj_point();
+
+        // Logging tools
+        void log_ground_truth(Eigen::VectorXd x_data);
+        void log_control(Eigen::VectorXd ctrl_data);
 
         // Test Code
         void open_loop_control(const ros::TimerEvent& time_event);

@@ -157,11 +157,13 @@ add_library(GTDDP_LIB
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(gtddp_control_node src/gtddp_control_node.cpp src/control_calc.cpp src/flight_controller.cpp)
 add_executable(pursuit_control_node src/pursuit_control_node.cpp src/control_calc.cpp src/flight_controller.cpp)
+add_executable(cart_control_node src/cart_control_node.cpp src/control_calc.cpp src/flight_controller.cpp)
 add_executable(gtddp_optimize_node src/gtddp_optimize_node.cpp src/traj_optimizer.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(gtddp_control_node ${catkin_LIBRARIES} GTDDP_LIB ${CGAL_LIBRARIES})
 target_link_libraries(pursuit_control_node ${catkin_LIBRARIES} GTDDP_LIB ${CGAL_LIBRARIES})
+target_link_libraries(cart_control_node ${catkin_LIBRARIES} GTDDP_LIB ${CGAL_LIBRARIES})
 target_link_libraries(gtddp_optimize_node ${catkin_LIBRARIES} GTDDP_LIB ${CGAL_LIBRARIES})
 
 

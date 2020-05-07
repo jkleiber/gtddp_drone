@@ -1,0 +1,22 @@
+<launch>
+    <arg name="is_sim" value="1" />
+    <arg name="real_time" value="0"/>
+    <arg name="target_timestep" value="1.0"/>
+
+    <rosparam file="$(find gtddp_drone)/launch/constants/cart_pole_sim_constants.yaml" command="load" />
+
+
+    <!-- GT-DDP optimizer node -->
+    <node name="gtddp_optimize_node" pkg="gtddp_drone" type="gtddp_optimize_node" output="screen">
+        <param name="is_simulation" value="$(arg is_sim)"/>
+        <param name="is_real_time" value="$(arg real_time)"/>
+    </node>
+
+    <!-- Cart-Pole specific control node -->
+    <node name="cart_control_node" pkg="gtddp_drone" type="cart_control_node" output="screen" required="true" />
+
+
+    <!-- Simulator -->
+    <include file="$(find cart_pole_simulator)/launch/cart_pole.launch"/>
+
+</launch>

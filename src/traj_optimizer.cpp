@@ -15,6 +15,10 @@ Optimizer::Optimizer()
     this->goal_state.resize(Constants::num_states);
     this->last_goal_state.resize(Constants::num_states);
 
+    // HACK: used to set zero offset on cart-pole. Need to redesign this
+    //Set the current state to the origin
+    this->cur_state.setZero();
+
     //Set the optimizer to uninitialized
     this->initialized = false;
 
@@ -32,6 +36,9 @@ Optimizer::Optimizer()
 
     //Reset number of legs
     this->num_legs = 0;
+
+    // Assume offline files are good for now
+    this->offline_good = true;
 }
 
 
@@ -59,6 +66,10 @@ Optimizer::Optimizer(ros::Publisher& traj_publisher,
     this->cur_state.resize(Constants::num_states);
     this->goal_state.resize(Constants::num_states);
     this->last_goal_state.resize(Constants::num_states);
+
+    // HACK: used to set zero offset on cart-pole. Need to redesign this
+    //Set the current state to the origin
+    this->cur_state.setZero();
 
     //Set the optimizer to uninitialized
     this->initialized = false;
@@ -120,6 +131,9 @@ Optimizer::Optimizer(ros::Publisher& traj_publisher,
 
     //Reset number of legs
     this->num_legs = 0;
+
+    // Assume offline files are good for now
+    this->offline_good = true;
 }
 
 /**
@@ -427,7 +441,7 @@ void Optimizer::offline_traj_callback(const ros::TimerEvent& time_event)
     int tmp_col;
 
     //Only publish if the drone is ready to fly
-    if(initialized)
+    if(initialized && this->offline_good)
     {
         std::cout << "Reading Leg #" << num_legs << std::endl;
         ++num_legs;
@@ -442,6 +456,7 @@ void Optimizer::offline_traj_callback(const ros::TimerEvent& time_event)
             //Check to see if this file is OK to read
             if(!x_traj_in.good())
             {
+                this->offline_good = false;
                 break;
             }
 
@@ -520,6 +535,7 @@ void Optimizer::offline_traj_callback(const ros::TimerEvent& time_event)
             //Check to see if this file is OK to read
             if(!u_traj_in.good())
             {
+                this->offline_good = false;
                 break;
             }
 
@@ -555,6 +571,7 @@ void Optimizer::offline_traj_callback(const ros::TimerEvent& time_event)
             //Check to see if this file is OK to read
             if(!v_traj_in.good())
             {
+                this->offline_good = false;
                 break;
             }
 
@@ -588,6 +605,7 @@ void Optimizer::offline_traj_callback(const ros::TimerEvent& time_event)
             //Check to see if this file is OK to read
             if(!Ku_traj_in.good())
             {
+                this->offline_good = false;
                 break;
             }
 
@@ -628,12 +646,13 @@ void Optimizer::offline_traj_callback(const ros::TimerEvent& time_event)
         temp_matrix.resize(Constants::num_controls_u, Constants::num_states);
         temp_matrix.setZero();
 
-        //Read the Ku_traj file
+        //Read the Kv_traj file
         for(int i = 0; i < Constants::offline_traj_batch_size; ++i)
         {
             //Check to see if this file is OK to read
             if(!Kv_traj_in.good())
             {
+                this->offline_good = false;
                 break;
             }
 
@@ -738,6 +757,12 @@ void Optimizer::open_loop_traj_callback(const ros::TimerEvent& time_event)
         }
     }
 
+}
+
+
+bool Optimizer::is_offline_good()
+{
+    return this->offline_good;
 }
 
 
@@ -858,7 +883,7 @@ void Optimizer::target_state_decode(const gtddp_drone_msgs::state_data& target_e
     this->last_goal_state_init = true;
 }
 
-
+// TODO: make this less hacky and expandable to other systems
 void Optimizer::init_optimizer(const std_msgs::Empty::ConstPtr& init_msg)
 {
     //IF the optimizer has not been initialized yet, edit the target trajectory settings
@@ -939,10 +964,11 @@ gtddp_drone_msgs::Trajectory Optimizer::get_traj_msg(std::vector<Eigen::VectorXd
     //Declare local variables
     int i;                              //iteration variable
     gtddp_drone_msgs::Trajectory traj_msg;   //trajectory message result
+    int traj_size = std::min(x_traj.size(), std::min(u_traj.size(), std::min(v_traj.size(), std::min(Ku_traj.size(), Kv_traj.size()))));
 
     //Loop through each time step and encode the data into ROS messages
     //Note: the ddp only initializes values from 0 to num_time_steps - 1. Thus, 100 timesteps will yield 99 values
-    for(i = 0; i < x_traj.size(); ++i)
+    for(i = 0; i < traj_size; ++i)
     {
         traj_msg.x_traj.push_back(this->get_state_data_msg(x_traj, i));
         traj_msg.u_traj.push_back(this->get_ctrl_data_msg(u_traj, i));
@@ -987,6 +1013,7 @@ gtddp_drone_msgs::ctrl_data Optimizer::get_ctrl_data_msg(std::vector<Eigen::Vect
 {
     //Set up a state data message
     gtddp_drone_msgs::ctrl_data ctrl_msg;
+    ctrl_msg.ctrl.resize(u_traj[0].size());
 
     //Loop through each state variable for this particular state to extract the value
     for(int i = 0; i < Constants::num_controls_u; ++i)
