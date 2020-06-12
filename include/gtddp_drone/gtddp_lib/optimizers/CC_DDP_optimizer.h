@@ -23,6 +23,13 @@ class CC_DDP_optimizer : public DDP_Optimizer
         std::vector<Eigen::MatrixXd> Qvx_;
         std::vector<Eigen::MatrixXd> Qv_;
 
+        // Constrained control update functions
+        void update_controls_box_qp(const std::vector<Eigen::VectorXd>&,std::vector<Eigen::VectorXd>&, std::vector<Eigen::VectorXd>&, bool single = false);
+        void update_controls_clamp(const std::vector<Eigen::VectorXd>&,std::vector<Eigen::VectorXd>&, std::vector<Eigen::VectorXd>&);
+
+        // Helper functions
+        double clamp(double val, double min, double max);
+
     public:
         /**
             constructs a CC_DDP_optimizer for the given system

@@ -56,7 +56,9 @@ namespace Constants {
     // How many traj points to read per loop from offline
     int offline_traj_batch_size(300);
 
+    // Selectors
     std::string ddp_selector("gtddp");
+    std::string constraint("box_qp");
 }
 
 
@@ -73,7 +75,11 @@ ConstantLoader::ConstantLoader(ros::NodeHandle nh)
     std::string selector = "gtddp";
     selector = nh.param("/ddp_select", selector);
     Constants::ddp_selector = selector;
-    selector = "/" + selector;
+
+    // Choose the constraint strategy for the DDP (if applicable)
+    selector = "box_qp";
+    selector = nh.param("/constraint", selector);
+    Constants::constraint = selector;
 
     // Update the Quadrotor State information
     Constants::num_states = nh.param("/num_states", 0);

@@ -10,7 +10,7 @@ ddp_select: "gtddp_cart_pole"
 # DDP Hyperparameters
 num_time_steps: 251
 num_iterations: 70
-num_long_legs: 2
+num_long_legs: 8
 short_iterations: 30
 dt: 0.001
 learning_rate: 0.3
@@ -29,10 +29,10 @@ u_hover: [0]
 v_hover: [0]
 
 # Cost Function Parameters
-Ru: [8]
-Rv: [20]
+Ru: [1]
+Rv: [100]
 Q: [1, 1, 1000000, 100000]
-Qx_multiplier: 0.01
+Qx_multiplier: 0.001
 
 # Constrain the pursuit controls?
 constrained: true

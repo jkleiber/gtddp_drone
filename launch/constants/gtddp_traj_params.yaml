@@ -1,0 +1,39 @@
+# General runtime parameters
+is_sim: 1
+gtddp_optimize_node/is_gen: 1
+gtddp_target_node/target_dt: 0.5
+gtddp_optimize_node/gen_legs: 80
+
+# DDP Type
+ddp_select: "gtddp"
+
+# DDP Hyperparameters
+num_time_steps: 501
+num_iterations: 150
+num_long_legs: 5
+short_iterations: 100
+dt: 0.001
+learning_rate: 0.04
+
+# AR.Drone System Parameters
+num_states: 12
+num_controls_u: 4
+num_controls_v: 4
+mass: 0.436
+length: 0.19
+Ixx: 0.0045
+Iyy: 0.0051
+Izz: 0.0095
+
+# Initial conditions for u_traj
+u_hover: [0, 0, 0, 0]
+v_hover: [0, 0, 0, 0]
+
+# Cost Function Parameters
+Ru: [0.7, 0.5, 0.5, 0.5]
+Rv: [2, 2, 2, 2]
+Q: [1000000, 1000000, 1000000, 10000, 10000, 10000, 10000, 10000, 10000, 1000, 1000, 10000]
+Qx_multiplier: 0.0001
+
+# Constrain the controls?
+constrained: true

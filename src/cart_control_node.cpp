@@ -48,7 +48,7 @@ void cartStateCallback(const gtddp_drone_msgs::state_data::ConstPtr& state)
         }
 
         // Log the state
-        control_calc->log_ground_truth(cart_state);
+        //control_calc->log_ground_truth(cart_state);
     }
 }
 
@@ -76,13 +76,14 @@ void controlUpdateCallback(const ros::TimerEvent& event)
 
         // Feedback Controller
         traj_pt.u += traj_pt.Ku * (cart_state - traj_pt.x);
+        // traj_pt.v += traj_pt.Kv * (cart_state - traj_pt.x);
 
         // Publish control message
-        ctrl_msg.ctrl[0] = traj_pt.u(0);
+        ctrl_msg.ctrl[0] = traj_pt.u(0); // + traj_pt.v(0);
         ctrl_pub.publish(ctrl_msg);
 
         // Log the control message
-        control_calc->log_control(traj_pt.u);
+        //control_calc->log_control(traj_pt.u);
     }
     // If the trajectory has been fully read, then stop the simulation
     else if(!control_calc->is_traj_available() && sim_started && control_empty)

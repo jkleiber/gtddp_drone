@@ -7,10 +7,14 @@ gtddp_optimize_node/gen_legs: 8
 # DDP Type
 ddp_select: "ccddp_cart_pole"
 
+# Constraint Strategy
+# constraint: "clamp"
+constraint: "single_box_qp"
+
 # DDP Hyperparameters
 num_time_steps: 251
 num_iterations: 70
-num_long_legs: 2
+num_long_legs: 8
 short_iterations: 30
 dt: 0.001
 learning_rate: 0.3
@@ -29,8 +33,8 @@ dist_converge_u: 1
 dist_converge_v: 1
 
 # Constraints for du
-u_upper: [40]
-u_lower: [-40]
+u_upper: [50]
+u_lower: [-50]
 
 # Constraints for dv
 v_upper: [5]
@@ -41,10 +45,10 @@ u_hover: [0]
 v_hover: [0]
 
 # Cost Function Parameters
-Ru: [8]
-Rv: [20]
+Ru: [1]
+Rv: [100]
 Q: [1, 1, 1000000, 100000]
-Qx_multiplier: 0.01
+Qx_multiplier: 0.001
 
 # Constrain the pursuit controls?
 constrained: true

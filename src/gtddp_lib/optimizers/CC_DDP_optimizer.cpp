@@ -160,6 +160,33 @@ void CC_DDP_optimizer::backpropagate_mm_rk(const vector<VectorXd>& x_traj,
 void CC_DDP_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
                                           vector<VectorXd>& u_traj, vector<VectorXd>& v_traj)
 {
+    // Clamping
+    if(!Constants::constraint.compare("clamp"))
+    {
+        this->update_controls_clamp(dx_traj, u_traj, v_traj);
+    }
+    // Single constraint, only on u_traj
+    else if (!Constants::constraint.compare("single_box_qp"))
+    {
+        this->update_controls_box_qp(dx_traj, u_traj, v_traj, true);
+    }
+    // Any custom constraint strategy
+    else if (!Constants::constraint.compare("custom"))
+    {
+        // TODO: implement
+    }
+    // Box QP
+    else
+    {
+        this->update_controls_box_qp(dx_traj, u_traj, v_traj);
+    }
+}
+
+
+
+void CC_DDP_optimizer::update_controls_box_qp(const vector<VectorXd>& dx_traj,
+                                          vector<VectorXd>& u_traj, vector<VectorXd>& v_traj, bool single)
+{
     // Vectors for delta u and delta v
     VectorXd du(num_controls_u);
     VectorXd dv(num_controls_v);
@@ -254,49 +281,53 @@ void CC_DDP_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
             //////////////////
             // dv
             /////////////////
-            // Calculate boundaries for dv
-            b1 = lower_v - v_traj[i];
-            b2 = upper_v - v_traj[i];
-
-            // Set control boundaries
-            for(int i = 0; i < num_controls_v; ++i)
+            // Only do this for the double constrained DDP
+            if (!single)
             {
-                qp.set_l(i, true, b1(i));
-                qp.set_u(i, true, b2(i));
-            }
+                // Calculate boundaries for dv
+                b1 = lower_v - v_traj[i];
+                b2 = upper_v - v_traj[i];
 
-            // Calculate linear objective function for dv
-            c = -(Qvx_[i]*dx_traj[i] + Quv_[i].transpose()*du + Qv_[i]);
-
-            // Add quadratic and linear objective functions to the program solver
-            // Also add boundaries to the solver
-            for (int i = 0; i < Constants::num_controls_v; ++i)
-            {
-                qp.set_c(i, c(i));
-                for (int j = 0; j < Constants::num_controls_v; ++j)
+                // Set control boundaries
+                for(int i = 0; i < num_controls_v; ++i)
                 {
-                    qp.set_d(i, j, -Qvv(i, j));
+                    qp.set_l(i, true, b1(i));
+                    qp.set_u(i, true, b2(i));
                 }
-            }
 
-            // solve quadratic program to find dv
-            sol = CGAL::solve_quadratic_program(qp, ET());
+                // Calculate linear objective function for dv
+                c = -(Qvx_[i]*dx_traj[i] + Quv_[i].transpose()*du + Qv_[i]);
 
-            // Find du after performing the quadratic programming step if the solution is feasible
-            if(sol.solves_quadratic_program(qp) && !sol.is_infeasible())
-            {
-                Solution::Variable_value_iterator it = sol.variable_values_begin();
-                Solution::Variable_value_iterator end = sol.variable_values_end();
-
-                for (int v = 0; it != end; ++it, ++v) {
-                    dv(v) = CGAL::to_double(*it);
+                // Add quadratic and linear objective functions to the program solver
+                // Also add boundaries to the solver
+                for (int i = 0; i < Constants::num_controls_v; ++i)
+                {
+                    qp.set_c(i, c(i));
+                    for (int j = 0; j < Constants::num_controls_v; ++j)
+                    {
+                        qp.set_d(i, j, -Qvv(i, j));
+                    }
                 }
-            }
-            // QP failed, so use normal dv
-            else
-            {
-                std::cout << "dv ERROR\n";
-                dv = lv_[i] + Kv_[i] * dx_traj[i];
+
+                // solve quadratic program to find dv
+                sol = CGAL::solve_quadratic_program(qp, ET());
+
+                // Find du after performing the quadratic programming step if the solution is feasible
+                if(sol.solves_quadratic_program(qp) && !sol.is_infeasible())
+                {
+                    Solution::Variable_value_iterator it = sol.variable_values_begin();
+                    Solution::Variable_value_iterator end = sol.variable_values_end();
+
+                    for (int v = 0; it != end; ++it, ++v) {
+                        dv(v) = CGAL::to_double(*it);
+                    }
+                }
+                // QP failed, so use normal dv
+                else
+                {
+                    std::cout << "dv ERROR\n";
+                    dv = lv_[i] + Kv_[i] * dx_traj[i];
+                }
             }
 
             // Calculate if the quadratic program needs to continue
@@ -326,4 +357,61 @@ void CC_DDP_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
         u_traj[i] = u_traj[i] + learning_rate * du;
         v_traj[i] = v_traj[i] + learning_rate * dv;
     }
+}
+
+
+void CC_DDP_optimizer::update_controls_clamp(const vector<VectorXd>& dx_traj,
+                                          vector<VectorXd>& u_traj, vector<VectorXd>& v_traj)
+{
+    // Vectors for delta u and delta v
+    VectorXd du(num_controls_u);
+    VectorXd dv(num_controls_v);
+
+    Eigen::VectorXd lower_u(num_controls_u), upper_u(num_controls_u); // upper and lower bounds for u
+    Eigen::VectorXd lower_v(num_controls_v), upper_v(num_controls_v); // upper and lower bounds for v
+
+    // Establish boundaries
+    // du
+    upper_u = Constants::u_upper;
+    lower_u = Constants::u_lower;
+
+    // dv
+    upper_v = Constants::v_upper;
+    lower_v = Constants::v_lower;
+
+
+    // Update the controls using a clamping
+    for (int i = 0; i < num_time_steps-1; i++) {
+        // Update controls
+        u_traj[i] = u_traj[i] + learning_rate * du;
+        v_traj[i] = v_traj[i] + learning_rate * dv;
+
+        // Clamping logic for u_traj
+        for(int j = 0; j < Constants::num_controls_u; ++j)
+        {
+            u_traj[i](j) = this->clamp(u_traj[i](j), lower_u(j), upper_u(j));
+        }
+        // Clamping logic for v_traj
+        for(int j = 0; j < Constants::num_controls_v; ++j)
+        {
+            v_traj[i](j) = this->clamp(v_traj[i](j), lower_v(j), upper_v(j));
+        }
+    }
+}
+
+
+
+
+double CC_DDP_optimizer::clamp(double val, double min, double max)
+{
+    if(val < min)
+    {
+        return min;
+    }
+    else if(val > max)
+    {
+        return max;
+    }
+
+    return val;
 }

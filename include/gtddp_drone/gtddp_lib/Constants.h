@@ -50,6 +50,7 @@ namespace Constants {
     extern int offline_traj_batch_size;
 
     extern std::string ddp_selector;
+    extern std::string constraint;
 
 }
 
