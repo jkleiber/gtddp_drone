@@ -2,6 +2,7 @@
 
 import csv
 import os
+import subprocess32
 import pickle
 import sys
 
@@ -9,7 +10,7 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 
-NUM_RUNS = 2
+NUM_RUNS = 50
 
 # Cart-Pole Simulation files
 home_directory = os.path.expanduser("~")
@@ -26,13 +27,15 @@ def cart_pole_runner():
     # Run the simulation N times
     for i in range(NUM_RUNS):
         # Run the simulator
-        os.system("roslaunch gtddp_drone cart_pole_sim.launch")
+        subprocess32.call("roslaunch gtddp_drone cart_pole_sim.launch", shell=True)
+        # os.system("roslaunch gtddp_drone cart_pole_sim.launch")
 
         # Load the results from the CSV
         result_frame = np.loadtxt(open(sim_log, 'rb'), delimiter=',')
-        print(result_frame)
+
         # Add to current results
         current_results.append(result_frame)
+        print(result_frame)
 
         # Save current raw results as a pickle
         pickle.dump(np.asarray(current_results), open(raw_log, 'w'))
@@ -85,7 +88,6 @@ def process_results():
 
     # Save the result to CSV
     np.savetxt(result_log, mean_traj, delimiter=',')
-    print(mean_traj)
 
     ### Plot
     # Gather arrays
@@ -96,7 +98,6 @@ def process_results():
     theta_dot = mean_traj[:, 4]
 
     fig, axs = plt.subplots(2, 2)
-    print(axs[0, 0])
     axs[0, 0].plot(t, x)
     axs[0, 0].set_title("x")
     axs[0, 1].plot(t, x_dot)
