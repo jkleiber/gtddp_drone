@@ -2,6 +2,8 @@
     <arg name="is_sim" value="1" />
     <arg name="real_time" value="0"/>
     <arg name="target_timestep" value="1.0"/>
+    <arg name="seed" default="0"/>
+    <param name="seed" value="$(arg seed)"/>
 
     <rosparam file="$(find gtddp_drone)/launch/constants/cart_pole_sim_constants.yaml" command="load" />
 

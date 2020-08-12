@@ -74,6 +74,9 @@ void controlUpdateCallback(const ros::TimerEvent& event)
         // Get current control data
         traj_pt = control_calc->pop_traj_point();
 
+        // Log the raw control
+        control_calc->log_control(traj_pt.u);
+
         // Feedback Controller
         traj_pt.u += traj_pt.Ku * (cart_state - traj_pt.x);
         // traj_pt.v += traj_pt.Kv * (cart_state - traj_pt.x);
@@ -83,7 +86,7 @@ void controlUpdateCallback(const ros::TimerEvent& event)
         ctrl_pub.publish(ctrl_msg);
 
         // Log the control message
-        //control_calc->log_control(traj_pt.u);
+        // control_calc->log_control(traj_pt.u);
     }
     // If the trajectory has been fully read, then stop the simulation
     else if(!control_calc->is_traj_available() && sim_started && control_empty)

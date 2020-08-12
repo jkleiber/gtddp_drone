@@ -9,8 +9,6 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 
-from termcolor
-
 NUM_RUNS = 50
 
 # Cart-Pole Simulation files
@@ -27,9 +25,11 @@ def cart_pole_runner():
 
     # Run the simulation N times
     for i in range(NUM_RUNS):
+        # Calculate seed
+        seed = i * 100000
+
         # Run the simulator
-        subprocess32.call("roslaunch gtddp_drone cart_pole_sim.launch", shell=True)
-        # os.system("roslaunch gtddp_drone cart_pole_sim.launch")
+        subprocess32.call("roslaunch gtddp_drone cart_pole_sim.launch seed:=" + str(seed), shell=True)
 
         # Load the results from the CSV
         result_frame = np.loadtxt(open(sim_log, 'rb'), delimiter=',')
