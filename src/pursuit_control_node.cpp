@@ -48,8 +48,8 @@ int main(int argc, char **argv)
     }
     else
     {
-        estimate_sub = control_node.subscribe(control_node.resolveName("/drone1/vicon/odom"), 1, &ControlCalculator::state_estimate_callback, &control_calc);
-        estimate_sub_2 = control_node.subscribe(control_node.resolveName("/drone2/vicon/odom"), 1, &ControlCalculator::state_estimate_callback_2, &control_calc);
+        estimate_sub = control_node.subscribe(control_node.resolveName("/vicon/ardrone1/odom"), 1, &ControlCalculator::state_estimate_callback, &control_calc);
+        estimate_sub_2 = control_node.subscribe(control_node.resolveName("/vicon/ardrone2/odom"), 1, &ControlCalculator::state_estimate_callback_2, &control_calc);
     }
 
     // Set up a timer to call the control calculation function at the appropriate update rate

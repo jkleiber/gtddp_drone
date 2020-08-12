@@ -23,21 +23,6 @@
             <arg name="ip" value="192.168.1.11"/>
             <!-- CHANGE THE ABOVE LINE TO BE CORRECT -->
         </include>
-
-        <!-- VICON -->
-        <!-- Make sure to follow compile instructions in mocap_vicon -->
-        <node pkg="mocap_vicon" type="mocap_vicon_node" name="vicon" >
-            <!-- Set the server address to the IP of the computer running the VICON Tracker program -->
-            <!-- Set the port number according to the UDP port set in Tracker -->
-            <!-- Format: IP:PORT like 192.168.X.ABC:PORT -->
-            <param name="server_address" value="192.168.1.119:801"/>
-            <param name="frame_rate" value="100"/>
-            <param name="max_accel" value="10.0"/>
-            <param name="publish_tf" value="false"/>
-            <param name="fixed_frame_id" value="mocap"/>
-            <rosparam param="model_list">[]</rosparam>
-            <!--remap from="vicon/model_name/odom" to="/model_name/odom"/-->
-        </node>
     </group>
 
     <!-- EVADER -->
@@ -48,8 +33,9 @@
             <arg name="ip" value="192.168.1.12"/>
             <!-- CHANGE THE ABOVE LINE TO BE CORRECT -->
         </include>
+    </group>
 
-        <!-- VICON -->
+    <!-- VICON -->
         <!-- Make sure to follow compile instructions in mocap_vicon -->
         <node pkg="mocap_vicon" type="mocap_vicon_node" name="vicon" >
             <!-- Set the server address to the IP of the computer running the VICON Tracker program -->
@@ -63,7 +49,6 @@
             <rosparam param="model_list">[]</rosparam>
             <!--remap from="vicon/model_name/odom" to="/model_name/odom"/-->
         </node>
-    </group>
 
     <!-- Keyboard node -->
     <node pkg="gtddp_drone" type="keyboard_node.py" name="keyboard_node" output="screen"/>
