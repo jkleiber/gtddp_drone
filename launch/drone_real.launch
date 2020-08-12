@@ -1,26 +1,15 @@
 <launch>
-  <arg name="is_open_loop" value="0" />
-  <arg name="is_sim" value="0" />
-  <arg name="real_time" value="0"/>
-  <arg name="target_timestep" value="0.5"/>
 
-  <include file="$(find gtddp_drone)/launch/constants.launch">
-  </include>
+  <rosparam file="$(find gtddp_drone)/launch/constants/drone_sim_params.yaml" command="load" />
 
   <!-- GT-DDP nodes -->
   <node name="gtddp_control_node" pkg="gtddp_drone" type="gtddp_control_node" output="screen">
-    <param name="is_simulation" value="$(arg is_sim)"/>
-    <param name="is_open_loop" value="$(arg is_open_loop)"/>
   </node>
   <node name="gtddp_optimize_node" pkg="gtddp_drone" type="gtddp_optimize_node" output="screen">
-    <param name="is_simulation" value="$(arg is_sim)"/>
-    <param name="is_real_time" value="$(arg real_time)"/>
-    <param name="is_open_loop" value="$(arg is_open_loop)"/>
   </node>
 
   <!-- Target node -->
   <node name="gtddp_target_node" pkg="gtddp_drone_target_trajectory" type="gtddp_target_node" output="screen">
-    <param name="target_dt" value="$(arg target_timestep)"/>
   </node>
 
   <!-- AR.Drone Driver -->

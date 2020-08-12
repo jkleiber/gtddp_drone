@@ -115,11 +115,11 @@ int main(int argc, char **argv)
         //Otherwise subscribe to the vicon system
         else
         {
-            estimate_sub = traj_node.subscribe(traj_node.resolveName("/vicon/ardrone1/odom"), 1, &Optimizer::state_estimate_callback, traj_optimizer);
+            estimate_sub = traj_node.subscribe(traj_node.resolveName("/drone1/vicon/odom"), 1, &Optimizer::state_estimate_callback, traj_optimizer);
 
             if(!Constants::ddp_selector.compare("pursuit"))
             {
-                estimate_sub_2 = traj_node.subscribe(traj_node.resolveName("/vicon/ardrone2/odom"), 1, &Optimizer::state_estimate_callback_2, traj_optimizer);
+                estimate_sub_2 = traj_node.subscribe(traj_node.resolveName("/drone2/vicon/odom"), 1, &Optimizer::state_estimate_callback_2, traj_optimizer);
             }
         }
 

@@ -366,7 +366,7 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         // Evader control
         if(this->is_pursuit)
         {
-            this->ctrl_command_2 = flight_controller_2.update_state(this->cur_state);
+            this->ctrl_command_2 = flight_controller_2.update_state(this->cur_state.tail(Constants::num_states / 2));
             this->ctrl_command_2.linear.x = this->clamp(this->ctrl_command_2.linear.x, -1.0, 1.0);
             this->ctrl_command_2.linear.y = this->clamp(this->ctrl_command_2.linear.y, -1.0, 1.0);
 
@@ -472,7 +472,7 @@ void ControlCalculator::open_loop_control(const ros::TimerEvent& time_event)
         // Publish the control signal
         flight_controller.publish_control(this->ctrl_command);
 
-    //TODO: comment this
+        // Convert flight control forces into AR.Drone control signal.
         this->ctrl_command = flight_controller.update_state(this->cur_state);
         this->ctrl_command.linear.x = this->clamp(this->ctrl_command.linear.x, -1.0, 1.0);
         this->ctrl_command.linear.y = this->clamp(this->ctrl_command.linear.y, -1.0, 1.0);

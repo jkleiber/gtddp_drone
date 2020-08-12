@@ -6,9 +6,10 @@ import subprocess32
 import pickle
 import sys
 
+import matplotlib.pyplot as plt
 import numpy as np
 
-import matplotlib.pyplot as plt
+from termcolor
 
 NUM_RUNS = 50
 
