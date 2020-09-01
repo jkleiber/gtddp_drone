@@ -273,6 +273,13 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
 
             // Y velocity (move side to side) (y dot)
             this->ctrl_command.linear.y = this->drone_traj.x_traj.front()(4);
+
+            // Pursuit X and Y velocity
+            if(this->is_pursuit)
+            {
+                this->ctrl_command_2.linear.x = this->clamp(this->drone_traj.x_traj.front()(15), -1.0, 1.0);
+                this->ctrl_command_2.linear.y = this->clamp(this->drone_traj.x_traj.front()(16), -1.0, 1.0);
+            }
         }
 
         // Yaw rate (how fast to spin) (r)
