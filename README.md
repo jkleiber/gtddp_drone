@@ -51,16 +51,20 @@ Each launch file uses a standard set of arguments so the code doesn't need to be
 Note that while changing the arguments in the launch files removes the need to recompile, changing the intended trajectory requires a rebuild of the code. For example, if you want to change from a figure eight to an inclined circle, you should do this in the [gtddp_drone_target_trajectory](https://github.com/jkleiber/gtddp_drone_target_trajectory/tree/master) package and then rerun `catkin_make`
 
 ##### A. Offline Trajectory Generation
-If you want to generate a trajectory offline for the drone to follow, run the following command:
+If you want to generate an offline trajectory, run the command that corresponds to the system you wish to use:
 ```
-roslaunch gtddp_drone traj_gen.launch
+roslaunch gtddp_drone drone_traj_gen.launch
+roslaunch gtddp_drone pursuit_traj_gen.launch
+roslaunch gtddp_drone cart_pole_traj_gen.launch
 ```
-This will generate 3 trajectory files in your home directory (x_traj.csv, u_traj.csv, and K_traj.csv) that will be used by the flight controller when run in offline mode.
+This will generate 5 trajectory files in your home directory (x_traj.csv, u_traj.csv, v_traj.csv, Ku_traj.csv and Kv_traj.csv) that will be used by the flight controller when run in offline mode.
 
-##### B. Drone Simulation
-If you want to run the drone in the simulator, run the following launch file:
+##### B. Simulation
+If you want to run the simulator, run one of the following launch files:
 ```
-roslaunch gtddp_drone gtddp_drone.launch
+roslaunch gtddp_drone drone_sim.launch
+roslaunch gtddp_drone pursuit_sim.launch
+roslaunch gtddp_drone cart_pole_sim.launch
 ```
 This will bring up the simulator and run the code in either an offline or real-time state. Modify the `<arg>` tags in the launch file itself to choose which mode to operate in.
 
@@ -69,7 +73,11 @@ This assumes you have followed the setup instructions for an ARDrone in the ARDr
 After determining the IP address of your AR.Drone and the IP and UDP port of the VICON Datastream SDK (and you've verified that you can connect to both at the same time) enter these into the `real_gtddp_drone.launch` launch file, located in the launch folder.
 Make sure to set the rest of the `<arg>` tags appropriately based on your setup. Then run:
 ```
-roslaunch gtddp_drone real_gtddp_drone.launch
+roslaunch gtddp_drone drone_real.launch
+```
+This has also been implemented for pursuit-evasion, but is still in its early days. The launch file for pursuit can be used by running:
+```
+roslaunch gtddp_drone pursuit_real.launch
 ```
 
 ### Launch File Arguments
@@ -80,6 +88,21 @@ roslaunch gtddp_drone real_gtddp_drone.launch
 * traj_gen: boolean flag for if this code will generate a trajectory or not. 0 = no (default), 1 = yes.
 
 ### Flight Instructions
+The following is for drone simulation/real-life flights specifically. The cart-pole simulation runs automatically and has no real-life counterpart yet.
+
+#### Keyboard Commands
+G: "GO" (start the trajectory tracking)  
+Spacebar: Land the drone  
+Q: "Quit" (stop the keyboard node. Note: this does not stop the other nodes yet)  
+A: Fly up  
+Z: Fly down  
+C: Fly forward (drone's perspective)   
+X: Fly backward (drone's perspective)  
+E: Fly left (drone's perspective)  
+D: Fly right (drone's perspective)  
+R: Reset drone (helpful for crashes)    
+Ctrl+C: Shutdown software  
+
 The drone will automatically take off and hover using its own internal system. Once it is in a stable hover state, press the G button on your keyboard (G is for GO) to start the drone on its path following adventure. If you ever want the drone to land, press spacebar.
 To exit the program, press Q on the keyboard and then hit Ctrl-C like normal to kill the rest of the nodes. If you don't press Q first, the keyboard node might not be shutdown properly and you will have to close the terminal window to start a new flight.
 
@@ -87,5 +110,5 @@ To exit the program, press Q on the keyboard and then hit Ctrl-C like normal to 
 All flight records are logged to CSV files in the home directory with a timestamp to avoid overwriting past logs. If the code crashes the logs may not be saved.
 
 ### Issue Tracking and Known Issues
-This project is actively being developed and has bugs. These can be found under the issues tab. If you find any bugs, please report them and identify the conditions necessary to replicate them.
+This project is actively being developed and probably has bugs. These can be found under the issues tab. If you find any bugs or something doesn't work the way you think it should, please report these situations and identify the conditions necessary to replicate them.
 
