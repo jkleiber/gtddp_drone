@@ -213,6 +213,9 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
     // Get the current time
     double cur_time = (ros::Time::now() - begin_time).toSec();
 
+    // Send hover command
+    bool hover = false;
+
     // Only output to the control topic if the localization has happened and the trajectory has been built
     if(this->cur_state_init
     && (!this->is_pursuit || this->cur_state_init_2)
@@ -313,6 +316,7 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
          || this->drone_traj.x_traj.empty())
     {
         // Hover until next command
+        hover = true;
         this->ctrl_command.linear.x = 0;
         this->ctrl_command.linear.y = 0;
         this->ctrl_command.linear.z = 0;
@@ -354,7 +358,7 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
         }
     }
     // Otherwise, publish data after going through the flight controller
-    else
+    else if (!hover)
     {
         // Publish the control signal
         flight_controller.publish_control(this->ctrl_command);
@@ -383,6 +387,16 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
 
         // Default drone control publish
         this->control_signal_pub.publish(this->ctrl_command);
+    }
+    // Hover on the real drone
+    else
+    {
+        this->control_signal_pub.publish(this->ctrl_command);
+
+        if(this->is_pursuit)
+        {
+            this->control_signal_pub_2.publish(this->ctrl_command_2);
+        }
     }
 
     // Log the commands
