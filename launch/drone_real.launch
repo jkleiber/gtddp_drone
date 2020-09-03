@@ -1,6 +1,6 @@
 <launch>
 
-  <rosparam file="$(find gtddp_drone)/launch/constants/drone_sim_params.yaml" command="load" />
+  <rosparam file="$(find gtddp_drone)/launch/constants/drone_real_params.yaml" command="load" />
 
   <!-- GT-DDP nodes -->
   <node name="gtddp_control_node" pkg="gtddp_drone" type="gtddp_control_node" output="screen">
