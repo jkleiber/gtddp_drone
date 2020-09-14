@@ -59,6 +59,9 @@ namespace Constants {
     // Selectors
     std::string ddp_selector("gtddp");
     std::string constraint("box_qp");
+
+    // Show debugging prints
+    bool debug_mode(true);
 }
 
 
@@ -107,6 +110,9 @@ ConstantLoader::ConstantLoader(ros::NodeHandle nh)
     // Update the control constraint hyperparameters
     Constants::du_converge_dist = nh.param("/du_converge_dist", 2.0);
     Constants::dv_converge_dist = nh.param("/dv_converge_dist", 2.0);
+
+    // Debugging mode
+    Constants::debug_mode = nh.param<bool>("/debug_mode", false);
 
     // Temporaries
     std::vector<double> tmp_vector;

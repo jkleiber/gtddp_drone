@@ -52,6 +52,8 @@ namespace Constants {
     extern std::string ddp_selector;
     extern std::string constraint;
 
+    // Show debugging prints
+    extern bool debug_mode;
 }
 
 class ConstantLoader {

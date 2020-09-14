@@ -5,6 +5,8 @@
 
     <rosparam file="$(find gtddp_drone)/launch/constants/pursuit_sim_constants.yaml" command="load" />
 
+    <!-- Debugging -->
+    <param name="debug_mode" value="true" />
 
     <!-- GT-DDP nodes -->
     <node name="pursuit_control_node" pkg="gtddp_drone" type="pursuit_control_node" output="screen">

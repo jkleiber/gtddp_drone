@@ -216,6 +216,20 @@ void ControlCalculator::recalculate_control_callback(const ros::TimerEvent& time
     // Send hover command
     bool hover = false;
 
+    if(Constants::debug_mode)
+    {
+        if (!this->is_pursuit)
+        {
+            printf("VICON Connected: %d, Trajectory Initialized: %d, Trajectory Deque Empty?: %d\n",
+                    this->cur_state_init, this->traj_init, this->drone_traj.x_traj.empty());
+        }
+        else
+        {
+            printf("VICON Connected ardrone1: %d, VICON Connected ardrone2: %d, Trajectory Initialized: %d, Trajectory Deque Empty?: %d\n",
+                    this->cur_state_init, this->cur_state_init_2, this->traj_init, this->drone_traj.x_traj.empty());
+        }
+    }
+
     // Only output to the control topic if the localization has happened and the trajectory has been built
     if(this->cur_state_init
     && (!this->is_pursuit || this->cur_state_init_2)
