@@ -10,7 +10,7 @@ This ROS package implements Game-Theoretic Differential Dynamic Programming (GT-
 
 ### Library Dependencies
 * Boost - Used for numeric methods and solving
-* CGAL - Used as a quadratic programming solver 
+* CGAL - Used as a quadratic programming solver
 * Eigen - C++ matrix library
 
 ### ROS Package Dependencies
@@ -91,24 +91,27 @@ roslaunch gtddp_drone pursuit_real.launch
 The following is for drone simulation/real-life flights specifically. The cart-pole simulation runs automatically and has no real-life counterpart yet.
 
 #### Keyboard Commands
-G: "GO" (start the trajectory tracking)  
-Spacebar: Land the drone  
-Q: "Quit" (stop the keyboard node. Note: this does not stop the other nodes yet)  
-A: Fly up  
-Z: Fly down  
+G: "GO" (start the trajectory tracking)   
+Spacebar: Land the drone   
+Q: "Quit" (stop the keyboard node. Note: this does not stop the other nodes yet)   
+A: Fly up   
+Z: Fly down   
 C: Fly forward (drone's perspective)   
-X: Fly backward (drone's perspective)  
-E: Fly left (drone's perspective)  
-D: Fly right (drone's perspective)  
-R: Reset drone (helpful for crashes)    
-Ctrl+C: Shutdown software  
+X: Fly backward (drone's perspective)   
+E: Fly left (drone's perspective)   
+D: Fly right (drone's perspective)   
+R: Reset drone (helpful for crashes)   
+Ctrl+C: Shutdown software   
+1: (Pursuit Only) Switch to drone 1 (pursuer) controls   
+2: (Pursuit Only) Switch to drone 2 (evader) controls   
 
 The drone will automatically take off and hover using its own internal system. Once it is in a stable hover state, press the G button on your keyboard (G is for GO) to start the drone on its path following adventure. If you ever want the drone to land, press spacebar.
-To exit the program, press Q on the keyboard and then hit Ctrl-C like normal to kill the rest of the nodes. If you don't press Q first, the keyboard node might not be shutdown properly and you will have to close the terminal window to start a new flight.
+To exit the program, press Q on the keyboard and then hit Ctrl-C like normal to kill the rest of the nodes. If you don't press Q first, the keyboard node might not be shutdown properly and you will have to close the terminal window to start a new flight.  
+  
+In pursuit mode, the spacebar will land both drones, while G and Q work as normal. All other commands are drone specific, so you should press either 1 or 2 to switch modes between drones. This acts as a toggle and does not need to be held down.
 
 ### Data Logging
 All flight records are logged to CSV files in the home directory with a timestamp to avoid overwriting past logs. If the code crashes the logs may not be saved.
 
 ### Issue Tracking and Known Issues
 This project is actively being developed and probably has bugs. These can be found under the issues tab. If you find any bugs or something doesn't work the way you think it should, please report these situations and identify the conditions necessary to replicate them.
-
