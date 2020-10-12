@@ -21,6 +21,6 @@
     <include file="$(find cvg_sim_gazebo)/launch/pursuit_emptyworld.launch"/>
 
     <!-- Keyboard node -->
-    <node pkg="gtddp_drone" type="keyboard_node.py" name="keyboard_node" output="screen"/>
+    <node pkg="gtddp_drone" type="pursuit_keyboard_node.py" name="pursuit_keyboard_node" output="screen"/>
 
 </launch>
