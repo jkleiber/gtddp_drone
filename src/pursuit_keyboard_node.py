@@ -39,6 +39,14 @@ def getKey(settings):
 
 def manual_control(key, reset_pub, takeoff_pub, manual_ctrl_pub):
     # R is for reset. Reset a crashed drone without a power cycle
+    global vel
+
+    # Reset vel cmd
+    vel.linear.x = 0
+    vel.linear.y = 0
+    vel.linear.z = 0
+    vel.angular.z = 0
+
     if (key == 'r'):
         reset_msg = Empty()
         reset_pub.publish(reset_msg)
@@ -47,45 +55,35 @@ def manual_control(key, reset_pub, takeoff_pub, manual_ctrl_pub):
         takeoff_pub.publish(takeoff_msg)
     # W commands a positive vertical speed
     elif (key == 'a'):
-        vel.linear.x = 0
-        vel.linear.y = 0
         vel.linear.z = SPEED
         manual_ctrl_pub.publish(vel)
     # S commands a negative vertical speed
     elif (key == 'z'):
-        vel.linear.x = 0
-        vel.linear.y = 0
         vel.linear.z = -SPEED
         manual_ctrl_pub.publish(vel)
     # C commands a positive pitch
     elif (key == 'c'):
         vel.linear.x = SPEED
-        vel.linear.y = 0
-        vel.linear.z = 0
         manual_ctrl_pub.publish(vel)
     # X commands a negative pitch
     elif (key == 'x'):
         vel.linear.x = -SPEED
-        vel.linear.y = 0
-        vel.linear.z = 0
         manual_ctrl_pub.publish(vel)
     # E commands a positive roll
     elif (key == 'e'):
-        vel.linear.x = 0
         vel.linear.y = SPEED
-        vel.linear.z = 0
         manual_ctrl_pub.publish(vel)
     # D commands a negative roll
     elif (key == 'd'):
-        vel.linear.x = 0
         vel.linear.y = -SPEED
-        vel.linear.z = 0
         manual_ctrl_pub.publish(vel)
-    # If no command is pressed, then make sure not to affect the drone
-    elif (vel.linear.z != 0 or vel.linear.x != 0 or vel.linear.y != 0):
-        vel.linear.z = 0
-        vel.linear.x = 0
-        vel.linear.y = 0
+    # Turn Left
+    elif (key == 'j'):
+        vel.angular.z = SPEED
+        manual_ctrl_pub.publish(vel)
+    # Turn Right
+    elif (key == 'k'):
+        vel.angular.z = -SPEED
         manual_ctrl_pub.publish(vel)
 
 

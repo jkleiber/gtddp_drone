@@ -100,6 +100,8 @@ C: Fly forward (drone's perspective)
 X: Fly backward (drone's perspective)   
 E: Fly left (drone's perspective)   
 D: Fly right (drone's perspective)   
+J: Turn left (drone's perspective)  
+K: Turn right (drone's perspective)  
 R: Reset drone (helpful for crashes)   
 Ctrl+C: Shutdown software   
 1: (Pursuit Only) Switch to drone 1 (pursuer) controls   

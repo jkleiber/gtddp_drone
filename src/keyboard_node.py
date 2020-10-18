@@ -68,6 +68,12 @@ if __name__=="__main__":
         finally:
             termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
 
+        # Reset vel cmd
+        vel.linear.x = 0
+        vel.linear.y = 0
+        vel.linear.z = 0
+        vel.angular.z = 0
+
         # print(key)
         # If the key is the E-Stop key, land the drone
         if (key == ' '):
@@ -120,12 +126,14 @@ if __name__=="__main__":
             vel.linear.y = -SPEED
             vel.linear.z = 0
             manual_ctrl_pub.publish(vel)
+        # Turn Left
+        elif (key == 'j'):
+            vel.angular.z = SPEED
+            manual_ctrl_pub.publish(vel)
+        # Turn Right
+        elif (key == 'k'):
+            vel.angular.z = -SPEED
+            manual_ctrl_pub.publish(vel)
         # If the key is one of the exit keys, close the program
         elif (key in exitKeys):
             break
-        # If no command is pressed, then make sure not to affect the drone
-        elif (vel.linear.z != 0 or vel.linear.x != 0 or vel.linear.y != 0):
-            vel.linear.z = 0
-            vel.linear.x = 0
-            vel.linear.y = 0
-            manual_ctrl_pub.publish(vel)
