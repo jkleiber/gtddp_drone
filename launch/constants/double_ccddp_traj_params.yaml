@@ -34,8 +34,12 @@ u_upper: [7.25, 5, 1, 1]
 u_lower: [0, -5, -1, -1]
 
 # Constraints for dv
-v_upper: [0, 1, 0.5, 0.5]
-v_lower: [-2, -1, -0.5, -0.5]
+# v_upper: [0, 1, 0.5, 0.5]
+# v_lower: [-2, -1, -0.5, -0.5]
+
+# "unconstrained case"
+v_upper: [10, 10, 10, 10]
+v_lower: [-10, -10, -10, -10]
 
 # Initial conditions for u_traj
 u_hover: [0, 0, 0, 0]

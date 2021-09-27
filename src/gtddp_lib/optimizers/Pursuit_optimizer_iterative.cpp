@@ -177,18 +177,10 @@ void Pursuit_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
     Eigen::VectorXd b1(2*num_controls_u), b2(2*num_controls_u); // intermediate b vectors
 
     // Calculate quadratic matrix
-    Eigen::MatrixXd D = MatrixXd::Zero(2*num_controls_u, 2*num_controls_u);
-    D.block<u_size, u_size>(0,0) = Quu;
-    // D.block<u_size,u_size>(0,u_size) = -Quv[0];
-    // D.block<u_size,u_size>(u_size,0) = Quv[0].transpose();
-    D.block<u_size,u_size>(u_size,u_size) = -Qvv;
-
-    // Make D symmetric
-    D = 0.5 * (D + D.transpose());
-
-    cu = Qux_[0]*dx_traj[0] + Qu_[0];
-    cv = -Qvx_[0]*dx_traj[0] - Qv_[0];
-    Eigen::VectorXd c = Eigen::VectorXd::Zero(cu.size() + cv.size());
+    Eigen::MatrixXd D1 = MatrixXd::Zero(num_controls_u, num_controls_u);
+    Eigen::MatrixXd D2 = MatrixXd::Zero(num_controls_v, num_controls_v);
+    D1 = Quu;
+    D2 = -Qvv;
 
     // Control Constraint DDP
     Program qp(CGAL::SMALLER);
@@ -199,14 +191,7 @@ void Pursuit_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
     options.set_auto_validation(true);
     qp.set_c0(0);
 
-    // Set the quadratic term in the program
-    for (int j = 0; j < Constants::num_controls_u*2; ++j)
-    {
-        for (int k = 0; k < Constants::num_controls_u*2; ++k)
-        {
-            qp.set_d(j, k, D(j, k));
-        }
-    }
+    
 
     // Update the controls using a QP solver
     for (int i = 0; i < num_time_steps-1; i++) {
@@ -245,32 +230,45 @@ void Pursuit_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
         /**
          * Double Control constraint DDP logic
          */
-
-        // Calculate boundaries for du
+        // Calculate boundaries for du/dv
         b1.segment(0, u_size) = Constants::u_lower - u_traj[i];
         b1.segment(u_size, u_size) = Constants::v_lower - v_traj[i];
         b2.segment(0, u_size) = Constants::u_upper - u_traj[i];
         b2.segment(u_size, u_size) = Constants::v_upper - v_traj[i];
 
+        // Calculate linear objective function for du and dv
+        cu = Qux_[i]*dx_traj[i] + Qu_[i];
+        cv = -Qvx_[i]*dx_traj[i] - Qv_[i];
+
+
+
+        ////// du
+
+        // Set the quadratic term in the program
+        for (int j = 0; j < Constants::num_controls_u; ++j)
+        {
+            for (int k = 0; k < Constants::num_controls_u; ++k)
+            {
+                qp.set_d(j, k, 2*D1(j, k));
+            }
+        }
+
+        
+
         // Set control boundaries
-        for(int j = 0; j < b1.size(); ++j)
+        for(int j = 0; j < Constants::num_controls_u; ++j)
         {
             qp.set_l(j, true, b1(j));
             qp.set_u(j, true, b2(j));
         }
 
-        // Calculate linear objective function for du and dv
-        cu = Qux_[i]*dx_traj[i] + Qu_[i];
-        cv = -Qvx_[i]*dx_traj[i] - Qv_[i];
+        
 
-        // Concatenate these vectors into a matrix c
-        c.segment(0, cu.size()) = cu;
-        c.segment(cu.size(), cu.size()) = cv;
 
         // Add linear objective function to the program solver
-        for (int j = 0; j < c.size(); ++j)
+        for (int j = 0; j < cu.size(); ++j)
         {
-            qp.set_c(j, c(j));
+            qp.set_c(j, cu(j));
         }
 
         // solve quadratic program to find du
@@ -283,14 +281,7 @@ void Pursuit_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
             Solution::Variable_value_iterator end = sol.variable_values_end();
 
             for (int u = 0; it != end; ++it, ++u) {
-                if (u < num_controls_u)
-                {
-                    du(u) = CGAL::to_double(*it);
-                }
-                else
-                {
-                    dv(u - num_controls_u) = CGAL::to_double(*it);
-                }
+                du(u) = CGAL::to_double(*it);
             }
         }
         // QP failed, so use normal du and dv
@@ -300,6 +291,52 @@ void Pursuit_optimizer::update_controls_mm(const vector<VectorXd>& dx_traj,
             dv = lv_[i] + Kv_[i] * dx_traj[i];
             du = lu_[i] + Ku_[i] * dx_traj[i];
         }
+
+        /////////////// dv
+
+        // Set the quadratic term in the program
+        for (int j = 0; j < Constants::num_controls_u; ++j)
+        {
+            for (int k = 0; k < Constants::num_controls_u; ++k)
+            {
+                qp.set_d(j, k, 2*D2(j, k));
+            }
+        }
+
+        // Set control boundaries
+        for(int j = 0; j < Constants::num_controls_u; ++j)
+        {
+            qp.set_l(j, true, b1(j + num_controls_u));
+            qp.set_u(j, true, b2(j + num_controls_u));
+        }
+
+        // Add linear objective function to the program solver
+        for (int j = 0; j < cv.size(); ++j)
+        {
+            qp.set_c(j, cv(j));
+        }
+
+        // solve quadratic program to find du
+        sol = CGAL::solve_quadratic_program(qp, ET(), options);
+
+        // Find du after performing the quadratic programming step if the solution is feasible
+        if(sol.solves_quadratic_program(qp) && !sol.is_infeasible())
+        {
+            Solution::Variable_value_iterator it = sol.variable_values_begin();
+            Solution::Variable_value_iterator end = sol.variable_values_end();
+
+            for (int u = 0; it != end; ++it, ++u) {
+                dv(u) = CGAL::to_double(*it);
+            }
+        }
+        // QP failed, so use normal du and dv
+        else
+        {
+            std::cout << "QP Solution not found!\n";
+            dv = lv_[i] + Kv_[i] * dx_traj[i];
+            du = lu_[i] + Ku_[i] * dx_traj[i];
+        }
+
 
         // Update controls
         u_traj[i] = u_traj[i] + learning_rate * du;
