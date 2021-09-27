@@ -81,11 +81,12 @@ DDP_main_mm::DDP_main_mm(Eigen::VectorXd x, Eigen::VectorXd x_t)
     // If the DDP is constrained, use the CC_DDP_optimizer
     if(!Constants::ddp_selector.compare("ccddp") || !Constants::ddp_selector.compare("ccddp_cart_pole"))
     {
-        ddp = new CC_DDP_optimizer(cost);
+        ddp = new CC_DDP_optimizer_new(cost);
     }
     // If this is a pursuit scenario, use the pursuit optimizer
     else if(!Constants::ddp_selector.compare("pursuit"))
     {
+        // ddp = new CC_DDP_optimizer_new(cost);
         ddp = new Pursuit_optimizer(cost);
     }
     // Otherwise use the default GT_DDP_optimizer
@@ -141,7 +142,7 @@ void DDP_main_mm::update(Eigen::VectorXd x, Eigen::VectorXd x_t)
     // If the DDP is constrained, use the CC_DDP_optimizer
     if(!Constants::ddp_selector.compare("ccddp") || !Constants::ddp_selector.compare("ccddp_cart_pole"))
     {
-        ddp = new CC_DDP_optimizer(cost);
+        ddp = new CC_DDP_optimizer_new(cost);
     }
     // If this is a pursuit scenario, use the pursuit optimizer
     else if(!Constants::ddp_selector.compare("pursuit"))

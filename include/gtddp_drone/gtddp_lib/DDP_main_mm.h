@@ -23,6 +23,7 @@
 // Optimizers
 #include "DDP_Optimizer.h"
 #include "optimizers/CC_DDP_optimizer.h"
+#include "optimizers/CC_DDP_optimizer_new.h"
 #include "optimizers/GT_DDP_optimizer.h"
 #include "optimizers/Pursuit_optimizer.h"
 

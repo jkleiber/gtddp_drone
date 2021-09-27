@@ -41,6 +41,7 @@ v_lower: [2.0, -1, -1, -1]
 u_hover: [4.3, 0, 0, 0]
 v_hover: [4.3, 0, 0, 0]
 
+
 # Cost Function Parameters
 Ru: [0.09, 0.1, 0.1, 0.1]
 Rv: [5, 5, 1, 1]

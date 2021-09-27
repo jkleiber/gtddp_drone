@@ -1,6 +1,6 @@
 <launch>
     <arg name="constrained" value="true"/>
-    <arg name="double-constrained" value="false" />
+    <arg name="double-constrained" value="true" />
 
     <group if="$(arg constrained)">
         <group if="$(arg double-constrained)" >
